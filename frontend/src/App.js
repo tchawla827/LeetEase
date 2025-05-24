@@ -2,18 +2,18 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Sidebar     from './components/Sidebar';
 import CompanyPage from './pages/CompanyPage';
-import Sidebar from './components/Sidebar';
 
 function App() {
   return (
     <Router>
       <div style={{ display: 'flex', height: '100vh' }}>
-        {/* Sidebar is always visible */}
+        {/* Left pane: companies, scrollable in Sidebar */}
         <Sidebar />
 
-        {/* Main content area */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        {/* Right pane: routes. CompanyPage will handle its own header/tabs + question scrolling */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Routes>
             {/* Company view */}
             <Route

@@ -8,27 +8,29 @@ const PAGE_SIZE = 50;
 
 export default function QuestionsTable({ company, bucket, showUnsolved }) {
   const [questions, setQuestions] = useState([]);
-  const [page, setPage]           = useState(1);
-  const [hasMore, setHasMore]     = useState(true);
-  const loaderRef                 = useRef(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const loaderRef = useRef(null);
 
-  // 1) Wrap fetchQuestions so it can be in deps
-  const fetchQuestions = useCallback((pageNum) => {
-    axios
-      .get(`/api/companies/${encodeURIComponent(company)}/buckets/${bucket}/questions`, {
-        params: { page: pageNum, limit: PAGE_SIZE }
-      })
-      .then(res => {
-        const data = res.data;
-        setQuestions(prev => [...prev, ...data]);
-        if (data.length < PAGE_SIZE) {
-          setHasMore(false);
-        }
-      })
-      .catch(console.error);
-  }, [company, bucket]);
+  // 1) Fetch a page of questions
+  const fetchQuestions = useCallback(
+    (pageNum) => {
+      axios
+        .get(
+          `/api/companies/${encodeURIComponent(company)}/buckets/${bucket}/questions`,
+          { params: { page: pageNum, limit: PAGE_SIZE } }
+        )
+        .then((res) => {
+          const data = res.data;
+          setQuestions((prev) => [...prev, ...data]);
+          if (data.length < PAGE_SIZE) setHasMore(false);
+        })
+        .catch(console.error);
+    },
+    [company, bucket]
+  );
 
-  // 2) Reset & load first page on company/bucket change
+  // 2) Reset & load first page when company or bucket changes
   useEffect(() => {
     setQuestions([]);
     setPage(1);
@@ -36,37 +38,39 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
     fetchQuestions(1);
   }, [fetchQuestions]);
 
-  // 3) IntersectionObserver for infinite scroll
+  // 3) Infinite-scroll: observe loader div
   useEffect(() => {
     if (!hasMore) return;
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) {
-        setPage(prev => prev + 1);
-      }
-    }, { rootMargin: '200px' });
-
-    const currentLoader = loaderRef.current;
-    if (currentLoader) observer.observe(currentLoader);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    const current = loaderRef.current;
+    if (current) observer.observe(current);
     return () => {
-      if (currentLoader) observer.unobserve(currentLoader);
+      if (current) observer.unobserve(current);
     };
-  }, [loaderRef, hasMore]);
+  }, [hasMore]);
 
-  // 4) Fetch next pages when `page` changes
+  // 4) Fetch subsequent pages
   useEffect(() => {
-    if (page === 1) return; // already loaded
+    if (page === 1) return;
     fetchQuestions(page);
   }, [page, fetchQuestions]);
 
-  // 5) Update a question’s field
+  // 5) Update a question field and merge updates
   const updateField = (id, field, value) => {
     axios
       .patch(`/api/questions/${id}`, { [field]: value })
-      .then(res => {
-        const updatedList = res.data;
-        setQuestions(prev =>
-          prev.map(q => {
-            const match = updatedList.find(u => u.id === q.id);
+      .then((res) => {
+        const updated = res.data; // array of docs sharing same link
+        setQuestions((prev) =>
+          prev.map((q) => {
+            const match = updated.find((u) => u.id === q.id);
             return match || q;
           })
         );
@@ -74,9 +78,9 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
       .catch(console.error);
   };
 
-  // 6) Apply “unsolved only” filter
+  // 6) Apply “Unsolved only” filter
   const displayed = showUnsolved
-    ? questions.filter(q => !q.solved)
+    ? questions.filter((q) => !q.solved)
     : questions;
 
   return (
@@ -98,7 +102,7 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
           </tr>
         </thead>
         <tbody>
-          {displayed.map(q => (
+          {displayed.map((q) => (
             <tr key={q.id}>
               <td>{q.title}</td>
               <td>
@@ -112,12 +116,12 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
               <td>
                 <select
                   value={q.userDifficulty || ''}
-                  onChange={e =>
+                  onChange={(e) =>
                     updateField(q.id, 'userDifficulty', e.target.value)
                   }
                 >
                   <option value="">–</option>
-                  {difficulties.map(d => (
+                  {difficulties.map((d) => (
                     <option key={d} value={d}>
                       {d}
                     </option>
@@ -128,7 +132,9 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
                 <input
                   type="checkbox"
                   checked={q.solved}
-                  onChange={e => updateField(q.id, 'solved', e.target.checked)}
+                  onChange={(e) =>
+                    updateField(q.id, 'solved', e.target.checked)
+                  }
                 />
               </td>
             </tr>
@@ -137,13 +143,11 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
       </table>
 
       {/* Sentinel div for infinite scroll */}
-      {hasMore && (
-        <div ref={loaderRef} style={{ height: 1, margin: '1rem 0' }} />
-      )}
+      {hasMore && <div ref={loaderRef} style={{ height: 1, margin: '1rem 0' }} />}
+
+      {/* End-of-list marker */}
       {!hasMore && (
-        <p style={{ textAlign: 'center', margin: '1rem 0' }}>
-          — End of list —
-        </p>
+        <p style={{ textAlign: 'center', margin: '1rem 0' }}>— End of list —</p>
       )}
     </>
   );
