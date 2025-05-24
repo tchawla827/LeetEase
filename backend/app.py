@@ -55,10 +55,28 @@ def list_buckets(company):
 def list_questions(company, bucket):
     """
     GET /api/companies/<company>/buckets/<bucket>/questions
-    → Returns all questions for a given company + bucket.
+    Query params:
+       - page (1-based, default 1)
+       - limit (items per page, default 50)
+    → Returns a paginated list of questions for a given company + bucket.
     """
-    docs = questions.find({"company": company, "bucket": bucket})
-    result = [to_json(doc) for doc in docs]
+    # Parse pagination parameters
+    try:
+        page  = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 50))
+    except ValueError:
+        abort(400, description="`page` and `limit` must be integers")
+
+    if page < 1 or limit < 1:
+        abort(400, description="`page` and `limit` must be positive integers")
+
+    skip = (page - 1) * limit
+
+    cursor = questions.find(
+        {"company": company, "bucket": bucket}
+    ).skip(skip).limit(limit)
+
+    result = [to_json(doc) for doc in cursor]
     return jsonify(result), 200
 
 @app.route("/api/questions/<id>", methods=["PATCH"])

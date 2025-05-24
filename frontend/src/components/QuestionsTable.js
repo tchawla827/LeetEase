@@ -1,77 +1,150 @@
 // frontend/src/components/QuestionsTable.js
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 
 const difficulties = ['Easy', 'Medium', 'Hard'];
+const PAGE_SIZE = 50;
 
-export default function QuestionsTable({ company, bucket }) {
+export default function QuestionsTable({ company, bucket, showUnsolved }) {
   const [questions, setQuestions] = useState([]);
+  const [page, setPage]           = useState(1);
+  const [hasMore, setHasMore]     = useState(true);
+  const loaderRef                 = useRef(null);
 
-  useEffect(() => {
+  // 1) Wrap fetchQuestions so it can be in deps
+  const fetchQuestions = useCallback((pageNum) => {
     axios
-      .get(`/api/companies/${encodeURIComponent(company)}/buckets/${bucket}/questions`)
-      .then(res => setQuestions(res.data))
+      .get(`/api/companies/${encodeURIComponent(company)}/buckets/${bucket}/questions`, {
+        params: { page: pageNum, limit: PAGE_SIZE }
+      })
+      .then(res => {
+        const data = res.data;
+        setQuestions(prev => [...prev, ...data]);
+        if (data.length < PAGE_SIZE) {
+          setHasMore(false);
+        }
+      })
       .catch(console.error);
   }, [company, bucket]);
 
+  // 2) Reset & load first page on company/bucket change
+  useEffect(() => {
+    setQuestions([]);
+    setPage(1);
+    setHasMore(true);
+    fetchQuestions(1);
+  }, [fetchQuestions]);
+
+  // 3) IntersectionObserver for infinite scroll
+  useEffect(() => {
+    if (!hasMore) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setPage(prev => prev + 1);
+      }
+    }, { rootMargin: '200px' });
+
+    const currentLoader = loaderRef.current;
+    if (currentLoader) observer.observe(currentLoader);
+    return () => {
+      if (currentLoader) observer.unobserve(currentLoader);
+    };
+  }, [loaderRef, hasMore]);
+
+  // 4) Fetch next pages when `page` changes
+  useEffect(() => {
+    if (page === 1) return; // already loaded
+    fetchQuestions(page);
+  }, [page, fetchQuestions]);
+
+  // 5) Update a question’s field
   const updateField = (id, field, value) => {
     axios
       .patch(`/api/questions/${id}`, { [field]: value })
       .then(res => {
-        // update local state with returned array of updated docs
+        const updatedList = res.data;
         setQuestions(prev =>
-          prev.map(q =>
-            q.link === res.data[0].link // all returned share same link
-              ? res.data.find(r => r.id === q.id)
-              : q
-          )
+          prev.map(q => {
+            const match = updatedList.find(u => u.id === q.id);
+            return match || q;
+          })
         );
       })
       .catch(console.error);
   };
 
+  // 6) Apply “unsolved only” filter
+  const displayed = showUnsolved
+    ? questions.filter(q => !q.solved)
+    : questions;
+
   return (
-    <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Link</th>
-          <th>Frequency</th>
-          <th>Acceptance</th>
-          <th>Leet Diff</th>
-          <th>Your Diff</th>
-          <th>Solved</th>
-        </tr>
-      </thead>
-      <tbody>
-        {questions.map(q => (
-          <tr key={q.id}>
-            <td>{q.title}</td>
-            <td><a href={q.link} target="_blank" rel="noopener noreferrer">View</a></td>
-            <td>{q.frequency}</td>
-            <td>{q.acceptanceRate.toFixed(2)}</td>
-            <td>{q.leetDifficulty}</td>
-            <td>
-              <select
-                value={q.userDifficulty || ''}
-                onChange={e => updateField(q.id, 'userDifficulty', e.target.value)}
-              >
-                <option value="">–</option>
-                {difficulties.map(d => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-            </td>
-            <td>
-              <input
-                type="checkbox"
-                checked={q.solved}
-                onChange={e => updateField(q.id, 'solved', e.target.checked)}
-              />
-            </td>
+    <>
+      <table
+        style={{ width: '100%', borderCollapse: 'collapse' }}
+        border="1"
+        cellPadding="8"
+      >
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Link</th>
+            <th>Frequency</th>
+            <th>Acceptance</th>
+            <th>Leet Diff</th>
+            <th>Your Diff</th>
+            <th>Solved</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {displayed.map(q => (
+            <tr key={q.id}>
+              <td>{q.title}</td>
+              <td>
+                <a href={q.link} target="_blank" rel="noopener noreferrer">
+                  View
+                </a>
+              </td>
+              <td>{q.frequency}</td>
+              <td>{(q.acceptanceRate * 100).toFixed(1)}%</td>
+              <td>{q.leetDifficulty}</td>
+              <td>
+                <select
+                  value={q.userDifficulty || ''}
+                  onChange={e =>
+                    updateField(q.id, 'userDifficulty', e.target.value)
+                  }
+                >
+                  <option value="">–</option>
+                  {difficulties.map(d => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </td>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={q.solved}
+                  onChange={e => updateField(q.id, 'solved', e.target.checked)}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Sentinel div for infinite scroll */}
+      {hasMore && (
+        <div ref={loaderRef} style={{ height: 1, margin: '1rem 0' }} />
+      )}
+      {!hasMore && (
+        <p style={{ textAlign: 'center', margin: '1rem 0' }}>
+          — End of list —
+        </p>
+      )}
+    </>
   );
 }
