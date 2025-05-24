@@ -1,9 +1,9 @@
 // frontend/src/pages/CompanyPage.js
 
 import React, { useEffect, useState } from 'react';
-import { useParams }                   from 'react-router-dom';
-import BucketsTabs                     from '../components/BucketsTabs';
-import QuestionsTable                  from '../components/QuestionsTable';
+import { useParams }                  from 'react-router-dom';
+import BucketsTabs                    from '../components/BucketsTabs';
+import QuestionsTable                 from '../components/QuestionsTable';
 
 const BUCKET_ORDER = [
   "30Days",
@@ -15,10 +15,11 @@ const BUCKET_ORDER = [
 
 export default function CompanyPage() {
   const { companyName } = useParams();
-  const [buckets, setBuckets]           = useState([]);
+  const [buckets, setBuckets]               = useState([]);
   const [selectedBucket, setSelectedBucket] = useState(null);
-  const [showUnsolved, setShowUnsolved] = useState(false);
+  const [showUnsolved, setShowUnsolved]     = useState(false);
 
+  // Load and order the available buckets for this company
   useEffect(() => {
     setSelectedBucket(null);
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
@@ -27,7 +28,6 @@ export default function CompanyPage() {
         return res.json();
       })
       .then(raw => {
-        // keep only expected buckets, in correct order
         const filtered = raw
           .filter(b => BUCKET_ORDER.includes(b))
           .sort((a, b) => BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b));
@@ -46,7 +46,7 @@ export default function CompanyPage() {
             type="checkbox"
             checked={showUnsolved}
             onChange={e => setShowUnsolved(e.target.checked)}
-          />{" "}
+          />{' '}
           Unsolved only
         </label>
       </div>
