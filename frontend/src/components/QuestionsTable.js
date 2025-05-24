@@ -3,8 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const difficulties = ['Easy', 'Medium', 'Hard'];
-const PAGE_SIZE   = 50;
+const PAGE_SIZE = 50;
+
+// Map our sort keys to user-friendly labels
+const SORT_FIELDS = {
+  title:          "Title",
+  frequency:      "Frequency",
+  acceptanceRate: "Acceptance",
+  leetDifficulty: "Leet Diff"
+};
 
 export default function QuestionsTable({ company, bucket, showUnsolved }) {
   const [questions, setQuestions]   = useState([]);
@@ -12,12 +19,16 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading]       = useState(false);
 
-  // Whenever company, bucket, or filter changes, reset to page 1
+  // Sorting state
+  const [sortField, setSortField]   = useState(null);
+  const [sortOrder, setSortOrder]   = useState("asc");
+
+  // Reset to page 1 whenever any filter or sort changes
   useEffect(() => {
     setPage(1);
-  }, [company, bucket, showUnsolved]);
+  }, [company, bucket, showUnsolved, sortField, sortOrder]);
 
-  // Fetch the current page (and total count) on dependency change
+  // Fetch data
   useEffect(() => {
     if (!company || !bucket) {
       setQuestions([]);
@@ -29,14 +40,19 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
     axios
       .get(
         `/api/companies/${encodeURIComponent(company)}/buckets/${bucket}/questions`,
-        { params: { page, limit: PAGE_SIZE } }
+        {
+          params: {
+            page,
+            limit: PAGE_SIZE,
+            sortField,
+            sortOrder
+          }
+        }
       )
       .then(res => {
         const { data, total } = res.data;
-        // Compute how many pages in total
         setTotalPages(Math.ceil(total / PAGE_SIZE));
 
-        // Apply “Unsolved only” filter client‐side
         const filtered = showUnsolved
           ? data.filter(q => !q.solved)
           : data;
@@ -45,9 +61,19 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [company, bucket, page, showUnsolved]);
+  }, [company, bucket, page, showUnsolved, sortField, sortOrder]);
 
-  // Send updates back to server (solved flag or userDifficulty)
+  // Toggle sort on header click
+  const onSort = field => {
+    if (sortField === field) {
+      setSortOrder(prev => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  // Patch updates back to server
   const updateField = (id, field, value) => {
     axios
       .patch(`/api/questions/${id}`, { [field]: value })
@@ -63,6 +89,10 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
       .catch(console.error);
   };
 
+  // Helper to render sort arrow
+  const arrow = field =>
+    sortField === field ? (sortOrder === "asc" ? " ▲" : " ▼") : "";
+
   return (
     <>
       <table
@@ -72,15 +102,47 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
       >
         <thead>
           <tr>
-            <th>Title</th>
+            {/* Sortable Title */}
+            <th
+              onClick={() => onSort("title")}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              {SORT_FIELDS.title}{arrow("title")}
+            </th>
+
+            {/* Link (not sortable) */}
             <th>Link</th>
-            <th>Frequency</th>
-            <th>Acceptance</th>
-            <th>Leet Diff</th>
+
+            {/* Sortable Frequency */}
+            <th
+              onClick={() => onSort("frequency")}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              {SORT_FIELDS.frequency}{arrow("frequency")}
+            </th>
+
+            {/* Sortable Acceptance */}
+            <th
+              onClick={() => onSort("acceptanceRate")}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              {SORT_FIELDS.acceptanceRate}{arrow("acceptanceRate")}
+            </th>
+
+            {/* Sortable Leet Diff */}
+            <th
+              onClick={() => onSort("leetDifficulty")}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+            >
+              {SORT_FIELDS.leetDifficulty}{arrow("leetDifficulty")}
+            </th>
+
+            {/* Your own difficulty and solved columns */}
             <th>Your Diff</th>
             <th>Solved</th>
           </tr>
         </thead>
+
         <tbody>
           {loading ? (
             <tr>
@@ -91,15 +153,26 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
           ) : questions.length ? (
             questions.map(q => (
               <tr key={q.id}>
+                {/* Title */}
                 <td>{q.title}</td>
+
+                {/* Link */}
                 <td>
                   <a href={q.link} target="_blank" rel="noopener noreferrer">
                     View
                   </a>
                 </td>
+
+                {/* Frequency */}
                 <td>{q.frequency}</td>
+
+                {/* Acceptance */}
                 <td>{(q.acceptanceRate * 100).toFixed(1)}%</td>
+
+                {/* Leet Difficulty */}
                 <td>{q.leetDifficulty}</td>
+
+                {/* Your Difficulty */}
                 <td>
                   <select
                     value={q.userDifficulty || ''}
@@ -108,13 +181,13 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
                     }
                   >
                     <option value="">–</option>
-                    {difficulties.map(d => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
                   </select>
                 </td>
+
+                {/* Solved checkbox */}
                 <td>
                   <input
                     type="checkbox"
@@ -145,7 +218,10 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
           margin: '1rem 0'
         }}
       >
-        <button onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1}>
+        <button
+          onClick={() => setPage(p => Math.max(p - 1, 1))}
+          disabled={page === 1}
+        >
           ← Prev
         </button>
 

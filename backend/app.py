@@ -1,5 +1,3 @@
-# backend/app.py
-
 import os
 from flask import Flask, jsonify, request, abort
 from dotenv import load_dotenv
@@ -29,7 +27,7 @@ def ping():
 
 @app.route("/api/db-test", methods=["GET"])
 def db_test():
-    """Simple database-read test."""
+    """Quick MongoDB connectivity test: return one sample question."""
     sample = questions.find_one()
     if not sample:
         abort(500, description="No documents found in `questions` collection")
@@ -48,7 +46,7 @@ def list_companies():
 def list_buckets(company):
     """
     GET /api/companies/<company>/buckets
-    → Returns the 5 buckets (e.g. 30Days, 3Months, …, All) available for that company.
+    → Returns the list of buckets (e.g. 30Days, 3Months, …) for that company.
     """
     buckets = questions.distinct("bucket", {"company": company})
     if not buckets:
@@ -62,9 +60,12 @@ def list_questions(company, bucket):
     Query params:
        - page (1-based, default 1)
        - limit (items per page, default 50)
-    → Returns a paginated list of questions plus total count.
+       - sortField (optional; one of: title, frequency, acceptanceRate, leetDifficulty)
+       - sortOrder (optional; asc or desc; default asc)
+    → Returns a JSON object { data: [...], total: N } where `data` is the requested
+      page of questions (sorted if requested) and `total` is the total matching count.
     """
-    # Parse pagination parameters
+    # --- 1) Parse & validate pagination params ---
     try:
         page  = int(request.args.get("page", 1))
         limit = int(request.args.get("limit", 50))
@@ -76,18 +77,43 @@ def list_questions(company, bucket):
 
     skip = (page - 1) * limit
 
-    # 1) Fetch this page of results
-    cursor = questions.find(
-        {"company": company, "bucket": bucket}
-    ).skip(skip).limit(limit)
-    result = [to_json(doc) for doc in cursor]
+    # --- 2) Parse & validate sorting params ---
+    field_map = {
+        "title":          "title",
+        "frequency":      "frequency",
+        "acceptanceRate": "acceptanceRate",
+        "leetDifficulty": "leetDifficulty"
+    }
+    sort_field = request.args.get("sortField")
+    sort_order = request.args.get("sortOrder", "asc").lower()
+    sort_spec  = None
 
-    # 2) Count total matching documents
-    total = questions.count_documents({"company": company, "bucket": bucket})
+    if sort_field:
+        if sort_field not in field_map:
+            abort(
+                400,
+                description=(
+                    f"Invalid `sortField` (“{sort_field}”). "
+                    f"Must be one of: {', '.join(field_map.keys())}"
+                )
+            )
+        direction = 1 if sort_order == "asc" else -1
+        sort_spec = [(field_map[sort_field], direction)]
 
-    # 3) Return both page data and total count
+    # --- 3) Build base filter & total count ---
+    base_filter = {"company": company, "bucket": bucket}
+    total = questions.count_documents(base_filter)
+
+    # --- 4) Fetch the requested page, applying sort if any ---
+    cursor = questions.find(base_filter)
+    if sort_spec:
+        cursor = cursor.sort(sort_spec)
+    cursor = cursor.skip(skip).limit(limit)
+
+    page_data = [to_json(doc) for doc in cursor]
+
     return jsonify({
-        "data": result,
+        "data":  page_data,
         "total": total
     }), 200
 
@@ -96,7 +122,6 @@ def update_question(id):
     """
     PATCH /api/questions/<id>
     Body JSON: { "solved": true|false, "userDifficulty": "Easy"|"Medium"|"Hard" }
-    
     Marks ALL questions sharing the same `link` as updated.
     Returns the array of updated question documents.
     """
@@ -107,22 +132,28 @@ def update_question(id):
     if not update_fields:
         abort(400, description=f"Only these fields can be updated: {allowed}")
 
-    # 1) Find original to extract its link
-    orig = questions.find_one({"_id": ObjectId(id)})
+    # Lookup original by ObjectId
+    try:
+        orig = questions.find_one({"_id": ObjectId(id)})
+    except:
+        abort(400, description="Invalid question ID")
+
     if not orig:
         abort(404, description="Question not found")
 
-    link_key = orig["link"]
+    link_key = orig.get("link")
+    if not link_key:
+        abort(400, description="Original question has no link field")
 
-    # 2) Update all docs with that link
+    # Update all docs with that link
     questions.update_many(
         {"link": link_key},
         {"$set": update_fields}
     )
 
-    # 3) Return all updated documents
-    updated_docs = questions.find({"link": link_key})
-    return jsonify([to_json(doc) for doc in updated_docs]), 200
+    # Return all updated docs
+    updated = questions.find({"link": link_key})
+    return jsonify([to_json(doc) for doc in updated]), 200
 
 if __name__ == "__main__":
     # Default: listen on 127.0.0.1:5000 with debug on
