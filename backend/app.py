@@ -1,3 +1,5 @@
+# backend/app.py
+
 import os
 from flask import Flask, jsonify, request, abort
 from dotenv import load_dotenv
@@ -27,9 +29,11 @@ def ping():
 
 @app.route("/api/db-test", methods=["GET"])
 def db_test():
-    """Quick MongoDB connectivity test: list your database’s collections."""
-    colls = db.list_collection_names()
-    return jsonify({"collections": colls}), 200
+    """Simple database-read test."""
+    sample = questions.find_one()
+    if not sample:
+        abort(500, description="No documents found in `questions` collection")
+    return jsonify(to_json(sample)), 200
 
 @app.route("/api/companies", methods=["GET"])
 def list_companies():
@@ -48,7 +52,7 @@ def list_buckets(company):
     """
     buckets = questions.distinct("bucket", {"company": company})
     if not buckets:
-        abort(404, description="Company not found")
+        abort(404, description=f"No buckets found for company `{company}`")
     return jsonify(buckets), 200
 
 @app.route("/api/companies/<company>/buckets/<bucket>/questions", methods=["GET"])
@@ -58,7 +62,7 @@ def list_questions(company, bucket):
     Query params:
        - page (1-based, default 1)
        - limit (items per page, default 50)
-    → Returns a paginated list of questions for a given company + bucket.
+    → Returns a paginated list of questions plus total count.
     """
     # Parse pagination parameters
     try:
@@ -72,12 +76,20 @@ def list_questions(company, bucket):
 
     skip = (page - 1) * limit
 
+    # 1) Fetch this page of results
     cursor = questions.find(
         {"company": company, "bucket": bucket}
     ).skip(skip).limit(limit)
-
     result = [to_json(doc) for doc in cursor]
-    return jsonify(result), 200
+
+    # 2) Count total matching documents
+    total = questions.count_documents({"company": company, "bucket": bucket})
+
+    # 3) Return both page data and total count
+    return jsonify({
+        "data": result,
+        "total": total
+    }), 200
 
 @app.route("/api/questions/<id>", methods=["PATCH"])
 def update_question(id):
@@ -100,9 +112,7 @@ def update_question(id):
     if not orig:
         abort(404, description="Question not found")
 
-    link_key = orig.get("link")
-    if not link_key:
-        abort(400, description="Original question has no link field")
+    link_key = orig["link"]
 
     # 2) Update all docs with that link
     questions.update_many(
