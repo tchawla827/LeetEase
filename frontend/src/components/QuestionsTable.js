@@ -1,17 +1,19 @@
 // frontend/src/components/QuestionsTable.js
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const PAGE_SIZE = 50;
 
-// Map our sort keys to user-friendly labels
 const SORT_FIELDS = {
-  title:          "Title",
-  frequency:      "Frequency",
-  acceptanceRate: "Acceptance",
-  leetDifficulty: "Leet Diff"
+  title:            'Title',
+  frequency:        'Frequency',
+  acceptanceRate:   'Acceptance',
+  leetDifficulty:   'Leet Diff',
+  userDifficulty:   'Your Diff',
 };
+
+// Numeric ranking so asc ⇄ desc behaves “Easy → Medium → Hard”
+const difficultyRank = { Easy: 1, Medium: 2, Hard: 3 };
 
 export default function QuestionsTable({ company, bucket, showUnsolved }) {
   const [questions, setQuestions]   = useState([]);
@@ -19,166 +21,112 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading]       = useState(false);
 
-  // Sorting state
-  const [sortField, setSortField]   = useState(null);
-  const [sortOrder, setSortOrder]   = useState("asc");
+  const [sortField, setSortField]   = useState(null);        // null → server default
+  const [sortOrder, setSortOrder]   = useState('asc');       // 'asc' | 'desc'
 
-  // Reset to page 1 whenever any filter or sort changes
-  useEffect(() => {
-    setPage(1);
-  }, [company, bucket, showUnsolved, sortField, sortOrder]);
+  // reset to first page whenever filters / sort change
+  useEffect(() => setPage(1),
+    [company, bucket, showUnsolved, sortField, sortOrder]);
 
-  // Fetch data
+  /* ------------------------------------------------------------------ */
+  /*                         Fetch questions                            */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (!company || !bucket) {
-      setQuestions([]);
-      setTotalPages(1);
-      return;
+      setQuestions([]); setTotalPages(1); return;
     }
-
     setLoading(true);
+
+    // ⚠️  Skip server sort if we’ll handle it client-side
+    const isDifficulty = sortField === 'leetDifficulty'
+                      || sortField === 'userDifficulty';
+
+    const params = {
+      page,
+      limit: PAGE_SIZE,
+      ...(!isDifficulty && sortField && { sortField, sortOrder }),
+    };
+
     axios
-      .get(
-        `/api/companies/${encodeURIComponent(company)}/buckets/${bucket}/questions`,
-        {
-          params: {
-            page,
-            limit: PAGE_SIZE,
-            sortField,
-            sortOrder
-          }
-        }
-      )
+      .get(`/api/companies/${encodeURIComponent(company)}/buckets/${bucket}/questions`,
+           { params })
       .then(res => {
         const { data, total } = res.data;
         setTotalPages(Math.ceil(total / PAGE_SIZE));
 
-        const filtered = showUnsolved
-          ? data.filter(q => !q.solved)
-          : data;
+        /* ------------------- local filtering / sorting ------------------- */
+        let list = showUnsolved ? data.filter(q => !q.solved) : data;
 
-        setQuestions(filtered);
+        // ⚠️  Unified difficulty sort for BOTH columns
+        if (isDifficulty) {
+          list = [...list].sort((a, b) => {
+            const ra = difficultyRank[a[sortField]] ?? 0;
+            const rb = difficultyRank[b[sortField]] ?? 0;
+            return sortOrder === 'asc' ? ra - rb : rb - ra;
+          });
+        }
+
+        setQuestions(list);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [company, bucket, page, showUnsolved, sortField, sortOrder]);
 
-  // Toggle sort on header click
+  /* ------------------------------------------------------------------ */
+  /*                              helpers                               */
+  /* ------------------------------------------------------------------ */
   const onSort = field => {
     if (sortField === field) {
-      setSortOrder(prev => (prev === "asc" ? "desc" : "asc"));
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortOrder("asc");
+      setSortOrder('asc');
     }
   };
+  const arrow = f => (sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '');
 
-  // Patch updates back to server
-  const updateField = (id, field, value) => {
-    axios
-      .patch(`/api/questions/${id}`, { [field]: value })
-      .then(res => {
-        const updated = res.data;
-        setQuestions(prev =>
-          prev.map(q => {
-            const match = updated.find(u => u.id === q.id);
-            return match || q;
-          })
-        );
-      })
-      .catch(console.error);
-  };
+  const updateField = (id, field, value) =>
+    axios.patch(`/api/questions/${id}`, { [field]: value })
+         .then(res => {
+           const updated = res.data;
+           setQuestions(prev => prev.map(q => updated.find(u => u.id === q.id) || q));
+         })
+         .catch(console.error);
 
-  // Helper to render sort arrow
-  const arrow = field =>
-    sortField === field ? (sortOrder === "asc" ? " ▲" : " ▼") : "";
-
+  /* ------------------------------------------------------------------ */
+  /*                             render                                 */
+  /* ------------------------------------------------------------------ */
   return (
     <>
-      <table
-        style={{ width: '100%', borderCollapse: 'collapse' }}
-        border="1"
-        cellPadding="8"
-      >
+      <table style={{ width: '100%', borderCollapse: 'collapse' }} border="1" cellPadding="8">
         <thead>
           <tr>
-            {/* Sortable Title */}
-            <th
-              onClick={() => onSort("title")}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              {SORT_FIELDS.title}{arrow("title")}
-            </th>
-
-            {/* Link (not sortable) */}
-            <th>Link</th>
-
-            {/* Sortable Frequency */}
-            <th
-              onClick={() => onSort("frequency")}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              {SORT_FIELDS.frequency}{arrow("frequency")}
-            </th>
-
-            {/* Sortable Acceptance */}
-            <th
-              onClick={() => onSort("acceptanceRate")}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              {SORT_FIELDS.acceptanceRate}{arrow("acceptanceRate")}
-            </th>
-
-            {/* Sortable Leet Diff */}
-            <th
-              onClick={() => onSort("leetDifficulty")}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              {SORT_FIELDS.leetDifficulty}{arrow("leetDifficulty")}
-            </th>
-
-            {/* Your own difficulty and solved columns */}
-            <th>Your Diff</th>
-            <th>Solved</th>
+            {Object.entries(SORT_FIELDS).map(([field, label]) => (
+              <th key={field}
+                  onClick={() => onSort(field)}
+                  style={{ cursor: 'pointer', userSelect: 'none' }}>
+                {label}{arrow(field)}
+              </th>
+            ))}
+            <th style={{ cursor: 'default' }}>Link</th>
+            <th style={{ cursor: 'default' }}>Solved</th>
           </tr>
         </thead>
 
         <tbody>
           {loading ? (
-            <tr>
-              <td colSpan="7" style={{ textAlign: 'center' }}>
-                Loading…
-              </td>
-            </tr>
+            <tr><td colSpan="8" style={{ textAlign: 'center' }}>Loading…</td></tr>
           ) : questions.length ? (
             questions.map(q => (
               <tr key={q.id}>
-                {/* Title */}
                 <td>{q.title}</td>
-
-                {/* Link */}
-                <td>
-                  <a href={q.link} target="_blank" rel="noopener noreferrer">
-                    View
-                  </a>
-                </td>
-
-                {/* Frequency */}
                 <td>{q.frequency}</td>
-
-                {/* Acceptance */}
                 <td>{(q.acceptanceRate * 100).toFixed(1)}%</td>
-
-                {/* Leet Difficulty */}
                 <td>{q.leetDifficulty}</td>
-
-                {/* Your Difficulty */}
                 <td>
                   <select
                     value={q.userDifficulty || ''}
-                    onChange={e =>
-                      updateField(q.id, 'userDifficulty', e.target.value)
-                    }
+                    onChange={e => updateField(q.id, 'userDifficulty', e.target.value)}
                   >
                     <option value="">–</option>
                     <option value="Easy">Easy</option>
@@ -186,55 +134,28 @@ export default function QuestionsTable({ company, bucket, showUnsolved }) {
                     <option value="Hard">Hard</option>
                   </select>
                 </td>
-
-                {/* Solved checkbox */}
                 <td>
-                  <input
-                    type="checkbox"
-                    checked={q.solved}
-                    onChange={e =>
-                      updateField(q.id, 'solved', e.target.checked)
-                    }
-                  />
+                  <a href={q.link} target="_blank" rel="noopener noreferrer">View</a>
+                </td>
+                <td>
+                  <input type="checkbox"
+                         checked={q.solved}
+                         onChange={e => updateField(q.id, 'solved', e.target.checked)} />
                 </td>
               </tr>
             ))
           ) : (
-            <tr>
-              <td colSpan="7" style={{ textAlign: 'center' }}>
-                No questions found.
-              </td>
-            </tr>
+            <tr><td colSpan="8" style={{ textAlign: 'center' }}>No questions found.</td></tr>
           )}
         </tbody>
       </table>
 
-      {/* Pagination controls */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          margin: '1rem 0'
-        }}
-      >
-        <button
-          onClick={() => setPage(p => Math.max(p - 1, 1))}
-          disabled={page === 1}
-        >
-          ← Prev
-        </button>
-
-        <span style={{ margin: '0 1rem' }}>
-          Page {page} of {totalPages}
-        </span>
-
-        <button
-          onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-          disabled={page === totalPages}
-        >
-          Next →
-        </button>
+      {/* pagination */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
+        <button onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1}>← Prev</button>
+        <span style={{ margin: '0 1rem' }}>Page {page} of {totalPages}</span>
+        <button onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                disabled={page === totalPages}>Next →</button>
       </div>
     </>
   );
