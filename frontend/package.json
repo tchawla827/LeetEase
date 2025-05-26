@@ -9,6 +9,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.9.0",
+    "js-cookie": "^3.0.5",
     "lodash.debounce": "^4.0.8",
     "react": "^19.1.0",
     "react-autosuggest": "^10.1.0",

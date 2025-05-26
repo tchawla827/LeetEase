@@ -1,34 +1,59 @@
 // frontend/src/App.js
-//npm start
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Sidebar     from './components/Sidebar';
+
+import Sidebar from './components/Sidebar';
+import PrivateRoute from './components/PrivateRoute';
+
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AdminImport from './pages/AdminImport';
 import CompanyPage from './pages/CompanyPage';
 
 function App() {
   return (
     <Router>
       <div style={{ display: 'flex', height: '100vh' }}>
-        {/* Left pane: companies, scrollable in Sidebar */}
+        {/* Left pane: Sidebar includes navigation and Logout */}
         <Sidebar />
 
-        {/* Right pane: routes. CompanyPage will handle its own header/tabs + question scrolling */}
+        {/* Right pane: routed views */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Routes>
-            {/* Company view */}
+            {/* Public */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            {/* Admin-only CSV import */}
             <Route
-              path="/company/:companyName"
-              element={<CompanyPage />}
+              path="/import"
+              element={
+                <PrivateRoute>
+                  <AdminImport />
+                </PrivateRoute>
+              }
             />
 
-            {/* Default landing message */}
+            {/* Company-specific questions (authenticated) */}
+            <Route
+              path="/company/:companyName"
+              element={
+                <PrivateRoute>
+                  <CompanyPage />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Authenticated fallback landing */}
             <Route
               path="*"
               element={
-                <div style={{ padding: '1rem' }}>
-                  <h2>Welcome to LeetEase</h2>
-                  <p>Select a company from the sidebar to get started.</p>
-                </div>
+                <PrivateRoute>
+                  <div style={{ padding: '1rem' }}>
+                    <h2>Welcome to LeetEase</h2>
+                    <p>Select a company from the sidebar to get started.</p>
+                  </div>
+                </PrivateRoute>
               }
             />
           </Routes>

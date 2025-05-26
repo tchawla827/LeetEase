@@ -5,6 +5,7 @@ import Autosuggest from 'react-autosuggest';
 import debounce from 'lodash.debounce';
 import axios from 'axios';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import LogoutButton from './LogoutButton';
 
 export default function Sidebar() {
   const [value, setValue]      = useState('');
@@ -53,7 +54,6 @@ export default function Sidebar() {
     navigate(`/company/${encodeURIComponent(suggestion)}`);
   };
 
-  // 🔥 Highlight any matching substring
   const renderSuggestion = (sug, { query }) => {
     const idx = sug.toLowerCase().indexOf(query.toLowerCase());
     if (idx === -1) return <div style={{ padding: '0.5rem' }}>{sug}</div>;
@@ -91,6 +91,24 @@ export default function Sidebar() {
       overflowY: 'auto',
       background: '#fafafa'
     }}>
+      {/* Navigation Links */}
+      <nav style={{ marginBottom: '1rem' }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          <li style={{ margin: '0.5rem 0' }}>
+            <Link to="/login" style={{ textDecoration: 'none', color: '#333' }}>Login</Link>
+          </li>
+          <li style={{ margin: '0.5rem 0' }}>
+            <Link to="/register" style={{ textDecoration: 'none', color: '#333' }}>Register</Link>
+          </li>
+          <li style={{ margin: '0.5rem 0' }}>
+            <Link to="/import" style={{ textDecoration: 'none', color: '#333' }}>Import Questions</Link>
+          </li>
+          <li style={{ margin: '0.5rem 0' }}>
+            <LogoutButton />
+          </li>
+        </ul>
+      </nav>
+
       <h2 style={{ marginTop: 0 }}>Companies</h2>
 
       <Autosuggest
