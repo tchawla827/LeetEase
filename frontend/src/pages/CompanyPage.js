@@ -3,15 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import BucketsTabs from '../components/BucketsTabs';
-import QuestionSearch from '../components/QuestionSearch';
 import QuestionsTable from '../components/QuestionsTable';
 
 const BUCKET_ORDER = [
-  "30Days",
-  "3Months",
-  "6Months",
-  "All",
-  "MoreThan6Months"
+  '30Days',
+  '3Months',
+  '6Months',
+  'All',
+  'MoreThan6Months'
 ];
 
 export default function CompanyPage() {
@@ -21,7 +20,7 @@ export default function CompanyPage() {
   const [showUnsolved, setShowUnsolved]     = useState(false);
   const [searchTerm, setSearchTerm]         = useState('');
 
-  // Load and order the available buckets for this company
+  // fetch and order buckets
   useEffect(() => {
     setSelectedBucket(null);
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
@@ -61,11 +60,21 @@ export default function CompanyPage() {
 
       {selectedBucket && (
         <>
-          <QuestionSearch
-            company={companyName}
-            bucket={selectedBucket}
-            onSearch={setSearchTerm}
-          />
+          {/* simple substring‐only search input */}
+          <div style={{ margin: '1rem 0' }}>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search questions…"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                fontSize: '1rem',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
 
           <QuestionsTable
             company={companyName}
