@@ -1,3 +1,6 @@
+# ./.venv/Scripts/Activate                             
+# python app.py
+
 import os
 from flask import Flask, jsonify, request, abort
 from dotenv import load_dotenv
