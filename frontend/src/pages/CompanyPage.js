@@ -1,9 +1,10 @@
 // frontend/src/pages/CompanyPage.js
 
 import React, { useEffect, useState } from 'react';
-import { useParams }                  from 'react-router-dom';
-import BucketsTabs                    from '../components/BucketsTabs';
-import QuestionsTable                 from '../components/QuestionsTable';
+import { useParams } from 'react-router-dom';
+import BucketsTabs from '../components/BucketsTabs';
+import QuestionSearch from '../components/QuestionSearch';
+import QuestionsTable from '../components/QuestionsTable';
 
 const BUCKET_ORDER = [
   "30Days",
@@ -18,6 +19,7 @@ export default function CompanyPage() {
   const [buckets, setBuckets]               = useState([]);
   const [selectedBucket, setSelectedBucket] = useState(null);
   const [showUnsolved, setShowUnsolved]     = useState(false);
+  const [searchTerm, setSearchTerm]         = useState('');
 
   // Load and order the available buckets for this company
   useEffect(() => {
@@ -58,11 +60,20 @@ export default function CompanyPage() {
       />
 
       {selectedBucket && (
-        <QuestionsTable
-          company={companyName}
-          bucket={selectedBucket}
-          showUnsolved={showUnsolved}
-        />
+        <>
+          <QuestionSearch
+            company={companyName}
+            bucket={selectedBucket}
+            onSearch={setSearchTerm}
+          />
+
+          <QuestionsTable
+            company={companyName}
+            bucket={selectedBucket}
+            showUnsolved={showUnsolved}
+            searchTerm={searchTerm}
+          />
+        </>
       )}
 
       {!selectedBucket && buckets.length === 0 && (
