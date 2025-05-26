@@ -17,7 +17,7 @@ export default function Sidebar() {
     location.pathname.split('/company/')[1] || ''
   );
 
-  // 1) load full list once
+  // Load full company list
   useEffect(() => {
     axios
       .get('/api/companies')
@@ -25,7 +25,7 @@ export default function Sidebar() {
       .catch(console.error);
   }, []);
 
-  // 2) debounced prefix‐search
+  // Debounced substring search
   const fetchSuggestions = debounce(q => {
     if (!q) return setSug([]);
     axios
@@ -39,11 +39,13 @@ export default function Sidebar() {
     fetchSuggestions(newValue);
   };
 
-  const onSuggestionsFetchRequested = ({ value }) =>
+  const onSuggestionsFetchRequested = ({ value }) => {
     fetchSuggestions(value);
+  };
 
-  const onSuggestionsClearRequested = () =>
+  const onSuggestionsClearRequested = () => {
     setSug([]);
+  };
 
   const onSuggestionSelected = (_, { suggestion }) => {
     setValue('');
@@ -51,9 +53,21 @@ export default function Sidebar() {
     navigate(`/company/${encodeURIComponent(suggestion)}`);
   };
 
-  const renderSuggestion = sug => (
-    <div style={{ padding: '0.5rem' }}>{sug}</div>
-  );
+  // 🔥 Highlight any matching substring
+  const renderSuggestion = (sug, { query }) => {
+    const idx = sug.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return <div style={{ padding: '0.5rem' }}>{sug}</div>;
+
+    const before = sug.slice(0, idx);
+    const match  = sug.slice(idx, idx + query.length);
+    const after  = sug.slice(idx + query.length);
+
+    return (
+      <div style={{ padding: '0.5rem' }}>
+        {before}<strong>{match}</strong>{after}
+      </div>
+    );
+  };
 
   const inputProps = {
     placeholder: 'Search companies…',
@@ -79,7 +93,6 @@ export default function Sidebar() {
     }}>
       <h2 style={{ marginTop: 0 }}>Companies</h2>
 
-      {/* autocomplete input */}
       <Autosuggest
         suggestions={suggestions}
         onSuggestionsFetchRequested={onSuggestionsFetchRequested}
@@ -90,8 +103,8 @@ export default function Sidebar() {
         inputProps={inputProps}
       />
 
-      {/* show full list whenever input is empty OR not focused */}
-      {( !value || !focused ) && (
+      {/* fallback full list */}
+      {(!value || !focused) && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {allCompanies.map(company => {
             const isActive = company === activeCompany;

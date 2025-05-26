@@ -28,7 +28,7 @@ export default function QuestionSearch({ company, bucket, onSearch }) {
 
   const onChange = (_, { newValue }) => {
     setValue(newValue);
-    onSearch(newValue);    // push up for full-table filtering
+    onSearch(newValue); // push up for full-table filtering
   };
 
   const onSuggestionsFetchRequested = ({ value }) => {
@@ -45,9 +45,21 @@ export default function QuestionSearch({ company, bucket, onSearch }) {
     setSuggestions([]);
   };
 
-  const renderSuggestion = sug => (
-    <div className="p-2 hover:bg-gray-100">{sug}</div>
-  );
+  // 🔍 Highlight any matching substring in question title
+  const renderSuggestion = (sug, { query }) => {
+    const idx = sug.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return <div className="p-2">{sug}</div>;
+
+    const before = sug.slice(0, idx);
+    const match = sug.slice(idx, idx + query.length);
+    const after = sug.slice(idx + query.length);
+
+    return (
+      <div className="p-2 hover:bg-gray-100">
+        {before}<strong>{match}</strong>{after}
+      </div>
+    );
+  };
 
   const inputProps = {
     placeholder: 'Search questions…',
