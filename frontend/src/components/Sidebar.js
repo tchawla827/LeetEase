@@ -1,73 +1,73 @@
 // frontend/src/components/Sidebar.js
 
-import React, { useState, useEffect } from 'react';
-import Autosuggest from 'react-autosuggest';
-import debounce from 'lodash.debounce';
-import axios from 'axios';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import LogoutButton from './LogoutButton';
+import React, { useState, useEffect } from 'react'
+import Autosuggest from 'react-autosuggest'
+import debounce from 'lodash.debounce'
+import axios from 'axios'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import LogoutButton from './LogoutButton'
+import { useAuth } from '../context/AuthContext'
 
 export default function Sidebar() {
-  const [value, setValue]      = useState('');
-  const [suggestions, setSug]  = useState([]);
-  const [allCompanies, setAll] = useState([]);
-  const [focused, setFocused]  = useState(false);
-  const location               = useLocation();
-  const navigate               = useNavigate();
+  const { user } = useAuth()
+  const [value, setValue]      = useState('')
+  const [suggestions, setSug]  = useState([])
+  const [allCompanies, setAll] = useState([])
+  const [focused, setFocused]  = useState(false)
+  const location               = useLocation()
+  const navigate               = useNavigate()
   const activeCompany          = decodeURIComponent(
     location.pathname.split('/company/')[1] || ''
-  );
+  )
 
   // Load full company list
   useEffect(() => {
     axios
       .get('/api/companies')
       .then(res => setAll(res.data))
-      .catch(console.error);
-  }, []);
+      .catch(console.error)
+  }, [])
 
   // Debounced substring search
   const fetchSuggestions = debounce(q => {
-    if (!q) return setSug([]);
+    if (!q) return setSug([])
     axios
       .get('/api/companies', { params: { search: q } })
       .then(res => setSug(res.data))
-      .catch(console.error);
-  }, 300);
+      .catch(console.error)
+  }, 300)
 
   const onChange = (_, { newValue }) => {
-    setValue(newValue);
-    fetchSuggestions(newValue);
-  };
+    setValue(newValue)
+    fetchSuggestions(newValue)
+  }
 
   const onSuggestionsFetchRequested = ({ value }) => {
-    fetchSuggestions(value);
-  };
+    fetchSuggestions(value)
+  }
 
   const onSuggestionsClearRequested = () => {
-    setSug([]);
-  };
+    setSug([])
+  }
 
   const onSuggestionSelected = (_, { suggestion }) => {
-    setValue('');
-    setSug([]);
-    navigate(`/company/${encodeURIComponent(suggestion)}`);
-  };
+    setValue('')
+    setSug([])
+    navigate(`/company/${encodeURIComponent(suggestion)}`)
+  }
 
   const renderSuggestion = (sug, { query }) => {
-    const idx = sug.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1) return <div style={{ padding: '0.5rem' }}>{sug}</div>;
-
-    const before = sug.slice(0, idx);
-    const match  = sug.slice(idx, idx + query.length);
-    const after  = sug.slice(idx + query.length);
-
+    const idx = sug.toLowerCase().indexOf(query.toLowerCase())
+    if (idx === -1) return <div style={{ padding: '0.5rem' }}>{sug}</div>
+    const before = sug.slice(0, idx)
+    const match  = sug.slice(idx, idx + query.length)
+    const after  = sug.slice(idx + query.length)
     return (
       <div style={{ padding: '0.5rem' }}>
         {before}<strong>{match}</strong>{after}
       </div>
-    );
-  };
+    )
+  }
 
   const inputProps = {
     placeholder: 'Search companies…',
@@ -75,11 +75,11 @@ export default function Sidebar() {
     onChange,
     onFocus: () => setFocused(true),
     onBlur: () => {
-      setFocused(false);
-      setSug([]);
+      setFocused(false)
+      setSug([])
     },
     className: 'w-full p-2 border rounded mb-4'
-  };
+  }
 
   return (
     <aside style={{
@@ -91,26 +91,47 @@ export default function Sidebar() {
       overflowY: 'auto',
       background: '#fafafa'
     }}>
-      {/* Navigation Links */}
+      {/* ——— Authentication Links ——— */}
       <nav style={{ marginBottom: '1rem' }}>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          <li style={{ margin: '0.5rem 0' }}>
-            <Link to="/login" style={{ textDecoration: 'none', color: '#333' }}>Login</Link>
-          </li>
-          <li style={{ margin: '0.5rem 0' }}>
-            <Link to="/register" style={{ textDecoration: 'none', color: '#333' }}>Register</Link>
-          </li>
-          <li style={{ margin: '0.5rem 0' }}>
-            <Link to="/import" style={{ textDecoration: 'none', color: '#333' }}>Import Questions</Link>
-          </li>
-          <li style={{ margin: '0.5rem 0' }}>
-            <LogoutButton />
-          </li>
+          {user ? (
+            <>
+              <li style={{ margin: '0.5rem 0' }}>
+                <strong>{user.firstName} {user.lastName}</strong>
+              </li>
+              {user.college && (
+                <li style={{ margin: '0.5rem 0', fontStyle: 'italic' }}>
+                  {user.college}
+                </li>
+              )}
+              <li style={{ margin: '0.5rem 0' }}>
+                <Link to="/import" style={{ textDecoration: 'none', color: '#333' }}>
+                  Import Questions
+                </Link>
+              </li>
+              <li style={{ margin: '0.5rem 0' }}>
+                <LogoutButton />
+              </li>
+            </>
+          ) : (
+            <>
+              <li style={{ margin: '0.5rem 0' }}>
+                <Link to="/login" style={{ textDecoration: 'none', color: '#333' }}>
+                  Login
+                </Link>
+              </li>
+              <li style={{ margin: '0.5rem 0' }}>
+                <Link to="/register" style={{ textDecoration: 'none', color: '#333' }}>
+                  Register
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
 
+      {/* ——— Company List & Search ——— */}
       <h2 style={{ marginTop: 0 }}>Companies</h2>
-
       <Autosuggest
         suggestions={suggestions}
         onSuggestionsFetchRequested={onSuggestionsFetchRequested}
@@ -120,12 +141,10 @@ export default function Sidebar() {
         onSuggestionSelected={onSuggestionSelected}
         inputProps={inputProps}
       />
-
-      {/* fallback full list */}
       {(!value || !focused) && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {allCompanies.map(company => {
-            const isActive = company === activeCompany;
+            const isActive = company === activeCompany
             return (
               <li key={company} style={{ margin: '0.5rem 0' }}>
                 <Link
@@ -139,10 +158,10 @@ export default function Sidebar() {
                   • {company}
                 </Link>
               </li>
-            );
+            )
           })}
         </ul>
       )}
     </aside>
-  );
+  )
 }

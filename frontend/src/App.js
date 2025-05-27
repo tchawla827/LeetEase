@@ -1,66 +1,70 @@
 // frontend/src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import Sidebar from './components/Sidebar';
-import PrivateRoute from './components/PrivateRoute';
+import React from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AdminImport from './pages/AdminImport';
-import CompanyPage from './pages/CompanyPage';
+import Sidebar from './components/Sidebar'
+import PrivateRoute from './components/PrivateRoute'
+
+import Login from './pages/Login'
+import Register from './pages/Register'
+import AdminImport from './pages/AdminImport'
+import CompanyPage from './pages/CompanyPage'
 
 function App() {
   return (
     <Router>
-      <div style={{ display: 'flex', height: '100vh' }}>
-        {/* Left pane: Sidebar includes navigation and Logout */}
-        <Sidebar />
+      <AuthProvider>
+        <div style={{ display: 'flex', height: '100vh' }}>
+          {/* Left pane: Sidebar includes navigation and Logout */}
+          <Sidebar />
 
-        {/* Right pane: routed views */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Routes>
-            {/* Public */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+          {/* Right pane: routed views */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <Routes>
+              {/* Public */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-            {/* Admin-only CSV import */}
-            <Route
-              path="/import"
-              element={
-                <PrivateRoute>
-                  <AdminImport />
-                </PrivateRoute>
-              }
-            />
+              {/* Admin-only CSV import */}
+              <Route
+                path="/import"
+                element={
+                  <PrivateRoute>
+                    <AdminImport />
+                  </PrivateRoute>
+                }
+              />
 
-            {/* Company-specific questions (authenticated) */}
-            <Route
-              path="/company/:companyName"
-              element={
-                <PrivateRoute>
-                  <CompanyPage />
-                </PrivateRoute>
-              }
-            />
+              {/* Company-specific questions (authenticated) */}
+              <Route
+                path="/company/:companyName"
+                element={
+                  <PrivateRoute>
+                    <CompanyPage />
+                  </PrivateRoute>
+                }
+              />
 
-            {/* Authenticated fallback landing */}
-            <Route
-              path="*"
-              element={
-                <PrivateRoute>
-                  <div style={{ padding: '1rem' }}>
-                    <h2>Welcome to LeetEase</h2>
-                    <p>Select a company from the sidebar to get started.</p>
-                  </div>
-                </PrivateRoute>
-              }
-            />
-          </Routes>
+              {/* Authenticated fallback landing */}
+              <Route
+                path="*"
+                element={
+                  <PrivateRoute>
+                    <div style={{ padding: '1rem' }}>
+                      <h2>Welcome to LeetEase</h2>
+                      <p>Select a company from the sidebar to get started.</p>
+                    </div>
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+          </div>
         </div>
-      </div>
+      </AuthProvider>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App
