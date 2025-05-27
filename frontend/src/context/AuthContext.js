@@ -1,22 +1,42 @@
 // src/context/AuthContext.js
+
 import { createContext, useContext, useState, useEffect } from 'react';
+import api from '../api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  // on mount, try to load user from localStorage or a /me endpoint
+  // On mount: restore from localStorage, then refresh from server
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    if (stored) setUser(JSON.parse(stored));
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+
+    api.get('/auth/me')
+      .then(res => {
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+      })
+      .catch(() => {
+        setUser(null);
+        localStorage.removeItem('user');
+      });
   }, []);
 
-  const login = (userObj) => {
-    setUser(userObj);
-    localStorage.setItem('user', JSON.stringify(userObj));
+  // email/password login → fetch profile → set user
+  const login = async (email, password) => {
+    await api.post('/auth/login', { email, password });
+    const res = await api.get('/auth/me');
+    setUser(res.data);
+    localStorage.setItem('user', JSON.stringify(res.data));
   };
-  const logout = () => {
+
+  // logout on server + clear client state
+  const logout = async () => {
+    await api.post('/auth/logout');
     setUser(null);
     localStorage.removeItem('user');
   };

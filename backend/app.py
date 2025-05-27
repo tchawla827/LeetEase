@@ -33,12 +33,12 @@ bcrypt.init_app(app)
 mail.init_app(app)
 
 # Collections (normalized)
-db = get_db()
-QUEST       = db.questions            # canonical questions
-COMPANIES   = db.companies            # company list
-CQ          = db.company_questions    # join: company × bucket × question
-USER_META   = db.user_meta            # per-user metadata
-USERS       = db.users                # auth users
+db          = get_db()
+QUEST       = db.questions
+COMPANIES   = db.companies
+CQ          = db.company_questions
+USER_META   = db.user_meta
+USERS       = db.users
 
 # Helpers
 def to_json(doc):
@@ -57,16 +57,27 @@ def generate_otp():
 @app.route('/auth/register', methods=['POST'])
 def register():
     data = request.get_json() or {}
-    email = data.get('email')
-    password = data.get('password')
-    if not (email and password):
-        abort(400, description='Email and password are required')
+    email     = data.get('email')
+    password  = data.get('password')
+    firstName = data.get('firstName')
+    lastName  = data.get('lastName')
+    college   = data.get('college')   # optional
+
+    # require email, password, first and last name
+    if not (email and password and firstName and lastName):
+        abort(400, description='Email, password, first name and last name are required')
 
     if USERS.find_one({'email': email}):
         abort(400, description='Email already registered')
 
     otp = generate_otp()
-    session['reg_data'] = {'email': email, 'password': password}
+    session['reg_data'] = {
+        'email':     email,
+        'password':  password,
+        'firstName': firstName,
+        'lastName':  lastName,
+        'college':   college
+    }
     session['otp'] = otp
 
     msg = Message('Your Registration OTP', recipients=[email])
@@ -75,20 +86,31 @@ def register():
 
     return jsonify({'msg': 'OTP sent via email'}), 200
 
+
 @app.route('/auth/verify', methods=['POST'])
 def verify():
     data = request.get_json() or {}
     if session.get('otp') != data.get('otp'):
         abort(400, description='Invalid OTP')
+
     reg = session.pop('reg_data', None)
     session.pop('otp', None)
     if not reg:
         abort(400, description='No registration data found')
 
     pw_hash = bcrypt.generate_password_hash(reg['password']).decode('utf-8')
-    user_doc = {'email': reg['email'], 'password': pw_hash, 'role': 'user'}
+    user_doc = {
+        'email':     reg['email'],
+        'password':  pw_hash,
+        'role':      'user',
+        'firstName': reg.get('firstName'),
+        'lastName':  reg.get('lastName'),
+        'college':   reg.get('college')
+    }
     USERS.insert_one(user_doc)
+
     return jsonify({'msg': 'Registration complete'}), 201
+
 
 @app.route('/auth/login', methods=['POST'])
 def login():
@@ -105,6 +127,7 @@ def login():
     set_access_cookies(resp, token)
     return resp, 200
 
+
 @app.route('/auth/logout', methods=['POST'])
 @jwt_required()
 def logout():
@@ -112,6 +135,22 @@ def logout():
     unset_jwt_cookies(resp)
     session.clear()
     return resp, 200
+
+
+# New endpoint: get current user profile
+@app.route('/auth/me', methods=['GET'])
+@jwt_required()
+def me():
+    uid = get_jwt_identity()
+    user = USERS.find_one(
+        {'_id': ObjectId(uid)},
+        {'password': 0}               # never send password hash
+    )
+    if not user:
+        abort(404, description='User not found')
+    user['id'] = str(user.pop('_id'))
+    return jsonify(user), 200
+
 
 @app.route('/auth/forgot-password', methods=['POST'])
 def forgot_password():
@@ -128,6 +167,7 @@ def forgot_password():
     msg.body = f"Your reset token: {reset_token}\nExpires in 15 minutes."
     mail.send(msg)
     return jsonify({'msg': 'Password reset token sent via email'}), 200
+
 
 @app.route('/auth/reset-password', methods=['POST'])
 def reset_password():
@@ -221,12 +261,12 @@ def import_questions():
 # ----------------------------
 # Public listings (with per-user metadata)
 # ----------------------------
-
 @app.route('/api/companies', methods=['GET'])
 @jwt_required()
 def list_companies():
     names = COMPANIES.distinct('name')
     return jsonify(names), 200
+
 
 @app.route('/api/companies/<company>/buckets', methods=['GET'])
 @jwt_required()
@@ -236,6 +276,7 @@ def list_buckets(company):
         abort(404, description=f"No company '{company}'")
     buckets = CQ.distinct('bucket', {'company_id': co['_id']})
     return jsonify(buckets), 200
+
 
 @app.route('/api/companies/<company>/buckets/<bucket>/questions', methods=['GET'])
 @jwt_required()
@@ -250,7 +291,7 @@ def list_questions(company, bucket):
     # match stage
     match = {'company_id': co['_id'], 'bucket': bucket}
     search = request.args.get('search')
-    # aggregate pipeline
+
     pipeline = [
         {'$match': match},
         {'$lookup': {
@@ -277,12 +318,12 @@ def list_questions(company, bucket):
         dir = 1 if so == 'asc' else -1
         pipeline.append({'$sort': {field_map[sf]: dir}})
 
-    # count total (without skip/limit)
+    # count total
     count_pipe = pipeline + [{'$count': 'count'}]
     cnt_res = list(CQ.aggregate(count_pipe))
     total = cnt_res[0]['count'] if cnt_res else 0
 
-    # apply pagination
+    # pagination
     pipeline += [{'$skip': skip}, {'$limit': limit}]
 
     docs = list(CQ.aggregate(pipeline))
@@ -307,41 +348,37 @@ def list_questions(company, bucket):
 
     return jsonify({'data': out, 'total': total}), 200
 
+
 @app.route('/api/questions/<qid>', methods=['PATCH'])
 @jwt_required()
 def update_question(qid):
     uid = get_jwt_identity()
     data = request.get_json() or {}
 
-    # Only allow these fields
     allowed = {'solved', 'userDifficulty'}
     updates = {k: data[k] for k in allowed if k in data}
     if not updates:
         abort(400, description='No valid fields to update')
 
-    # Upsert the per-user metadata
     USER_META.update_one(
         {'user_id': uid, 'question_id': qid},
         {'$set': updates},
         upsert=True
     )
 
-    # Fetch the fresh doc
     raw = USER_META.find_one({'user_id': uid, 'question_id': qid})
     if not raw:
         abort(404, description='Metadata not found')
 
-    # Build a JSON-safe dict
     meta = {
-        'id':              str(raw.pop('_id')),
-        'user_id':         raw.get('user_id'),
-        'question_id':     raw.get('question_id'),
-        'solved':          raw.get('solved', False),
-        'userDifficulty':  raw.get('userDifficulty')
+        'id':             str(raw.pop('_id')),
+        'user_id':        raw.get('user_id'),
+        'question_id':    raw.get('question_id'),
+        'solved':         raw.get('solved', False),
+        'userDifficulty': raw.get('userDifficulty')
     }
 
     return jsonify(meta), 200
-
 
 
 if __name__ == '__main__':
