@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import api from '../api'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
@@ -16,11 +15,9 @@ export default function Login() {
     e.preventDefault()
     setError('')
     try {
-      // attempt login — assume response includes the user object
-      const res = await api.post('/auth/login', { email, password })
-      const user = res.data
-      login(user)
-      navigate('/') // redirect to home/dashboard
+      // delegate the POST and profile-fetch to AuthContext.login
+      await login(email, password)
+      navigate('/') // redirect to home/dashboard on success
     } catch (err) {
       console.error(err)
       setError(err.response?.data?.description || 'Login failed')
