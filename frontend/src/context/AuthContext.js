@@ -6,39 +6,36 @@ import api from '../api'
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  const [user, setUser]         = useState(null)
-  const [syncing, setSyncing]   = useState(false)
+  const [user, setUser]           = useState(null)
+  const [syncing, setSyncing]     = useState(false)
   const [syncResult, setSyncResult] = useState(null)
 
   // background‐sync helper (returns count)
   const syncBackground = async () => {
-    console.log('[sync] starting')
-    setSyncResult(null)     // clear previous
+    setSyncResult(null)
     setSyncing(true)
     try {
-      const res = await api.post('/profile/leetcode/sync')
+      const res   = await api.post('/profile/leetcode/sync')
       const count = res.data.synced
-      setSyncResult(count)  // stash the count
+      setSyncResult(count)
       return count
-    } catch (err) {
-      console.error('[sync] error', err)
-      throw err
     } finally {
-      console.log('[sync] finished')
       setSyncing(false)
     }
   }
 
-  // on mount: restore user, refresh profile, then background‐sync
+  // On mount: restore user, fetch profile—but NO auto-sync here
   useEffect(() => {
     const stored = localStorage.getItem('user')
-    if (stored) setUser(JSON.parse(stored))
-
+    if (stored) {
+      setUser(JSON.parse(stored))
+    }
     api.get('/auth/me')
       .then(res => {
         setUser(res.data)
         localStorage.setItem('user', JSON.stringify(res.data))
-        if (res.data.leetcode_username) {
+        // only sync on first-ever boot if no stored user:
+        if (!stored && res.data.leetcode_username) {
           syncBackground().catch(() => {})
         }
       })
@@ -71,7 +68,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       syncing,
-      syncResult,        // expose the last count
+      syncResult,
       syncBackground
     }}>
       {children}
