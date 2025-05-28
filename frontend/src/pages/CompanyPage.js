@@ -19,8 +19,15 @@ export default function CompanyPage() {
   const [selectedBucket, setSelectedBucket] = useState(null);
   const [showUnsolved, setShowUnsolved]     = useState(false);
   const [searchTerm, setSearchTerm]         = useState('');
+  const [refreshKey, setRefreshKey]         = useState(0);
 
-  // fetch and order buckets
+  // Listen for global "leetSync" events to auto-refresh
+  useEffect(() => {
+    const onSync = () => setRefreshKey(k => k + 1);
+    window.addEventListener('leetSync', onSync);
+    return () => window.removeEventListener('leetSync', onSync);
+  }, []);
+
   useEffect(() => {
     setSelectedBucket(null);
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
@@ -31,7 +38,10 @@ export default function CompanyPage() {
       .then(raw => {
         const filtered = raw
           .filter(b => BUCKET_ORDER.includes(b))
-          .sort((a, b) => BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b));
+          .sort(
+            (a, b) =>
+              BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b)
+          );
         setBuckets(filtered);
       })
       .catch(console.error);
@@ -60,20 +70,27 @@ export default function CompanyPage() {
 
       {selectedBucket && (
         <>
-          {/* simple substring‐only search input */}
-          <div style={{ margin: '1rem 0' }}>
+          <div style={{ margin: '1rem 0', display: 'flex', gap: '1rem' }}>
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search questions…"
               style={{
-                width: '100%',
+                flex: 1,
                 padding: '0.5rem',
                 fontSize: '1rem',
                 boxSizing: 'border-box'
               }}
             />
+
+            {/* Refresh button remains optional */}
+            <button
+              onClick={() => setRefreshKey(k => k + 1)}
+              style={{ padding: '0.5rem 1rem' }}
+            >
+              Refresh
+            </button>
           </div>
 
           <QuestionsTable
@@ -81,6 +98,7 @@ export default function CompanyPage() {
             bucket={selectedBucket}
             showUnsolved={showUnsolved}
             searchTerm={searchTerm}
+            refreshKey={refreshKey}
           />
         </>
       )}

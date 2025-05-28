@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import AdminImport from './pages/AdminImport'
 import CompanyPage from './pages/CompanyPage'
+import Profile from './pages/Profile'   // ← New import
 
 function App() {
   return (
@@ -43,6 +44,16 @@ function App() {
                 element={
                   <PrivateRoute>
                     <CompanyPage />
+                  </PrivateRoute>
+                }
+              />
+
+              {/* User profile */}
+              <Route
+                path="/profile"
+                element={
+                  <PrivateRoute>
+                    <Profile />
                   </PrivateRoute>
                 }
               />

@@ -20,7 +20,6 @@ export default function Sidebar() {
     (location.pathname.split('/company/')[1] || '').split('/')[0]
   )
 
-  // Load full company list
   useEffect(() => {
     api
       .get('/api/companies')
@@ -28,7 +27,6 @@ export default function Sidebar() {
       .catch(console.error)
   }, [])
 
-  // Debounced substring search
   const fetchSuggestions = debounce(q => {
     if (!q) return setSug([])
     api
@@ -112,6 +110,12 @@ export default function Sidebar() {
               <LogoutButton />
             </div>
             <hr style={{ margin: '0.5rem 0' }} />
+
++           <div style={{ marginBottom: '0.5rem' }}>
++             <Link to="/profile" style={{ textDecoration: 'none', color: '#333' }}>
++               Profile
++             </Link>
++           </div>
 
             <div>
               <Link to="/import" style={{ textDecoration: 'none', color: '#333' }}>

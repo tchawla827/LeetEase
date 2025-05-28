@@ -5,15 +5,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 
 export default function Register() {
-  const [step, setStep]           = useState('form'); // 'form' or 'otp'
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName]   = useState('');
-  const [college, setCollege]     = useState('');
-  const [email, setEmail]         = useState('');
-  const [password, setPassword]   = useState('');
-  const [otp, setOtp]             = useState('');
-  const [error, setError]         = useState('');
-  const navigate                  = useNavigate();
+  const [step, setStep]                   = useState('form'); // 'form' or 'otp'
+  const [firstName, setFirstName]         = useState('');
+  const [lastName, setLastName]           = useState('');
+  const [college, setCollege]             = useState('');
+  const [leetcodeUsername, setLeetcodeUsername] = useState('');  // ← NEW
+  const [email, setEmail]                 = useState('');
+  const [password, setPassword]           = useState('');
+  const [otp, setOtp]                     = useState('');
+  const [error, setError]                 = useState('');
+  const navigate                          = useNavigate();
 
   const submitForm = async e => {
     e.preventDefault();
@@ -22,7 +23,8 @@ export default function Register() {
       await api.post('/auth/register', {
         firstName,
         lastName,
-        college: college || undefined, // omit if empty
+        college: college || undefined,
+        leetcode_username: leetcodeUsername || undefined,  // ← SENDS username
         email,
         password
       });
@@ -79,6 +81,17 @@ export default function Register() {
                 type="text"
                 value={college}
                 onChange={e => setCollege(e.target.value)}
+              />
+            </label>
+          </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label>
+              LeetCode Username (optional):&nbsp;
+              <input
+                type="text"
+                value={leetcodeUsername}
+                onChange={e => setLeetcodeUsername(e.target.value)}
+                placeholder="e.g. your_handle"
               />
             </label>
           </div>

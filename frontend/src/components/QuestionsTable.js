@@ -1,4 +1,5 @@
 // frontend/src/components/QuestionsTable.js
+
 import React, { useEffect, useState } from 'react';
 import api from '../api';
 
@@ -12,7 +13,6 @@ const SORT_FIELDS = {
   userDifficulty: 'Your Diff',
 };
 
-// Numeric rank so asc⇄desc sorts “Easy → Medium → Hard”
 const difficultyRank = { Easy: 1, Medium: 2, Hard: 3 };
 
 export default function QuestionsTable({
@@ -20,6 +20,7 @@ export default function QuestionsTable({
   bucket,
   showUnsolved,
   searchTerm,
+  refreshKey             // ← new prop
 }) {
   const [questions, setQuestions]   = useState([]);
   const [page, setPage]             = useState(1);
@@ -29,16 +30,12 @@ export default function QuestionsTable({
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
 
-  /* ──────────────────────────────────────────────────────────────── */
-  /*  Reset to page 1 whenever filters / sort / search change        */
-  /* ──────────────────────────────────────────────────────────────── */
+  // reset to page 1 when any filter/sort/search/refresh changes
   useEffect(() => {
     setPage(1);
-  }, [company, bucket, showUnsolved, sortField, sortOrder, searchTerm]);
+  }, [company, bucket, showUnsolved, sortField, sortOrder, searchTerm, refreshKey]);
 
-  /* ──────────────────────────────────────────────────────────────── */
-  /*  Fetch questions                                                */
-  /* ──────────────────────────────────────────────────────────────── */
+  // fetch questions
   useEffect(() => {
     if (!company || !bucket) {
       setQuestions([]);
@@ -90,11 +87,9 @@ export default function QuestionsTable({
     sortField,
     sortOrder,
     searchTerm,
+    refreshKey          // ← include in deps
   ]);
 
-  /* ──────────────────────────────────────────────────────────────── */
-  /*  Helpers                                                        */
-  /* ──────────────────────────────────────────────────────────────── */
   const onSort = field => {
     if (sortField === field) {
       setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
@@ -107,7 +102,6 @@ export default function QuestionsTable({
   const arrow = f =>
     sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '';
 
-  /** Upsert solved / difficulty for *all* duplicates the backend returns */
   const updateField = (questionId, field, value) => {
     api
       .patch(`/api/questions/${questionId}`, { [field]: value })
@@ -116,25 +110,25 @@ export default function QuestionsTable({
         setQuestions(prev =>
           prev.map(q => {
             const hit = updates.find(u => u.question_id === q.id);
-            return hit
-              ? {
-                  ...q,
-                  solved: hit.solved,
-                  userDifficulty: hit.userDifficulty ?? null,
-                }
-              : q;
+            if (!hit) return q;
+            return {
+              ...q,
+              solved: hit.solved,
+              userDifficulty: hit.userDifficulty ?? null,
+            };
           })
         );
       })
       .catch(console.error);
   };
 
-  /* ──────────────────────────────────────────────────────────────── */
-  /*  Render                                                         */
-  /* ──────────────────────────────────────────────────────────────── */
   return (
     <>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }} border="1" cellPadding="8">
+      <table
+        style={{ width: '100%', borderCollapse: 'collapse' }}
+        border="1"
+        cellPadding="8"
+      >
         <thead>
           <tr>
             {Object.entries(SORT_FIELDS).map(([field, label]) => (
@@ -151,15 +145,19 @@ export default function QuestionsTable({
             <th>Solved</th>
           </tr>
         </thead>
-
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="8" style={{ textAlign: 'center' }}>Loading…</td>
+              <td colSpan="8" style={{ textAlign: 'center' }}>
+                Loading…
+              </td>
             </tr>
           ) : questions.length ? (
             questions.map(q => (
-              <tr key={q.id}>
+              <tr
+                key={q.id}
+                style={q.solved ? { backgroundColor: '#e6ffed' } : {}}
+              >
                 <td>{q.title}</td>
                 <td>{q.frequency}</td>
                 <td>{(q.acceptanceRate * 100).toFixed(1)}%</td>
@@ -167,7 +165,9 @@ export default function QuestionsTable({
                 <td>
                   <select
                     value={q.userDifficulty || ''}
-                    onChange={e => updateField(q.id, 'userDifficulty', e.target.value)}
+                    onChange={e =>
+                      updateField(q.id, 'userDifficulty', e.target.value)
+                    }
                   >
                     <option value="">–</option>
                     <option value="Easy">Easy</option>
@@ -176,34 +176,55 @@ export default function QuestionsTable({
                   </select>
                 </td>
                 <td>
-                  <a href={q.link} target="_blank" rel="noopener noreferrer">View</a>
+                  <a
+                    href={q.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View
+                  </a>
                 </td>
                 <td>
                   <input
                     type="checkbox"
                     checked={q.solved}
-                    onChange={e => updateField(q.id, 'solved', e.target.checked)}
+                    onChange={e =>
+                      updateField(q.id, 'solved', e.target.checked)
+                    }
                   />
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="8" style={{ textAlign: 'center' }}>No questions found.</td>
+              <td colSpan="8" style={{ textAlign: 'center' }}>
+                No questions found.
+              </td>
             </tr>
           )}
         </tbody>
       </table>
 
-      {/* Pagination */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
-        <button onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          margin: '1rem 0',
+        }}
+      >
+        <button
+          onClick={() => setPage(p => Math.max(p - 1, 1))}
+          disabled={page === 1}
+        >
           ← Prev
         </button>
         <span style={{ margin: '0 1rem' }}>
           Page {page} of {totalPages}
         </span>
-        <button onClick={() => setPage(p => Math.min(p + 1, totalPages))} disabled={page === totalPages}>
+        <button
+          onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+          disabled={page === totalPages}
+        >
           Next →
         </button>
       </div>
