@@ -1,19 +1,25 @@
+// frontend/src/context/AuthContext.js
+
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../api'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [syncing, setSyncing] = useState(false)
+  const [user, setUser]         = useState(null)
+  const [syncing, setSyncing]   = useState(false)
+  const [syncResult, setSyncResult] = useState(null)
 
   // background‐sync helper (returns count)
   const syncBackground = async () => {
     console.log('[sync] starting')
+    setSyncResult(null)     // clear previous
     setSyncing(true)
     try {
       const res = await api.post('/profile/leetcode/sync')
-      return res.data.synced
+      const count = res.data.synced
+      setSyncResult(count)  // stash the count
+      return count
     } catch (err) {
       console.error('[sync] error', err)
       throw err
@@ -26,15 +32,13 @@ export function AuthProvider({ children }) {
   // on mount: restore user, refresh profile, then background‐sync
   useEffect(() => {
     const stored = localStorage.getItem('user')
-    if (stored) {
-      setUser(JSON.parse(stored))
-    }
+    if (stored) setUser(JSON.parse(stored))
+
     api.get('/auth/me')
       .then(res => {
         setUser(res.data)
         localStorage.setItem('user', JSON.stringify(res.data))
         if (res.data.leetcode_username) {
-          // fire-and-forget:
           syncBackground().catch(() => {})
         }
       })
@@ -62,7 +66,14 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, syncing, syncBackground }}>
+    <AuthContext.Provider value={{
+      user,
+      login,
+      logout,
+      syncing,
+      syncResult,        // expose the last count
+      syncBackground
+    }}>
       {children}
     </AuthContext.Provider>
   )

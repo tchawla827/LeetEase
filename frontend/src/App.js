@@ -4,39 +4,40 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
-import Navbar from './components/Navbar'
-import Sidebar from './components/Sidebar'
+import Navbar       from './components/Navbar'
+import Sidebar      from './components/Sidebar'
 import PrivateRoute from './components/PrivateRoute'
 
-import Login       from './pages/Login'
-import Register    from './pages/Register'
-import AdminImport from './pages/AdminImport'
-import CompanyPage from './pages/CompanyPage'
-import Profile     from './pages/Profile'
+import Login        from './pages/Login'
+import Register     from './pages/Register'
+import AdminImport  from './pages/AdminImport'
+import CompanyPage  from './pages/CompanyPage'
+import Profile      from './pages/Profile'
 
 function AppContent() {
-  const { syncing } = useAuth()
+  const { syncing, syncResult } = useAuth()
+  const showToast = syncing || syncResult != null
 
   return (
     <>
-      {syncing && <SyncToast />}
+      {showToast && <SyncToast />}
 
       <Navbar />
 
       <div
         style={{
-          display: 'flex',
-          height: 'calc(100vh - 60px)',   // subtract navbar height
-          paddingTop: '60px'               // push content below fixed navbar
+          display:    'flex',
+          height:     'calc(100vh - 60px)', // subtract navbar height
+          paddingTop: '60px'                // push content below fixed navbar
         }}
       >
         <Sidebar />
 
         <main
           style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '1rem'
+            flex:       1,
+            overflowY:  'auto',
+            padding:    '1rem'
           }}
         >
           <Routes>
@@ -86,9 +87,16 @@ function AppContent() {
 }
 
 function SyncToast() {
+  const { syncing, syncResult } = useAuth()
+  const text = syncing
+    ? 'Syncing solved questions…'
+    : `Synced ${syncResult} questions`
+
   return (
     <>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
       <div
         style={{
           position:     'fixed',
@@ -104,18 +112,20 @@ function SyncToast() {
           zIndex:       9999
         }}
       >
-        <div
-          style={{
-            marginRight: '0.5rem',
-            border:      '2px solid #ddd',
-            borderTop:   '2px solid #333',
-            borderRadius:'50%',
-            width:       '1rem',
-            height:      '1rem',
-            animation:   'spin 1s linear infinite'
-          }}
-        />
-        <span>Syncing solved questions…</span>
+        {syncing && (
+          <div
+            style={{
+              marginRight: '0.5rem',
+              border:      '2px solid #ddd',
+              borderTop:   '2px solid #333',
+              borderRadius:'50%',
+              width:       '1rem',
+              height:      '1rem',
+              animation:   'spin 1s linear infinite'
+            }}
+          />
+        )}
+        <span>{text}</span>
       </div>
     </>
   )
