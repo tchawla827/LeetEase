@@ -1,7 +1,9 @@
 # backend/app.py  – LeetEase ©2025
+
 import os
 import random
 import csv
+import threading
 from datetime import timedelta
 
 import requests
@@ -171,14 +173,17 @@ def login():
     resp  = jsonify({'msg': 'Login successful'})
     set_access_cookies(resp, token)
 
-    # ← Immediately sync this user if they have a LeetCode profile
+    # fire background sync
+    def _bg_sync(u, s, uid):
+        try:
+            sync_leetcode(u, s, uid)
+        except Exception as e:
+            app.logger.warning("Background sync failed for %s: %s", uid, e)
+
     uname = user.get('leetcode_username')
     sc    = user.get('leetcode_session')
     if uname and sc:
-        try:
-            sync_leetcode(uname, sc, str(user['_id']))
-        except Exception as e:
-            app.logger.warning("Auto-sync on login failed: %s", e)
+        threading.Thread(target=_bg_sync, args=(uname, sc, str(user['_id'])), daemon=True).start()
 
     return resp, 200
 
@@ -420,7 +425,7 @@ def update_question(qid):
     if not raw:
         abort(404, description='Metadata not found')
     return jsonify({
-        'id':             str(raw.pop('_1')),
+        'id':             str(raw.pop('_id')),
         'user_id':        raw.get('user_id'),
         'question_id':    raw.get('question_id'),
         'solved':         raw.get('solved', False),
