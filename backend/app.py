@@ -49,7 +49,7 @@ def generate_otp() -> str:
     return f"{random.randint(100_000, 999_999)}"
 
 # ─── LeetCode sync via /api/problems/algorithms ────────────────────────────
-PROB_API       = "https://leetcode.com/api/problems/algorithms/"
+PROB_API        = "https://leetcode.com/api/problems/algorithms/"
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept":     "application/json, text/html",
@@ -71,12 +71,11 @@ def _fetch_solved_slugs_via_list(session_cookie: str) -> set[str]:
         abort(502, description="Failed to fetch LeetCode problem list: " + str(e))
 
     data = resp.json().get("stat_status_pairs", [])
-    slugs = {
+    return {
         p["stat"]["question__title_slug"]
         for p in data
         if p.get("status") == "ac"
     }
-    return slugs
 
 def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
     """
@@ -167,9 +166,20 @@ def login():
     if not user or not bcrypt.check_password_hash(user['password'], data['password']):
         abort(401, description='Bad email or password')
 
+    # issue token
     token = create_access_token(identity=str(user['_id']))
-    resp = jsonify({'msg': 'Login successful'})
+    resp  = jsonify({'msg': 'Login successful'})
     set_access_cookies(resp, token)
+
+    # ← Immediately sync this user if they have a LeetCode profile
+    uname = user.get('leetcode_username')
+    sc    = user.get('leetcode_session')
+    if uname and sc:
+        try:
+            sync_leetcode(uname, sc, str(user['_id']))
+        except Exception as e:
+            app.logger.warning("Auto-sync on login failed: %s", e)
+
     return resp, 200
 
 @app.route('/auth/logout', methods=['POST'])
@@ -252,7 +262,7 @@ def manual_leetcode_sync():
     synced = sync_leetcode(
         user['leetcode_username'],
         user['leetcode_session'],
-        uid
+        str(uid)
     )
     return jsonify({'synced': synced}), 200
 
@@ -292,7 +302,6 @@ def import_questions():
             return_document=True
         )
         qid = q_res['_id']
-
         co_res = COMPANIES.find_one_and_update(
             {'name': row['company']},
             {'$setOnInsert': {'name': row['company']}},
@@ -300,7 +309,6 @@ def import_questions():
             return_document=True
         )
         cid = co_res['_id']
-
         CQ.replace_one(
             {'company_id': cid, 'question_id': qid, 'bucket': row['bucket']},
             {
@@ -360,14 +368,14 @@ def list_questions(company, bucket):
 
     sf = request.args.get('sortField')
     so = request.args.get('sortOrder', 'asc')
-    field_map = {
+    fmap = {
         'title':          'q.title',
         'frequency':      'frequency',
-        'acceptanceRate': 'acceptanceRate',
-        'leetDifficulty': 'q.leetDifficulty'
+        'acceptanceRate':'acceptanceRate',
+        'leetDifficulty':'q.leetDifficulty'
     }
-    if sf in field_map:
-        pipeline.append({'$sort': {field_map[sf]: 1 if so == 'asc' else -1}})
+    if sf in fmap:
+        pipeline.append({'$sort': {fmap[sf]: 1 if so == 'asc' else -1}})
 
     cnt = list(CQ.aggregate(pipeline + [{'$count': 'c'}]))
     total = cnt[0]['c'] if cnt else 0
@@ -399,30 +407,38 @@ def list_questions(company, bucket):
 def update_question(qid):
     uid  = get_jwt_identity()
     data = request.get_json() or {}
-
-    allowed = {'solved', 'userDifficulty'}
+    allowed = {'solved','userDifficulty'}
     updates = {k: data[k] for k in allowed if k in data}
     if not updates:
         abort(400, description='No valid fields to update')
-
     USER_META.update_one(
         {'user_id': uid, 'question_id': qid},
         {'$set': updates},
         upsert=True
     )
-
     raw = USER_META.find_one({'user_id': uid, 'question_id': qid})
     if not raw:
         abort(404, description='Metadata not found')
-
     return jsonify({
-        'id':             str(raw.pop('_id')),
+        'id':             str(raw.pop('_1')),
         'user_id':        raw.get('user_id'),
         'question_id':    raw.get('question_id'),
         'solved':         raw.get('solved', False),
         'userDifficulty': raw.get('userDifficulty')
     }), 200
 
-# ─── Run ──────────────────────────────────────────────────────────────────
+# ─── Run & Startup Sync ────────────────────────────────────────────────────
+def _startup_sync():
+    """Sync every user who has both handle & session saved."""
+    for u in USERS.find({
+        'leetcode_username': {'$exists': True},
+        'leetcode_session':  {'$exists': True}
+    }):
+        try:
+            sync_leetcode(u['leetcode_username'], u['leetcode_session'], str(u['_id']))
+        except Exception as e:
+            app.logger.warning("Startup sync failed for %s: %s", u['_id'], e)
+
 if __name__ == '__main__':
+    _startup_sync()
     app.run(debug=True)
