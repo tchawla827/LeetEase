@@ -1,5 +1,3 @@
-// frontend/src/context/AuthContext.js
-
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../api'
 
@@ -9,21 +7,23 @@ export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null)
   const [syncing, setSyncing] = useState(false)
 
-  // helper to fire off background sync
-  const syncBackground = () => {
-  console.log('[sync] starting')       //  ← add
-  setSyncing(true)
-
-  api.post('/profile/leetcode/sync')
-    .catch(() => {})
-    .finally(() => {
-      console.log('[sync] finished')   //  ← add
+  // background‐sync helper (returns count)
+  const syncBackground = async () => {
+    console.log('[sync] starting')
+    setSyncing(true)
+    try {
+      const res = await api.post('/profile/leetcode/sync')
+      return res.data.synced
+    } catch (err) {
+      console.error('[sync] error', err)
+      throw err
+    } finally {
+      console.log('[sync] finished')
       setSyncing(false)
-    })
-}
+    }
+  }
 
-
-  // on mount, restore user & then refresh + kick off a sync if logged in
+  // on mount: restore user, refresh profile, then background‐sync
   useEffect(() => {
     const stored = localStorage.getItem('user')
     if (stored) {
@@ -33,8 +33,10 @@ export function AuthProvider({ children }) {
       .then(res => {
         setUser(res.data)
         localStorage.setItem('user', JSON.stringify(res.data))
-        // if they have a leetcode handle, sync in bg
-        if (res.data.leetcode_username) syncBackground()
+        if (res.data.leetcode_username) {
+          // fire-and-forget:
+          syncBackground().catch(() => {})
+        }
       })
       .catch(() => {
         setUser(null)
@@ -42,13 +44,15 @@ export function AuthProvider({ children }) {
       })
   }, [])
 
-  // login + then fire off sync in BG
+  // login + then background‐sync
   const login = async (email, password) => {
     await api.post('/auth/login', { email, password })
     const res = await api.get('/auth/me')
     setUser(res.data)
     localStorage.setItem('user', JSON.stringify(res.data))
-    if (res.data.leetcode_username) syncBackground()
+    if (res.data.leetcode_username) {
+      syncBackground().catch(() => {})
+    }
   }
 
   const logout = async () => {
@@ -58,7 +62,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, syncing }}>
+    <AuthContext.Provider value={{ user, login, logout, syncing, syncBackground }}>
       {children}
     </AuthContext.Provider>
   )

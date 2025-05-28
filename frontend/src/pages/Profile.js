@@ -1,84 +1,78 @@
-// frontend/src/pages/Profile.jsx
-
-import React, { useState, useEffect } from 'react';
-import api from '../api';
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import api from '../api'
 
 export default function Profile() {
-  const [loading, setLoading] = useState(true);
+  const { syncBackground } = useAuth()
 
-  // basic profile
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName]   = useState('');
-  const [email, setEmail]         = useState('');
-  const [college, setCollege]     = useState('');
+  const [loading, setLoading]             = useState(true)
+  const [firstName, setFirstName]         = useState('')
+  const [lastName, setLastName]           = useState('')
+  const [email, setEmail]                 = useState('')
+  const [college, setCollege]             = useState('')
+  const [leetcodeUsername, setLeetcodeUsername] = useState('')
+  const [leetcodeSession, setLeetcodeSession]   = useState('')
+  const [message, setMessage]             = useState('')
+  const [error, setError]                 = useState('')
 
-  // leetcode fields
-  const [leetcodeUsername, setLeetcodeUsername] = useState('');
-  const [leetcodeSession, setLeetcodeSession]   = useState('');
-
-  const [message, setMessage] = useState('');
-  const [error, setError]     = useState('');
-
-  // fetch profile including saved leetcode fields
+  // load profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get('/auth/me');
-        const data = res.data;
-        setFirstName(data.firstName || '');
-        setLastName(data.lastName || '');
-        setEmail(data.email || '');
-        setCollege(data.college || '');
-        setLeetcodeUsername(data.leetcode_username || '');
-        setLeetcodeSession(data.leetcode_session || '');
+        const res = await api.get('/auth/me')
+        const data = res.data
+        setFirstName(data.firstName || '')
+        setLastName(data.lastName || '')
+        setEmail(data.email || '')
+        setCollege(data.college || '')
+        setLeetcodeUsername(data.leetcode_username || '')
+        setLeetcodeSession(data.leetcode_session || '')
       } catch (err) {
-        console.error(err);
-        setError(err.response?.data?.description || 'Failed to load profile');
+        console.error(err)
+        setError(err.response?.data?.description || 'Failed to load profile')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    fetchProfile();
-  }, []);
+    }
+    fetchProfile()
+  }, [])
 
-  // save both username + sessionCookie
+  // save handle + sessionCookie
   const saveHandle = async () => {
-    setMessage('');
-    setError('');
+    setMessage('')
+    setError('')
     if (!leetcodeUsername.trim() || !leetcodeSession.trim()) {
-      setError('Both username and session cookie are required');
-      return;
+      setError('Both username and session cookie are required')
+      return
     }
     try {
       await api.post('/profile/leetcode', {
-        username: leetcodeUsername.trim(),
+        username:      leetcodeUsername.trim(),
         sessionCookie: leetcodeSession.trim(),
-      });
-      setMessage('LeetCode profile saved');
+      })
+      setMessage('LeetCode profile saved')
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.description || 'Save failed');
+      console.error(err)
+      setError(err.response?.data?.description || 'Save failed')
     }
-  };
-
-  // sync solved
-  const syncHandle = async () => {
-    setMessage('');
-    setError('');
-    try {
-      const res = await api.post('/profile/leetcode/sync');
-      setMessage(`Synced ${res.data.synced} questions`);
-      // fire event so question tables can re-fetch
-      window.dispatchEvent(new Event('leetSync'));
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.description || 'Sync failed');
-    }
-  };
-
-  if (loading) {
-    return <div>Loading profile…</div>;
   }
+
+  // manual sync now uses syncBackground()
+  const syncHandle = async () => {
+    setMessage('')
+    setError('')
+    try {
+      const count = await syncBackground()
+      setMessage(`Synced ${count} questions`)
+      // notify any question‐tables to refresh
+      window.dispatchEvent(new Event('leetSync'))
+    } catch (err) {
+      console.error(err)
+      setError(err.response?.data?.description || 'Sync failed')
+    }
+  }
+
+  if (loading) return <div>Loading profile…</div>
 
   return (
     <div style={{ padding: '1rem', maxWidth: 600, margin: '0 auto' }}>
@@ -147,5 +141,5 @@ export default function Profile() {
         <p style={{ color: 'red', marginTop: '0.5rem' }}>{error}</p>
       )}
     </div>
-  );
+  )
 }
