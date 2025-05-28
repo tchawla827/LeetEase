@@ -60,10 +60,6 @@ BROWSER_HEADERS = {
 }
 
 def _fetch_solved_slugs_via_list(session_cookie: str) -> set[str]:
-    """
-    Fetch the full problem list; each entry's 'status' == 'ac'
-    means the current (logged-in) user has solved it.
-    """
     cookies = {"LEETCODE_SESSION": session_cookie}
     resp = requests.get(PROB_API, headers=BROWSER_HEADERS, cookies=cookies, timeout=10)
     try:
@@ -80,13 +76,8 @@ def _fetch_solved_slugs_via_list(session_cookie: str) -> set[str]:
     }
 
 def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
-    """
-    Mark all 'ac' slugs in USER_META as solved.
-    Returns how many were updated.
-    """
     solved_slugs = _fetch_solved_slugs_via_list(session_cookie)
 
-    # Build slug → our question _id map
     slug_to_qid = {
         q["link"].rstrip("/").split("/")[-1]: str(q["_id"])
         for q in QUEST.find({}, {"_id":1,"link":1})
@@ -115,7 +106,7 @@ def register():
     password  = data.get('password')
     firstName = data.get('firstName')
     lastName  = data.get('lastName')
-    college   = data.get('college')  # optional
+    college   = data.get('college')
 
     if not (email and password and firstName and lastName):
         abort(400, description='Email, password, first name and last name are required')
@@ -168,12 +159,10 @@ def login():
     if not user or not bcrypt.check_password_hash(user['password'], data['password']):
         abort(401, description='Bad email or password')
 
-    # issue token
     token = create_access_token(identity=str(user['_id']))
     resp  = jsonify({'msg': 'Login successful'})
     set_access_cookies(resp, token)
 
-    # fire background sync
     def _bg_sync(u, s, uid):
         try:
             sync_leetcode(u, s, uid)
@@ -188,7 +177,6 @@ def login():
     return resp, 200
 
 @app.route('/auth/logout', methods=['POST'])
-@jwt_required()
 def logout():
     resp = jsonify({'msg': 'Logout successful'})
     unset_jwt_cookies(resp)
