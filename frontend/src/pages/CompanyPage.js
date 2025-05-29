@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import BucketsTabs from '../components/BucketsTabs'
 import QuestionsTable from '../components/QuestionsTable'
+import TopicsDashboard from '../components/TopicsDashboard'
 
-// Ensure “All” is the last entry here:
 const BUCKET_ORDER = [
   '30Days',
   '3Months',
@@ -16,11 +16,17 @@ const BUCKET_ORDER = [
 
 export default function CompanyPage() {
   const { companyName } = useParams()
+
   const [buckets, setBuckets]               = useState([])
   const [selectedBucket, setSelectedBucket] = useState(null)
   const [showUnsolved, setShowUnsolved]     = useState(false)
   const [searchTerm, setSearchTerm]         = useState('')
   const [refreshKey, setRefreshKey]         = useState(0)
+
+  // analytics state
+  const [showAnalytics, setShowAnalytics]   = useState(false)
+  const [topics, setTopics]                 = useState([])
+  const [loadingTopics, setLoadingTopics]   = useState(false)
 
   // Listen for global "leetSync" events to auto-refresh questions
   useEffect(() => {
@@ -29,7 +35,7 @@ export default function CompanyPage() {
     return () => window.removeEventListener('leetSync', onSync)
   }, [])
 
-  // Fetch buckets whenever companyName changes
+  // Fetch available buckets when company changes
   useEffect(() => {
     setSelectedBucket(null)
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
@@ -38,7 +44,6 @@ export default function CompanyPage() {
         return res.json()
       })
       .then(raw => {
-        // only keep known buckets, and sort by our BUCKET_ORDER
         const filtered = raw
           .filter(name => BUCKET_ORDER.includes(name))
           .sort((a, b) =>
@@ -48,6 +53,24 @@ export default function CompanyPage() {
       })
       .catch(console.error)
   }, [companyName])
+
+  // Fetch topic analytics when toggled on and a bucket is selected
+  useEffect(() => {
+    if (!showAnalytics || !selectedBucket) return
+
+    setLoadingTopics(true)
+    fetch(
+      `/api/companies/${encodeURIComponent(companyName)}` +
+      `/topics?bucket=${encodeURIComponent(selectedBucket)}`
+    )
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load analytics')
+        return res.json()
+      })
+      .then(json => setTopics(json.data))
+      .catch(err => console.error(err))
+      .finally(() => setLoadingTopics(false))
+  }, [companyName, showAnalytics, selectedBucket])
 
   return (
     <div style={{ padding: '1rem', height: '100%', overflow: 'auto' }}>
@@ -67,7 +90,10 @@ export default function CompanyPage() {
       <BucketsTabs
         buckets={buckets}
         selected={selectedBucket}
-        onSelect={setSelectedBucket}
+        onSelect={bucket => {
+          setSelectedBucket(bucket)
+          setShowAnalytics(false)  // reset analytics view on bucket change
+        }}
       />
 
       {selectedBucket && (
@@ -91,15 +117,28 @@ export default function CompanyPage() {
             >
               Refresh
             </button>
+            <button
+              onClick={() => setShowAnalytics(a => !a)}
+              style={{ padding: '0.5rem 1rem' }}
+            >
+              {showAnalytics ? 'Back to Questions' : 'Show Analytics'}
+            </button>
           </div>
 
-          <QuestionsTable
-            company={companyName}
-            bucket={selectedBucket}
-            showUnsolved={showUnsolved}
-            searchTerm={searchTerm}
-            refreshKey={refreshKey}
-          />
+          {showAnalytics ? (
+            loadingTopics
+              ? <div>Loading analytics…</div>
+              : <TopicsDashboard data={topics} />
+          ) : (
+            <QuestionsTable
+              key={refreshKey}
+              company={companyName}
+              bucket={selectedBucket}
+              showUnsolved={showUnsolved}
+              searchTerm={searchTerm}
+              refreshKey={refreshKey}
+            />
+          )}
         </>
       )}
 
