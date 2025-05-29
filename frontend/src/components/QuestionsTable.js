@@ -20,7 +20,8 @@ export default function QuestionsTable({
   bucket,
   showUnsolved,
   searchTerm,
-  refreshKey             // ← new prop
+  tagFilter,       // ← new prop
+  refreshKey       // ← existing
 }) {
   const [questions, setQuestions]   = useState([]);
   const [page, setPage]             = useState(1);
@@ -30,10 +31,19 @@ export default function QuestionsTable({
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
 
-  // reset to page 1 when any filter/sort/search/refresh changes
+  // reset to page 1 when any filter/sort/search/refresh/tag changes
   useEffect(() => {
     setPage(1);
-  }, [company, bucket, showUnsolved, sortField, sortOrder, searchTerm, refreshKey]);
+  }, [
+    company,
+    bucket,
+    showUnsolved,
+    sortField,
+    sortOrder,
+    searchTerm,
+    tagFilter,    // ← include tagFilter
+    refreshKey
+  ]);
 
   // fetch questions
   useEffect(() => {
@@ -53,6 +63,7 @@ export default function QuestionsTable({
       showUnsolved,
       ...(searchTerm && { search: searchTerm }),
       ...(!isDifficulty && sortField && { sortField, sortOrder }),
+      ...(tagFilter && { tag: tagFilter })   // ← pass tagFilter to API
     };
 
     api
@@ -65,7 +76,11 @@ export default function QuestionsTable({
         setTotalPages(Math.ceil(total / PAGE_SIZE));
 
         let list = data;
-        if (showUnsolved) list = list.filter(q => !q.solved);
+        if (showUnsolved) {
+          // this client‐side filter is redundant if backend handles showUnsolved,
+          // but kept for backward compatibility
+          list = list.filter(q => !q.solved);
+        }
 
         if (isDifficulty) {
           list = [...list].sort((a, b) => {
@@ -87,7 +102,8 @@ export default function QuestionsTable({
     sortField,
     sortOrder,
     searchTerm,
-    refreshKey          // ← include in deps
+    tagFilter,    // ← include tagFilter
+    refreshKey
   ]);
 
   const onSort = field => {

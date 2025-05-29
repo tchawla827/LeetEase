@@ -387,7 +387,6 @@ def list_buckets(company):
         abort(404, description=f"No company '{company}'")
     return jsonify(CQ.distinct('bucket', {'company_id': co['_id']})), 200
 
-# ─── Company-wise topics aggregation ──────────────────────────────────────
 @app.route('/api/companies/<company>/topics', methods=['GET'])
 @jwt_required()
 def get_company_topics(company):
@@ -395,16 +394,16 @@ def get_company_topics(company):
     if not co:
         abort(404, description=f"No company '{company}'")
 
-    # Filter by bucket and optional unsolved flag
+    # ── Read params ───────────────────────────────────────────────────────
     bucket   = request.args.get('bucket', 'All')
     unsolved = request.args.get('unsolved', 'false').lower() == 'true'
-    match    = {'company_id': co['_id']}
+    uid      = get_jwt_identity()
+
+    # ── Base match on company & bucket ────────────────────────────────────
+    match = {'company_id': co['_id']}
     if bucket != 'All':
         match['bucket'] = bucket
 
-    uid = get_jwt_identity()
-
-    # Build aggregation pipeline
     pipeline = [
         {'$match': match},
         {'$lookup': {
@@ -416,11 +415,12 @@ def get_company_topics(company):
         {'$unwind': '$q'}
     ]
 
+    # ── If unsolved, join user_meta and filter out solved ones ────────────
     if unsolved:
-        pipeline.extend([
+        pipeline += [
             {'$lookup': {
                 'from': 'user_meta',
-                'let':   {'qid': '$question_id'},
+                'let': {'qid': '$question_id'},
                 'pipeline': [
                     {'$match': {
                         '$expr': {
@@ -434,18 +434,25 @@ def get_company_topics(company):
                 ],
                 'as': 'meta'
             }},
-            {'$match': {'meta.0.solved': {'$ne': True}}}
-        ])
+            {'$match': {
+                '$or': [
+                    {'meta': {'$eq': []}},         # no entry => not solved
+                    {'meta.0.solved': False}       # entry exists but solved=false
+                ]
+            }}
+        ]
 
-    pipeline.extend([
+    # ── Unwind tags, group & sort ────────────────────────────────────────
+    pipeline += [
         {'$unwind': '$q.tags'},
-        {'$group':    {'_id': '$q.tags', 'count': {'$sum': 1}}},
-        {'$sort':     {'count': -1}}
-    ])
+        {'$group':   {'_id': '$q.tags', 'count': {'$sum': 1}}},
+        {'$sort':    {'count': -1}}
+    ]
 
     results = list(CQ.aggregate(pipeline))
     topics  = [{'tag': r['_id'], 'count': r['count']} for r in results]
     return jsonify({'data': topics}), 200
+
 
 @app.route('/api/companies/<company>/buckets/<bucket>/questions', methods=['GET'])
 @jwt_required()
@@ -454,14 +461,21 @@ def list_questions(company, bucket):
     if not co:
         abort(404, description=f"No company '{company}'")
 
-    page       = int(request.args.get('page', 1))
-    limit      = int(request.args.get('limit', 50))
-    skip       = (page - 1) * limit
-    search     = request.args.get('search')
-    sortField  = request.args.get('sortField')
-    sortOrder  = request.args.get('sortOrder', 'asc')
+    # ── Parse query params ─────────────────────────────────────────────
+    page         = int(request.args.get('page', 1))
+    limit        = int(request.args.get('limit', 50))
+    skip         = (page - 1) * limit
+    search       = request.args.get('search')
+    sortField    = request.args.get('sortField')
+    sortOrder    = request.args.get('sortOrder', 'asc')
+    tag_filter   = request.args.get('tag')
+    showUnsolved = request.args.get('showUnsolved', 'false').lower() == 'true'
 
-    match = {'company_id': co['_id'], 'bucket': bucket}
+    # ── Base match stage ───────────────────────────────────────────────
+    match = {'company_id': co['_id']}
+    if bucket != 'All':
+        match['bucket'] = bucket
+
     pipeline = [
         {'$match': match},
         {'$lookup': {
@@ -472,42 +486,70 @@ def list_questions(company, bucket):
         }},
         {'$unwind': '$q'}
     ]
-    if search:
-        pipeline.append({'$match': {'q.title': {'$regex': search, '$options': 'i'}}})
 
+    # ── Tag filter ─────────────────────────────────────────────────────
+    if tag_filter:
+        pipeline.append({'$match': {'q.tags': tag_filter}})
+
+    # ── Title search ───────────────────────────────────────────────────
+    if search:
+        pipeline.append({
+            '$match': {
+                'q.title': {'$regex': search, '$options': 'i'}
+            }
+        })
+
+    # ── Sorting ────────────────────────────────────────────────────────
     fmap = {
         'title':          'q.title',
         'frequency':      'frequency',
-        'acceptanceRate':'acceptanceRate',
-        'leetDifficulty':'q.leetDifficulty'
+        'acceptanceRate': 'acceptanceRate',
+        'leetDifficulty': 'q.leetDifficulty'
     }
     if sortField in fmap:
-        pipeline.append({'$sort': {fmap[sortField]: 1 if sortOrder == 'asc' else -1}})
+        pipeline.append({
+            '$sort': {fmap[sortField]: 1 if sortOrder == 'asc' else -1}
+        })
 
-    cnt = list(CQ.aggregate(pipeline + [{'$count': 'c'}]))
-    total = cnt[0]['c'] if cnt else 0
+    # ── Total count before pagination ─────────────────────────────────
+    total_count = list(CQ.aggregate(pipeline + [{'$count': 'c'}]))
+    total = total_count[0]['c'] if total_count else 0
 
-    pipeline += [{'$skip': skip}, {'$limit': limit}]
-    docs = list(CQ.aggregate(pipeline))
+    # ── Pagination ────────────────────────────────────────────────────
+    pipeline += [
+        {'$skip': skip},
+        {'$limit': limit}
+    ]
 
+    results = list(CQ.aggregate(pipeline))
+
+    # ── Attach user meta and apply unsolved filter server-side ──────────
     uid = get_jwt_identity()
     out = []
-    for doc in docs:
+    for doc in results:
         q = doc['q']
-        itm = {
+        meta = USER_META.find_one({
+            'user_id': uid,
+            'question_id': str(q['_id'])
+        })
+        solved = meta.get('solved', False) if meta else False
+        if showUnsolved and solved:
+            continue
+
+        out.append({
             'id':             str(q['_id']),
             'title':          q['title'],
             'link':           q['link'],
             'frequency':      doc.get('frequency'),
             'acceptanceRate': doc.get('acceptanceRate'),
             'leetDifficulty': q.get('leetDifficulty'),
-        }
-        meta = USER_META.find_one({'user_id': uid, 'question_id': itm['id']})
-        itm['solved']         = meta.get('solved', False) if meta else False
-        itm['userDifficulty'] = meta.get('userDifficulty') if meta else None
-        out.append(itm)
+            'solved':         solved,
+            'userDifficulty': meta.get('userDifficulty') if meta else None
+        })
 
     return jsonify({'data': out, 'total': total}), 200
+
+
 
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():

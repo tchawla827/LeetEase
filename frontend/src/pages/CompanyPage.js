@@ -28,6 +28,9 @@ export default function CompanyPage() {
   const [topics, setTopics]                 = useState([])
   const [loadingTopics, setLoadingTopics]   = useState(false)
 
+  // drill-down state
+  const [selectedTag, setSelectedTag]       = useState(null)
+
   // Listen for global "leetSync" events to auto-refresh questions
   useEffect(() => {
     const onSync = () => setRefreshKey(k => k + 1)
@@ -38,6 +41,7 @@ export default function CompanyPage() {
   // Fetch available buckets when company changes
   useEffect(() => {
     setSelectedBucket(null)
+    setSelectedTag(null)
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load buckets')
@@ -93,7 +97,8 @@ export default function CompanyPage() {
         selected={selectedBucket}
         onSelect={bucket => {
           setSelectedBucket(bucket)
-          setShowAnalytics(false)  // reset analytics view on bucket change
+          setShowAnalytics(false)
+          setSelectedTag(null)
         }}
       />
 
@@ -113,7 +118,10 @@ export default function CompanyPage() {
               }}
             />
             <button
-              onClick={() => setRefreshKey(k => k + 1)}
+              onClick={() => {
+                setRefreshKey(k => k + 1)
+                setSelectedTag(null)
+              }}
               style={{ padding: '0.5rem 1rem' }}
             >
               Refresh
@@ -129,16 +137,36 @@ export default function CompanyPage() {
           {showAnalytics ? (
             loadingTopics
               ? <div>Loading analytics…</div>
-              : <TopicsDashboard data={topics} />
+              : <TopicsDashboard
+                  data={topics}
+                  onTagClick={tag => {
+                    setSelectedTag(tag)
+                    setShowAnalytics(false)
+                  }}
+                />
           ) : (
-            <QuestionsTable
-              key={refreshKey}
-              company={companyName}
-              bucket={selectedBucket}
-              showUnsolved={showUnsolved}
-              searchTerm={searchTerm}
-              refreshKey={refreshKey}
-            />
+            <>
+              {selectedTag && (
+                <div style={{ margin: '0.5rem 0' }}>
+                  <strong>Filtered by topic:</strong> {selectedTag}{' '}
+                  <button
+                    onClick={() => setSelectedTag(null)}
+                    style={{ marginLeft: '0.5rem' }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+              <QuestionsTable
+                key={refreshKey}
+                company={companyName}
+                bucket={selectedBucket}
+                showUnsolved={showUnsolved}
+                searchTerm={searchTerm}
+                tagFilter={selectedTag}
+                refreshKey={refreshKey}
+              />
+            </>
           )}
         </>
       )}
