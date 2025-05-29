@@ -1,51 +1,53 @@
-// frontend/src/pages/CompanyPage.js
+// frontend/src/pages/CompanyPage.jsx
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import BucketsTabs from '../components/BucketsTabs';
-import QuestionsTable from '../components/QuestionsTable';
+import React, { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import BucketsTabs from '../components/BucketsTabs'
+import QuestionsTable from '../components/QuestionsTable'
 
+// Ensure “All” is the last entry here:
 const BUCKET_ORDER = [
   '30Days',
   '3Months',
   '6Months',
-  'All',
-  'MoreThan6Months'
-];
+  'MoreThan6Months',
+  'All'
+]
 
 export default function CompanyPage() {
-  const { companyName } = useParams();
-  const [buckets, setBuckets]               = useState([]);
-  const [selectedBucket, setSelectedBucket] = useState(null);
-  const [showUnsolved, setShowUnsolved]     = useState(false);
-  const [searchTerm, setSearchTerm]         = useState('');
-  const [refreshKey, setRefreshKey]         = useState(0);
+  const { companyName } = useParams()
+  const [buckets, setBuckets]               = useState([])
+  const [selectedBucket, setSelectedBucket] = useState(null)
+  const [showUnsolved, setShowUnsolved]     = useState(false)
+  const [searchTerm, setSearchTerm]         = useState('')
+  const [refreshKey, setRefreshKey]         = useState(0)
 
-  // Listen for global "leetSync" events to auto-refresh
+  // Listen for global "leetSync" events to auto-refresh questions
   useEffect(() => {
-    const onSync = () => setRefreshKey(k => k + 1);
-    window.addEventListener('leetSync', onSync);
-    return () => window.removeEventListener('leetSync', onSync);
-  }, []);
+    const onSync = () => setRefreshKey(k => k + 1)
+    window.addEventListener('leetSync', onSync)
+    return () => window.removeEventListener('leetSync', onSync)
+  }, [])
 
+  // Fetch buckets whenever companyName changes
   useEffect(() => {
-    setSelectedBucket(null);
+    setSelectedBucket(null)
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
       .then(res => {
-        if (!res.ok) throw new Error('Failed to load buckets');
-        return res.json();
+        if (!res.ok) throw new Error('Failed to load buckets')
+        return res.json()
       })
       .then(raw => {
+        // only keep known buckets, and sort by our BUCKET_ORDER
         const filtered = raw
-          .filter(b => BUCKET_ORDER.includes(b))
-          .sort(
-            (a, b) =>
-              BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b)
-          );
-        setBuckets(filtered);
+          .filter(name => BUCKET_ORDER.includes(name))
+          .sort((a, b) =>
+            BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b)
+          )
+        setBuckets(filtered)
       })
-      .catch(console.error);
-  }, [companyName]);
+      .catch(console.error)
+  }, [companyName])
 
   return (
     <div style={{ padding: '1rem', height: '100%', overflow: 'auto' }}>
@@ -83,8 +85,6 @@ export default function CompanyPage() {
                 boxSizing: 'border-box'
               }}
             />
-
-            {/* Refresh button remains optional */}
             <button
               onClick={() => setRefreshKey(k => k + 1)}
               style={{ padding: '0.5rem 1rem' }}
@@ -107,5 +107,5 @@ export default function CompanyPage() {
         <p>No buckets found for this company.</p>
       )}
     </div>
-  );
+  )
 }
