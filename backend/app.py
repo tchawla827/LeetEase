@@ -395,11 +395,16 @@ def get_company_topics(company):
     if not co:
         abort(404, description=f"No company '{company}'")
 
-    bucket = request.args.get('bucket', 'All')
-    match = {'company_id': co['_id']}
-    if bucket and bucket != 'All':
+    # Filter by bucket and optional unsolved flag
+    bucket   = request.args.get('bucket', 'All')
+    unsolved = request.args.get('unsolved', 'false').lower() == 'true'
+    match    = {'company_id': co['_id']}
+    if bucket != 'All':
         match['bucket'] = bucket
 
+    uid = get_jwt_identity()
+
+    # Build aggregation pipeline
     pipeline = [
         {'$match': match},
         {'$lookup': {
@@ -408,16 +413,39 @@ def get_company_topics(company):
             'foreignField': '_id',
             'as': 'q'
         }},
-        {'$unwind': '$q'},
-        {'$unwind': '$q.tags'},
-        {'$group': {
-            '_id': '$q.tags',
-            'count': {'$sum': 1}
-        }},
-        {'$sort': {'count': -1}}
+        {'$unwind': '$q'}
     ]
+
+    if unsolved:
+        pipeline.extend([
+            {'$lookup': {
+                'from': 'user_meta',
+                'let':   {'qid': '$question_id'},
+                'pipeline': [
+                    {'$match': {
+                        '$expr': {
+                            '$and': [
+                                {'$eq': ['$question_id', {'$toString': '$$qid'}]},
+                                {'$eq': ['$user_id', uid]}
+                            ]
+                        }
+                    }},
+                    {'$project': {'solved': 1}}
+                ],
+                'as': 'meta'
+            }},
+            {'$match': {'meta.0.solved': {'$ne': True}}}
+        ])
+
+    pipeline.extend([
+        {'$unwind': '$q.tags'},
+        {'$group':    {'_id': '$q.tags', 'count': {'$sum': 1}}},
+        {'$sort':     {'count': -1}}
+    ])
+
     results = list(CQ.aggregate(pipeline))
-    return jsonify({'data': [{'tag': r['_id'], 'count': r['count']} for r in results]}), 200
+    topics  = [{'tag': r['_id'], 'count': r['count']} for r in results]
+    return jsonify({'data': topics}), 200
 
 @app.route('/api/companies/<company>/buckets/<bucket>/questions', methods=['GET'])
 @jwt_required()
@@ -426,10 +454,12 @@ def list_questions(company, bucket):
     if not co:
         abort(404, description=f"No company '{company}'")
 
-    page  = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 50))
-    skip  = (page - 1) * limit
-    search = request.args.get('search')
+    page       = int(request.args.get('page', 1))
+    limit      = int(request.args.get('limit', 50))
+    skip       = (page - 1) * limit
+    search     = request.args.get('search')
+    sortField  = request.args.get('sortField')
+    sortOrder  = request.args.get('sortOrder', 'asc')
 
     match = {'company_id': co['_id'], 'bucket': bucket}
     pipeline = [
@@ -445,16 +475,14 @@ def list_questions(company, bucket):
     if search:
         pipeline.append({'$match': {'q.title': {'$regex': search, '$options': 'i'}}})
 
-    sf = request.args.get('sortField')
-    so = request.args.get('sortOrder', 'asc')
     fmap = {
         'title':          'q.title',
         'frequency':      'frequency',
         'acceptanceRate':'acceptanceRate',
         'leetDifficulty':'q.leetDifficulty'
     }
-    if sf in fmap:
-        pipeline.append({'$sort': {fmap[sf]: 1 if so == 'asc' else -1}})
+    if sortField in fmap:
+        pipeline.append({'$sort': {fmap[sortField]: 1 if sortOrder == 'asc' else -1}})
 
     cnt = list(CQ.aggregate(pipeline + [{'$count': 'c'}]))
     total = cnt[0]['c'] if cnt else 0

@@ -54,14 +54,15 @@ export default function CompanyPage() {
       .catch(console.error)
   }, [companyName])
 
-  // Fetch topic analytics when toggled on and a bucket is selected
+  // Fetch topic analytics when toggled on, a bucket is selected, or the "unsolved" filter changes
   useEffect(() => {
     if (!showAnalytics || !selectedBucket) return
 
     setLoadingTopics(true)
     fetch(
       `/api/companies/${encodeURIComponent(companyName)}` +
-      `/topics?bucket=${encodeURIComponent(selectedBucket)}`
+      `/topics?bucket=${encodeURIComponent(selectedBucket)}` +
+      `&unsolved=${showUnsolved}`
     )
       .then(res => {
         if (!res.ok) throw new Error('Failed to load analytics')
@@ -70,7 +71,7 @@ export default function CompanyPage() {
       .then(json => setTopics(json.data))
       .catch(err => console.error(err))
       .finally(() => setLoadingTopics(false))
-  }, [companyName, showAnalytics, selectedBucket])
+  }, [companyName, showAnalytics, selectedBucket, showUnsolved])
 
   return (
     <div style={{ padding: '1rem', height: '100%', overflow: 'auto' }}>
