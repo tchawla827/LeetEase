@@ -7,6 +7,7 @@ import threading
 import time
 from datetime import timedelta
 
+
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, abort, session
@@ -548,6 +549,51 @@ def list_questions(company, bucket):
         })
 
     return jsonify({'data': out, 'total': total}), 200
+
+
+
+@app.route('/api/questions/<question_id>', methods=['PATCH'])
+@jwt_required()
+def update_question_meta(question_id):
+    uid = get_jwt_identity()
+
+    # Validate question_id
+    try:
+        q_oid = ObjectId(question_id)
+    except:
+        abort(400, description=f"Invalid question ID '{question_id}'")
+
+    if not QUEST.find_one({'_id': q_oid}):
+        abort(404, description=f"Question '{question_id}' not found")
+
+    data = request.get_json() or {}
+    update_fields = {}
+
+    # Only allow these two fields
+    if 'solved' in data:
+        update_fields['solved'] = bool(data['solved'])
+    if 'userDifficulty' in data:
+        # store null or string
+        update_fields['userDifficulty'] = data.get('userDifficulty') or None
+
+    if not update_fields:
+        abort(400, description="No valid fields to update (solved, userDifficulty)")
+
+    # Upsert the per-user metadata
+    USER_META.update_one(
+        {'user_id': uid, 'question_id': question_id},
+        {'$set': update_fields},
+        upsert=True
+    )
+
+    # Re-read and return the updated record
+    meta = USER_META.find_one({'user_id': uid, 'question_id': question_id})
+    resp = {
+        'question_id': question_id,
+        'solved':       meta.get('solved', False),
+        'userDifficulty': meta.get('userDifficulty')
+    }
+    return jsonify(resp), 200
 
 
 
