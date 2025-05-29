@@ -1,28 +1,33 @@
-// frontend/src/components/Sidebar.jsx
-
 import React, { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../api'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function Sidebar() {
-  const [filter, setFilter]       = useState('')
+  const { user }               = useAuth()
+  const [filter, setFilter]    = useState('')
   const [companies, setCompanies] = useState([])
-  const location                  = useLocation()
-  const navigate                  = useNavigate()
+  const location               = useLocation()
 
-  // extract the “active” company slug from the URL
+  // extract active company slug from URL
   const activeCompany = decodeURIComponent(
     (location.pathname.split('/company/')[1] || '').split('/')[0]
   )
 
-  // fetch full company list once on mount
+  // re-fetch whenever `user` changes
   useEffect(() => {
+    if (!user) {
+      // clear list on logout
+      setCompanies([])
+      return
+    }
+
     api.get('/api/companies')
       .then(res => setCompanies(res.data))
-      .catch(console.error)
-  }, [])
+      .catch(err => console.error('Failed to load companies', err))
+  }, [user])
 
-  // compute prefix and filter by startsWith
+  // filter by prefix
   const prefix = filter.trim().toLowerCase()
   const filteredCompanies =
     prefix === ''
@@ -32,15 +37,17 @@ export default function Sidebar() {
         )
 
   return (
-    <aside style={{
-      width:         220,
-      borderRight:   '1px solid #ddd',
-      padding:       '1rem',
-      boxSizing:     'border-box',
-      height:        '100vh',
-      overflowY:     'auto',
-      background:    '#fafafa'
-    }}>
+    <aside
+      style={{
+        width:       220,
+        borderRight: '1px solid #ddd',
+        padding:     '1rem',
+        boxSizing:   'border-box',
+        height:      '100vh',
+        overflowY:   'auto',
+        background:  '#fafafa'
+      }}
+    >
       <h2 style={{ margin: 0, marginBottom: '0.5rem' }}>Companies</h2>
 
       <input
@@ -49,10 +56,10 @@ export default function Sidebar() {
         value={filter}
         onChange={e => setFilter(e.target.value)}
         style={{
-          width: '100%',
-          padding: '0.5rem',
+          width:        '100%',
+          padding:      '0.5rem',
           marginBottom: '1rem',
-          border: '1px solid #ccc',
+          border:       '1px solid #ccc',
           borderRadius: '4px'
         }}
       />
@@ -66,8 +73,8 @@ export default function Sidebar() {
                 to={`/company/${encodeURIComponent(company)}`}
                 style={{
                   textDecoration: 'none',
-                  color: isActive ? '#007bff' : '#333',
-                  fontWeight: isActive ? 'bold' : 'normal'
+                  color:          isActive ? '#007bff' : '#333',
+                  fontWeight:     isActive ? 'bold' : 'normal'
                 }}
               >
                 • {company}

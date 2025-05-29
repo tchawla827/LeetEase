@@ -1,11 +1,9 @@
-// frontend/src/pages/Login.jsx
-
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login }               = useAuth()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
@@ -18,8 +16,9 @@ export default function Login() {
     setLoading(true)
 
     try {
-      // just login — returns immediately
+      // perform login
       await login(email, password)
+      // redirect home—this will remount Sidebar and fetch companies
       navigate('/')
     } catch (err) {
       console.error(err)
@@ -30,32 +29,39 @@ export default function Login() {
   }
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 400, margin: '0 auto', position: 'relative' }}>
+    <div
+      style={{
+        padding:    '1rem',
+        maxWidth:   400,
+        margin:     '0 auto',
+        position:   'relative'
+      }}
+    >
       <h2>Login</h2>
 
-      {/* Spinner overlay during sign-in only */}
       {loading && (
         <div
           style={{
-            position: 'absolute',
+            position:        'absolute',
             top: 0, left: 0,
-            width: '100%', height: '100%',
-            background: 'rgba(255,255,255,0.7)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            width:           '100%',
+            height:          '100%',
+            background:      'rgba(255,255,255,0.7)',
+            display:         'flex',
+            flexDirection:   'column',
+            alignItems:      'center',
+            justifyContent:  'center',
+            zIndex:          1000
           }}
         >
           <div
             style={{
-              border: '4px solid #ddd',
-              borderTop: '4px solid #333',
+              border:       '4px solid #ddd',
+              borderTop:    '4px solid #333',
               borderRadius: '50%',
-              width: '3rem',
-              height: '3rem',
-              animation: 'spin 1s linear infinite',
+              width:        '3rem',
+              height:       '3rem',
+              animation:    'spin 1s linear infinite',
               marginBottom: '1rem'
             }}
           />
@@ -104,7 +110,7 @@ export default function Login() {
         Don’t have an account? <Link to="/register">Register</Link>
       </p>
 
-      {/* local keyframes */}
+      {/* spinner keyframes */}
       <style>
         {`
           @keyframes spin {
