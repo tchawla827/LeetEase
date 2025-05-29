@@ -38,7 +38,7 @@ export default function CompanyPage() {
     return () => window.removeEventListener('leetSync', onSync)
   }, [])
 
-  // Fetch available buckets when company changes, then pick the first one
+  // Fetch available buckets when company changes, then restore or pick bucket
   useEffect(() => {
     setSelectedBucket(null)
     setSelectedTag(null)
@@ -55,8 +55,12 @@ export default function CompanyPage() {
 
         setBuckets(filtered)
 
-        // auto-select the first bucket if any
-        if (filtered.length > 0) {
+        // Try to restore last bucket from localStorage
+        const key = `leetBucket:${companyName}`
+        const stored = localStorage.getItem(key)
+        if (stored && filtered.includes(stored)) {
+          setSelectedBucket(stored)
+        } else if (filtered.length > 0) {
           setSelectedBucket(filtered[0])
         }
       })
@@ -102,6 +106,7 @@ export default function CompanyPage() {
         selected={selectedBucket}
         onSelect={bucket => {
           setSelectedBucket(bucket)
+          localStorage.setItem(`leetBucket:${companyName}`, bucket)
           setShowAnalytics(false)
           setSelectedTag(null)
         }}
