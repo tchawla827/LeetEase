@@ -31,15 +31,24 @@ export default function TopicsDashboard({ data, onTagClick }) {
           />
           <YAxis />
           <Tooltip />
+
           <Bar
             dataKey="count"
-            onClick={({ tag }) => onTagClick(tag)}
+            fill="#000"
             cursor="pointer"
+            // Recharts onClick: first arg is an object with .payload
+            onClick={({ payload }) => onTagClick(payload.tag)}
+            background={{
+              fill: 'transparent',
+              cursor: 'pointer',
+              // if you really want clicking the background to work too:
+              // onClick: ({ payload }) => onTagClick(payload.tag)
+            }}
           />
         </BarChart>
       </ResponsiveContainer>
       <p className="mt-2 text-sm text-gray-600">
-        (Click a bar to view questions for that topic)
+        (Click anywhere in a column to filter by that topic)
       </p>
     </div>
   )
