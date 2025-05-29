@@ -1,21 +1,22 @@
 // frontend/src/components/BucketsTabs.js
+
 import React from 'react';
 
-export default function BucketsTabs({ buckets, selectedBucket, onSelect }) {
+export default function BucketsTabs({ buckets, selected, onSelect }) {
   return (
-    <div style={{ margin: '1rem 0' }}>
+    <div style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0' }}>
       {buckets.map(bucket => (
         <button
           key={bucket}
           onClick={() => onSelect(bucket)}
           style={{
-            marginRight: '0.5rem',
             padding: '0.5rem 1rem',
-            background: bucket === selectedBucket ? '#007bff' : '#eee',
-            color: bucket === selectedBucket ? '#fff' : '#000',
             border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer'
+            borderRadius: '4px',
+            cursor: 'pointer',
+            background: bucket === selected ? '#1976d2' : '#f0f0f0',
+            color:      bucket === selected ? '#fff'    : '#000',
+            fontWeight: bucket === selected ? '600'      : '400',
           }}
         >
           {bucket}

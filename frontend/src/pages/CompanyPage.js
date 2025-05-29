@@ -38,10 +38,11 @@ export default function CompanyPage() {
     return () => window.removeEventListener('leetSync', onSync)
   }, [])
 
-  // Fetch available buckets when company changes
+  // Fetch available buckets when company changes, then pick the first one
   useEffect(() => {
     setSelectedBucket(null)
     setSelectedTag(null)
+
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to load buckets')
@@ -50,10 +51,14 @@ export default function CompanyPage() {
       .then(raw => {
         const filtered = raw
           .filter(name => BUCKET_ORDER.includes(name))
-          .sort((a, b) =>
-            BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b)
-          )
+          .sort((a, b) => BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b))
+
         setBuckets(filtered)
+
+        // auto-select the first bucket if any
+        if (filtered.length > 0) {
+          setSelectedBucket(filtered[0])
+        }
       })
       .catch(console.error)
   }, [companyName])
@@ -135,15 +140,17 @@ export default function CompanyPage() {
           </div>
 
           {showAnalytics ? (
-            loadingTopics
-              ? <div>Loading analytics…</div>
-              : <TopicsDashboard
-                  data={topics}
-                  onTagClick={tag => {
-                    setSelectedTag(tag)
-                    setShowAnalytics(false)
-                  }}
-                />
+            loadingTopics ? (
+              <div>Loading analytics…</div>
+            ) : (
+              <TopicsDashboard
+                data={topics}
+                onTagClick={tag => {
+                  setSelectedTag(tag)
+                  setShowAnalytics(false)
+                }}
+              />
+            )
           ) : (
             <>
               {selectedTag && (
