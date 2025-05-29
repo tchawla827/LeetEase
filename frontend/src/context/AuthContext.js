@@ -1,8 +1,6 @@
-// frontend/src/context/AuthContext.js
-
 import { createContext, useContext, useState, useEffect } from 'react'
-import api from '../api'
 import { useNavigate } from 'react-router-dom'
+import api from '../api'
 
 const AuthContext = createContext()
 
@@ -10,9 +8,9 @@ export function AuthProvider({ children }) {
   const [user, setUser]             = useState(null)
   const [syncing, setSyncing]       = useState(false)
   const [syncResult, setSyncResult] = useState(null)
-  const navigate = useNavigate()
+  const navigate                    = useNavigate()
 
-  // background‐sync helper (returns count)
+  // background‐sync helper
   const syncBackground = async () => {
     setSyncResult(null)
     setSyncing(true)
@@ -26,17 +24,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // On mount: restore user, fetch profile—but NO auto-sync here
+  // On mount: restore from localStorage, then hit /auth/me
   useEffect(() => {
     const stored = localStorage.getItem('user')
     if (stored) {
       setUser(JSON.parse(stored))
     }
+
     api.get('/auth/me')
       .then(res => {
         setUser(res.data)
         localStorage.setItem('user', JSON.stringify(res.data))
-        // only sync on first-ever boot if no stored user:
         if (!stored && res.data.leetcode_username) {
           syncBackground().catch(() => {})
         }
@@ -47,7 +45,7 @@ export function AuthProvider({ children }) {
       })
   }, [])
 
-  // login + then background‐sync
+  // login + then sync if needed
   const login = async (email, password) => {
     await api.post('/auth/login', { email, password })
     const res = await api.get('/auth/me')
@@ -58,7 +56,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // logout (ignores already-logged-out 401)
+  // logout + redirect
   const logout = async () => {
     try {
       await api.post('/auth/logout')

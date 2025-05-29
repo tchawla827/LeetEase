@@ -1,8 +1,7 @@
-// frontend/src/components/Navbar.jsx
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import './Navbar.css'          // ← import the styles
+import './Navbar.css'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -14,13 +13,26 @@ export default function Navbar() {
       </div>
 
       <nav className="navbar__links">
-        <Link to="/profile">Profile</Link>
-        <Link to="/import">Import Questions</Link>
+        {user && (
+          <>
+            <Link to="/profile">Profile</Link>
+            <Link to="/import">Import Questions</Link>
+          </>
+        )}
       </nav>
 
       <div className="navbar__user">
-        <span>{user?.firstName || '—'}</span>
-        <button onClick={logout}>Logout</button>
+        {user ? (
+          <>
+            <span>{user.firstName || user.email}</span>
+            <button onClick={logout}>Logout</button>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/register">Register</Link>
+          </>
+        )}
       </div>
     </header>
   )
