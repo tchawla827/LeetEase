@@ -10,10 +10,12 @@ export default function Profile() {
   const [lastName, setLastName]           = useState('')
   const [email, setEmail]                 = useState('')
   const [college, setCollege]             = useState('')
+  const [role, setRole]                   = useState('')             // new
   const [leetcodeUsername, setLeetcodeUsername] = useState('')
   const [leetcodeSession, setLeetcodeSession]   = useState('')
   const [message, setMessage]             = useState('')
   const [error, setError]                 = useState('')
+  const [backfillLoading, setBackfillLoading] = useState(false)    // new
 
   // load profile
   useEffect(() => {
@@ -25,6 +27,7 @@ export default function Profile() {
         setLastName(data.lastName || '')
         setEmail(data.email || '')
         setCollege(data.college || '')
+        setRole(data.role || '')                             // new
         setLeetcodeUsername(data.leetcode_username || '')
         setLeetcodeSession(data.leetcode_session || '')
       } catch (err) {
@@ -64,11 +67,26 @@ export default function Profile() {
     try {
       const count = await syncBackground()
       setMessage(`Synced ${count} questions`)
-      // notify any question‐tables to refresh
       window.dispatchEvent(new Event('leetSync'))
     } catch (err) {
       console.error(err)
       setError(err.response?.data?.description || 'Sync failed')
+    }
+  }
+
+  // new: trigger backfill-tags
+  const backfillTags = async () => {
+    setMessage('')
+    setError('')
+    setBackfillLoading(true)
+    try {
+      await api.post('/api/admin/backfill-tags')
+      setMessage('Tags backfilled successfully')
+    } catch (err) {
+      console.error(err)
+      setError(err.response?.data?.description || 'Backfill failed')
+    } finally {
+      setBackfillLoading(false)
     }
   }
 
@@ -89,6 +107,9 @@ export default function Profile() {
       </div>
       <div style={{ marginBottom: '0.75rem' }}>
         <strong>College:</strong> {college || '—'}
+      </div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <strong>Role:</strong> {role}
       </div>
 
       <hr style={{ margin: '1rem 0' }} />
@@ -128,10 +149,19 @@ export default function Profile() {
         </button>
         <button
           onClick={syncHandle}
-          style={{ padding: '0.5rem 1rem' }}
+          style={{ padding: '0.5rem 1rem', marginRight: '1rem' }}
         >
           Sync Solved Questions
         </button>
+        {role === 'admin' && (
+          <button
+            onClick={backfillTags}
+            disabled={backfillLoading}
+            style={{ padding: '0.5rem 1rem' }}
+          >
+            {backfillLoading ? 'Backfilling…' : 'Backfill Tags'}
+          </button>
+        )}
       </div>
 
       {message && (

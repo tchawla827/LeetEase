@@ -4,6 +4,7 @@ import os
 import random
 import csv
 import threading
+import time
 from datetime import timedelta
 
 import requests
@@ -50,13 +51,18 @@ def to_json(doc):
 def generate_otp() -> str:
     return f"{random.randint(100_000, 999_999)}"
 
-# ─── LeetCode sync via /api/problems/algorithms ────────────────────────────
+# ─── LeetCode API endpoints & fetch helpers ───────────────────────────────
 PROB_API        = "https://leetcode.com/api/problems/algorithms/"
+GRAPHQL_API     = "https://leetcode.com/graphql"
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept":     "application/json, text/html",
     "Referer":    "https://leetcode.com/",
     "Origin":     "https://leetcode.com"
+}
+GRAPHQL_HEADERS = {
+    "User-Agent": BROWSER_HEADERS["User-Agent"],
+    "Content-Type": "application/json"
 }
 
 def _fetch_solved_slugs_via_list(session_cookie: str) -> set[str]:
@@ -74,6 +80,26 @@ def _fetch_solved_slugs_via_list(session_cookie: str) -> set[str]:
         for p in data
         if p.get("status") == "ac"
     }
+
+def fetch_leetcode_tags(slug: str) -> list[str]:
+    query = """
+    query getQuestionDetail($titleSlug: String!) {
+      question(titleSlug: $titleSlug) {
+        topicTags {
+          name
+        }
+      }
+    }
+    """
+    payload = {"query": query, "variables": {"titleSlug": slug}}
+    resp = requests.post(GRAPHQL_API, headers=GRAPHQL_HEADERS, json=payload, timeout=10)
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError as e:
+        app.logger.warning("Failed to fetch tags for %s: %s", slug, e)
+        return []
+    tags = resp.json().get("data", {}).get("question", {}).get("topicTags", [])
+    return [t["name"] for t in tags]
 
 def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
     solved_slugs = _fetch_solved_slugs_via_list(session_cookie)
@@ -284,6 +310,7 @@ def import_questions():
     reader = csv.DictReader(lines)
     created = 0
     for row in reader:
+        # 1) upsert question
         q_res = QUEST.find_one_and_update(
             {'link': row['link']},
             {'$setOnInsert': {
@@ -295,6 +322,13 @@ def import_questions():
             return_document=True
         )
         qid = q_res['_id']
+
+        # 2) always fetch & store tags
+        slug = row['link'].rstrip('/').split('/')[-1]
+        tags = fetch_leetcode_tags(slug)
+        QUEST.update_one({'_id': qid}, {'$set': {'tags': tags}})
+
+        # 3) upsert company
         co_res = COMPANIES.find_one_and_update(
             {'name': row['company']},
             {'$setOnInsert': {'name': row['company']}},
@@ -302,6 +336,8 @@ def import_questions():
             return_document=True
         )
         cid = co_res['_id']
+
+        # 4) upsert company_questions
         CQ.replace_one(
             {'company_id': cid, 'question_id': qid, 'bucket': row['bucket']},
             {
@@ -316,6 +352,24 @@ def import_questions():
         created += 1
 
     return jsonify({'imported': created}), 201
+
+# ─── Admin-only: backfill tags for existing questions ─────────────────────
+@app.route('/api/admin/backfill-tags', methods=['POST'])
+@jwt_required()
+def backfill_tags():
+    uid = get_jwt_identity()
+    user = USERS.find_one({'_id': ObjectId(uid)})
+    if user.get('role') != 'admin':
+        abort(403, description='Only admin can run backfill')
+
+    cursor = QUEST.find({}, {'link': 1})
+    for q in cursor:
+        slug = q['link'].rstrip('/').split('/')[-1]
+        tags = fetch_leetcode_tags(slug)
+        QUEST.update_one({'_id': q['_id']}, {'$set': {'tags': tags}})
+        time.sleep(0.2)
+
+    return jsonify({'msg': 'Backfill complete'}), 200
 
 # =============================================================================
 # Public listings & per-user metadata
@@ -332,6 +386,38 @@ def list_buckets(company):
     if not co:
         abort(404, description=f"No company '{company}'")
     return jsonify(CQ.distinct('bucket', {'company_id': co['_id']})), 200
+
+# ─── Company-wise topics aggregation ──────────────────────────────────────
+@app.route('/api/companies/<company>/topics', methods=['GET'])
+@jwt_required()
+def get_company_topics(company):
+    co = COMPANIES.find_one({'name': company})
+    if not co:
+        abort(404, description=f"No company '{company}'")
+
+    bucket = request.args.get('bucket', 'All')
+    match = {'company_id': co['_id']}
+    if bucket and bucket != 'All':
+        match['bucket'] = bucket
+
+    pipeline = [
+        {'$match': match},
+        {'$lookup': {
+            'from': 'questions',
+            'localField': 'question_id',
+            'foreignField': '_id',
+            'as': 'q'
+        }},
+        {'$unwind': '$q'},
+        {'$unwind': '$q.tags'},
+        {'$group': {
+            '_id': '$q.tags',
+            'count': {'$sum': 1}
+        }},
+        {'$sort': {'count': -1}}
+    ]
+    results = list(CQ.aggregate(pipeline))
+    return jsonify({'data': [{'tag': r['_id'], 'count': r['count']} for r in results]}), 200
 
 @app.route('/api/companies/<company>/buckets/<bucket>/questions', methods=['GET'])
 @jwt_required()
@@ -394,31 +480,6 @@ def list_questions(company, bucket):
         out.append(itm)
 
     return jsonify({'data': out, 'total': total}), 200
-
-@app.route('/api/questions/<qid>', methods=['PATCH'])
-@jwt_required()
-def update_question(qid):
-    uid  = get_jwt_identity()
-    data = request.get_json() or {}
-    allowed = {'solved','userDifficulty'}
-    updates = {k: data[k] for k in allowed if k in data}
-    if not updates:
-        abort(400, description='No valid fields to update')
-    USER_META.update_one(
-        {'user_id': uid, 'question_id': qid},
-        {'$set': updates},
-        upsert=True
-    )
-    raw = USER_META.find_one({'user_id': uid, 'question_id': qid})
-    if not raw:
-        abort(404, description='Metadata not found')
-    return jsonify({
-        'id':             str(raw.pop('_id')),
-        'user_id':        raw.get('user_id'),
-        'question_id':    raw.get('question_id'),
-        'solved':         raw.get('solved', False),
-        'userDifficulty': raw.get('userDifficulty')
-    }), 200
 
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
