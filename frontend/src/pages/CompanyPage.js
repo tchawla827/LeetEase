@@ -1,7 +1,7 @@
-// frontend/src/pages/CompanyPage.jsx
+// frontend/src/pages/CompanyPage.js
 
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import BucketsTabs from '../components/BucketsTabs'
 import QuestionsTable from '../components/QuestionsTable'
 import TopicsDashboard from '../components/TopicsDashboard'
@@ -16,32 +16,51 @@ const BUCKET_ORDER = [
 
 export default function CompanyPage() {
   const { companyName } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [buckets, setBuckets]               = useState([])
-  const [selectedBucket, setSelectedBucket] = useState(null)
-  const [showUnsolved, setShowUnsolved]     = useState(false)
-  const [searchTerm, setSearchTerm]         = useState('')
-  const [refreshKey, setRefreshKey]         = useState(0)
+  // pull URL params once
+  const bucketFromUrl    = searchParams.get('bucket')
+  const tagFromUrl       = searchParams.get('tag')
+  const unsolvedFromUrl  = searchParams.get('unsolved') === 'true'
+  const qFromUrl         = searchParams.get('q') || ''
 
-  // analytics state
-  const [showAnalytics, setShowAnalytics]   = useState(false)
-  const [topics, setTopics]                 = useState([])
-  const [loadingTopics, setLoadingTopics]   = useState(false)
+  // --- filter & drill-down state (bootstrapped from URL) ---
+  const [selectedBucket, setSelectedBucket] = useState(() => bucketFromUrl || null)
+  const [selectedTag, setSelectedTag]       = useState(() => tagFromUrl || null)
+  const [showUnsolved, setShowUnsolved]     = useState(() => unsolvedFromUrl)
+  const [searchTerm, setSearchTerm]         = useState(() => qFromUrl)
 
-  // drill-down state
-  const [selectedTag, setSelectedTag]       = useState(null)
+  // --- buckets + loading flag ---
+  const [buckets, setBuckets]         = useState([])
+  const [bucketsLoading, setBucketsLoading] = useState(true)
 
-  // Listen for global "leetSync" events to auto-refresh questions
+  // --- other UI state ---
+  const [refreshKey, setRefreshKey]       = useState(0)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [topics, setTopics]               = useState([])
+  const [loadingTopics, setLoadingTopics] = useState(false)
+
+  // keep URL in sync
+  useEffect(() => {
+    const params = {}
+    if (selectedBucket) params.bucket   = selectedBucket
+    if (selectedTag)    params.tag      = selectedTag
+    if (showUnsolved)   params.unsolved = 'true'
+    if (searchTerm)     params.q        = searchTerm
+    setSearchParams(params, { replace: true })
+  }, [selectedBucket, selectedTag, showUnsolved, searchTerm, setSearchParams])
+
+  // global refresh listener
   useEffect(() => {
     const onSync = () => setRefreshKey(k => k + 1)
     window.addEventListener('leetSync', onSync)
     return () => window.removeEventListener('leetSync', onSync)
   }, [])
 
-  // Fetch available buckets when company changes, then restore or pick bucket
+  // fetch buckets when company (or bucketFromUrl) changes
   useEffect(() => {
-    setSelectedBucket(null)
-    setSelectedTag(null)
+    setBucketsLoading(true)
+    setBuckets([])
 
     fetch(`/api/companies/${encodeURIComponent(companyName)}/buckets`)
       .then(res => {
@@ -52,26 +71,32 @@ export default function CompanyPage() {
         const filtered = raw
           .filter(name => BUCKET_ORDER.includes(name))
           .sort((a, b) => BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b))
-
         setBuckets(filtered)
 
-        // Try to restore last bucket from localStorage
-        const key = `leetBucket:${companyName}`
-        const stored = localStorage.getItem(key)
-        if (stored && filtered.includes(stored)) {
-          setSelectedBucket(stored)
-        } else if (filtered.length > 0) {
-          setSelectedBucket(filtered[0])
+        // pick initial bucket: URL → localStorage → first
+        if (bucketFromUrl && filtered.includes(bucketFromUrl)) {
+          setSelectedBucket(bucketFromUrl)
+        } else {
+          const key = `leetBucket:${companyName}`
+          const stored = localStorage.getItem(key)
+          if (stored && filtered.includes(stored)) {
+            setSelectedBucket(stored)
+          } else if (filtered.length > 0) {
+            setSelectedBucket(filtered[0])
+          } else {
+            setSelectedBucket(null)
+          }
         }
       })
       .catch(console.error)
-  }, [companyName])
+      .finally(() => setBucketsLoading(false))
+  }, [companyName, bucketFromUrl])
 
-  // Fetch topic analytics when toggled on, a bucket is selected, or the "unsolved" filter changes
+  // fetch analytics when toggled on
   useEffect(() => {
     if (!showAnalytics || !selectedBucket) return
-
     setLoadingTopics(true)
+
     fetch(
       `/api/companies/${encodeURIComponent(companyName)}` +
       `/topics?bucket=${encodeURIComponent(selectedBucket)}` +
@@ -82,7 +107,7 @@ export default function CompanyPage() {
         return res.json()
       })
       .then(json => setTopics(json.data))
-      .catch(err => console.error(err))
+      .catch(console.error)
       .finally(() => setLoadingTopics(false))
   }, [companyName, showAnalytics, selectedBucket, showUnsolved])
 
@@ -101,17 +126,25 @@ export default function CompanyPage() {
         </label>
       </div>
 
-      <BucketsTabs
-        buckets={buckets}
-        selected={selectedBucket}
-        onSelect={bucket => {
-          setSelectedBucket(bucket)
-          localStorage.setItem(`leetBucket:${companyName}`, bucket)
-          setShowAnalytics(false)
-          setSelectedTag(null)
-        }}
-      />
+      {/* only render tabs when we've got our bucket list */}
+      {bucketsLoading ? (
+        <div>Loading buckets…</div>
+      ) : buckets.length > 0 ? (
+        <BucketsTabs
+          buckets={buckets}
+          selected={selectedBucket}
+          onSelect={bucket => {
+            setSelectedBucket(bucket)
+            localStorage.setItem(`leetBucket:${companyName}`, bucket)
+            setShowAnalytics(false)
+            setSelectedTag(null)
+          }}
+        />
+      ) : (
+        <p>No buckets found for this company.</p>
+      )}
 
+      {/* once we have a selectedBucket, show search / table / analytics */}
       {selectedBucket && (
         <>
           <div style={{ margin: '1rem 0', display: 'flex', gap: '1rem' }}>
@@ -181,10 +214,6 @@ export default function CompanyPage() {
             </>
           )}
         </>
-      )}
-
-      {!selectedBucket && buckets.length === 0 && (
-        <p>No buckets found for this company.</p>
       )}
     </div>
   )
