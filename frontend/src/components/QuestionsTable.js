@@ -20,18 +20,28 @@ export default function QuestionsTable({
   bucket,
   showUnsolved,
   searchTerm,
-  tagFilter,       // ← new prop
-  refreshKey       // ← existing
+  tagFilter,
+  refreshKey
 }) {
-  const [questions, setQuestions]   = useState([]);
-  const [page, setPage]             = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading]       = useState(false);
+  const [questions, setQuestions]       = useState([]);
+  const [page, setPage]                 = useState(1);
+  const [totalPages, setTotalPages]     = useState(1);
+  const [loading, setLoading]           = useState(false);
 
-  const [sortField, setSortField] = useState(null);
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortField, setSortField]       = useState(null);
+  const [sortOrder, setSortOrder]       = useState('asc');
 
-  // reset to page 1 when any filter/sort/search/refresh/tag changes
+  // --- New state for batch actions:
+  const [selected, setSelected]         = useState([]);      // array of q.id's
+  const [batchDifficulty, setBatchDifficulty] = useState('');
+
+  // whenever the visible questions list changes, clear selection
+  useEffect(() => {
+    setSelected([]);
+    setBatchDifficulty('');
+  }, [questions]);
+
+  // reset to page 1 when filters or sorts change
   useEffect(() => {
     setPage(1);
   }, [
@@ -41,11 +51,11 @@ export default function QuestionsTable({
     sortField,
     sortOrder,
     searchTerm,
-    tagFilter,    // ← include tagFilter
+    tagFilter,
     refreshKey
   ]);
 
-  // fetch questions
+  // fetch questions from backend
   useEffect(() => {
     if (!company || !bucket) {
       setQuestions([]);
@@ -63,7 +73,7 @@ export default function QuestionsTable({
       showUnsolved,
       ...(searchTerm && { search: searchTerm }),
       ...(!isDifficulty && sortField && { sortField, sortOrder }),
-      ...(tagFilter && { tag: tagFilter })   // ← pass tagFilter to API
+      ...(tagFilter && { tag: tagFilter }),
     };
 
     api
@@ -77,11 +87,8 @@ export default function QuestionsTable({
 
         let list = data;
         if (showUnsolved) {
-          // this client‐side filter is redundant if backend handles showUnsolved,
-          // but kept for backward compatibility
           list = list.filter(q => !q.solved);
         }
-
         if (isDifficulty) {
           list = [...list].sort((a, b) => {
             const ra = difficultyRank[a[sortField]] ?? 0;
@@ -89,7 +96,6 @@ export default function QuestionsTable({
             return sortOrder === 'asc' ? ra - rb : rb - ra;
           });
         }
-
         setQuestions(list);
       })
       .catch(console.error)
@@ -102,7 +108,7 @@ export default function QuestionsTable({
     sortField,
     sortOrder,
     searchTerm,
-    tagFilter,    // ← include tagFilter
+    tagFilter,
     refreshKey
   ]);
 
@@ -118,6 +124,7 @@ export default function QuestionsTable({
   const arrow = f =>
     sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '';
 
+  // single‐row update (existing)
   const updateField = (questionId, field, value) => {
     api
       .patch(`/api/questions/${questionId}`, { [field]: value })
@@ -138,6 +145,33 @@ export default function QuestionsTable({
       .catch(console.error);
   };
 
+  // --- batch update helper
+  const batchUpdate = fields => {
+    if (!selected.length) return;
+    api
+      .patch('/api/questions/batch-meta', {
+        ids: selected,
+        ...fields
+      })
+      .then(res => {
+        const updates = res.data;
+        setQuestions(prev =>
+          prev.map(q => {
+            const hit = updates.find(u => u.question_id === q.id);
+            if (!hit) return q;
+            return {
+              ...q,
+              solved: hit.solved,
+              userDifficulty: hit.userDifficulty ?? null,
+            };
+          })
+        );
+        setSelected([]);
+        setBatchDifficulty('');
+      })
+      .catch(console.error);
+  };
+
   return (
     <>
       <table
@@ -147,6 +181,21 @@ export default function QuestionsTable({
       >
         <thead>
           <tr>
+            {/* ← batch‐select all */}
+            <th>
+              <input
+                type="checkbox"
+                checked={
+                  questions.length > 0 &&
+                  selected.length === questions.length
+                }
+                onChange={() =>
+                  selected.length === questions.length
+                    ? setSelected([])
+                    : setSelected(questions.map(q => q.id))
+                }
+              />
+            </th>
             {Object.entries(SORT_FIELDS).map(([field, label]) => (
               <th
                 key={field}
@@ -174,6 +223,21 @@ export default function QuestionsTable({
                 key={q.id}
                 style={q.solved ? { backgroundColor: '#e6ffed' } : {}}
               >
+                {/* ← per‐row selector */}
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(q.id)}
+                    onChange={() =>
+                      setSelected(sel =>
+                        sel.includes(q.id)
+                          ? sel.filter(x => x !== q.id)
+                          : [...sel, q.id]
+                      )
+                    }
+                  />
+                </td>
+
                 <td>{q.title}</td>
                 <td>{q.frequency}</td>
                 <td>{(q.acceptanceRate * 100).toFixed(1)}%</td>
@@ -221,11 +285,54 @@ export default function QuestionsTable({
         </tbody>
       </table>
 
+      {/* ← sticky footer for batch actions */}
+      {selected.length > 0 && (
+        <div
+          style={{
+            position:   'sticky',
+            bottom:     0,
+            background: '#fff',
+            padding:    '0.75rem 1rem',
+            borderTop:  '1px solid #ccc',
+            display:    'flex',
+            alignItems: 'center',
+            gap:        '0.75rem',
+            zIndex:     10
+          }}
+        >
+          <strong>{selected.length} selected</strong>
+          <button onClick={() => batchUpdate({ solved: true })}>
+            Mark Solved
+          </button>
+          <button onClick={() => batchUpdate({ solved: false })}>
+            Mark Unsolved
+          </button>
+          <select
+            value={batchDifficulty}
+            onChange={e => setBatchDifficulty(e.target.value)}
+          >
+            <option value="">Set difficulty…</option>
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+          <button
+            disabled={!batchDifficulty}
+            onClick={() =>
+              batchUpdate({ userDifficulty: batchDifficulty })
+            }
+          >
+            Apply Difficulty
+          </button>
+        </div>
+      )}
+
+      {/* pagination controls */}
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          margin: '1rem 0',
+          display:       'flex',
+          justifyContent:'center',
+          margin:        '1rem 0',
         }}
       >
         <button
@@ -238,7 +345,9 @@ export default function QuestionsTable({
           Page {page} of {totalPages}
         </span>
         <button
-          onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+          onClick={() =>
+            setPage(p => Math.min(p + 1, totalPages))
+          }
           disabled={page === totalPages}
         >
           Next →

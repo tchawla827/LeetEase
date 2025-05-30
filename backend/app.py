@@ -595,7 +595,42 @@ def update_question_meta(question_id):
     }
     return jsonify(resp), 200
 
+@app.route('/api/questions/batch-meta', methods=['PATCH'])
+@jwt_required()
+def batch_update_questions_meta():
+    uid   = get_jwt_identity()
+    data  = request.get_json() or {}
+    ids   = data.get('ids')
+    # require a non‐empty array of question IDs
+    if not isinstance(ids, list) or not ids:
+        abort(400, description="Field 'ids' must be a non-empty list")
 
+    # only these two fields are allowed
+    update_fields = {}
+    if 'solved' in data:
+        update_fields['solved'] = bool(data['solved'])
+    if 'userDifficulty' in data:
+        update_fields['userDifficulty'] = data.get('userDifficulty') or None
+    if not update_fields:
+        abort(400, description="No valid fields to update (solved, userDifficulty)")
+
+    results = []
+    for qid in ids:
+        # upsert per‐user metadata
+        USER_META.update_one(
+            {'user_id': uid, 'question_id': qid},
+            {'$set': update_fields},
+            upsert=True
+        )
+        # re-read so we can return the actual saved state
+        meta = USER_META.find_one({'user_id': uid, 'question_id': qid})
+        results.append({
+            'question_id':   qid,
+            'solved':        meta.get('solved', False),
+            'userDifficulty': meta.get('userDifficulty')
+        })
+
+    return jsonify(results), 200
 
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
