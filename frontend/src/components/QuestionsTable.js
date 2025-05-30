@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '../api';
+import './QuestionsTable.css';
 
 const PAGE_SIZE = 50;
 
@@ -23,25 +24,25 @@ export default function QuestionsTable({
   tagFilter,
   refreshKey
 }) {
-  const [questions, setQuestions]       = useState([]);
-  const [page, setPage]                 = useState(1);
-  const [totalPages, setTotalPages]     = useState(1);
-  const [loading, setLoading]           = useState(false);
+  const [questions, setQuestions]           = useState([]);
+  const [page, setPage]                     = useState(1);
+  const [totalPages, setTotalPages]         = useState(1);
+  const [loading, setLoading]               = useState(false);
 
-  const [sortField, setSortField]       = useState(null);
-  const [sortOrder, setSortOrder]       = useState('asc');
+  const [sortField, setSortField]           = useState(null);
+  const [sortOrder, setSortOrder]           = useState('asc');
 
-  // --- New state for batch actions:
-  const [selected, setSelected]         = useState([]);      // array of q.id's
+  // batch‐actions state
+  const [selected, setSelected]             = useState([]);      // array of q.id's
   const [batchDifficulty, setBatchDifficulty] = useState('');
 
-  // whenever the visible questions list changes, clear selection
+  // clear selection when questions change
   useEffect(() => {
     setSelected([]);
     setBatchDifficulty('');
   }, [questions]);
 
-  // reset to page 1 when filters or sorts change
+  // reset to page 1 when filters/sorts/search/refresh change
   useEffect(() => {
     setPage(1);
   }, [
@@ -55,7 +56,7 @@ export default function QuestionsTable({
     refreshKey
   ]);
 
-  // fetch questions from backend
+  // fetch questions
   useEffect(() => {
     if (!company || !bucket) {
       setQuestions([]);
@@ -112,6 +113,7 @@ export default function QuestionsTable({
     refreshKey
   ]);
 
+  // sort handlers
   const onSort = field => {
     if (sortField === field) {
       setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
@@ -120,11 +122,10 @@ export default function QuestionsTable({
       setSortOrder('asc');
     }
   };
-
   const arrow = f =>
     sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '';
 
-  // single‐row update (existing)
+  // single‐row update
   const updateField = (questionId, field, value) => {
     api
       .patch(`/api/questions/${questionId}`, { [field]: value })
@@ -145,7 +146,7 @@ export default function QuestionsTable({
       .catch(console.error);
   };
 
-  // --- batch update helper
+  // batch update helper
   const batchUpdate = fields => {
     if (!selected.length) return;
     api
@@ -172,6 +173,17 @@ export default function QuestionsTable({
       .catch(console.error);
   };
 
+  // helper to pick a CSS class per row
+  const getRowClass = q => {
+    if (q.solved && !q.userDifficulty) return 'row-solved';
+    switch (q.userDifficulty) {
+      case 'Easy':   return 'row-easy';
+      case 'Medium': return 'row-medium';
+      case 'Hard':   return 'row-hard';
+      default:       return '';
+    }
+  };
+
   return (
     <>
       <table
@@ -181,7 +193,6 @@ export default function QuestionsTable({
       >
         <thead>
           <tr>
-            {/* ← batch‐select all */}
             <th>
               <input
                 type="checkbox"
@@ -219,11 +230,7 @@ export default function QuestionsTable({
             </tr>
           ) : questions.length ? (
             questions.map(q => (
-              <tr
-                key={q.id}
-                style={q.solved ? { backgroundColor: '#e6ffed' } : {}}
-              >
-                {/* ← per‐row selector */}
+              <tr key={q.id} className={getRowClass(q)}>
                 <td>
                   <input
                     type="checkbox"
@@ -237,7 +244,6 @@ export default function QuestionsTable({
                     }
                   />
                 </td>
-
                 <td>{q.title}</td>
                 <td>{q.frequency}</td>
                 <td>{(q.acceptanceRate * 100).toFixed(1)}%</td>
@@ -285,7 +291,6 @@ export default function QuestionsTable({
         </tbody>
       </table>
 
-      {/* ← sticky footer for batch actions */}
       {selected.length > 0 && (
         <div
           style={{
@@ -327,12 +332,11 @@ export default function QuestionsTable({
         </div>
       )}
 
-      {/* pagination controls */}
       <div
         style={{
-          display:       'flex',
-          justifyContent:'center',
-          margin:        '1rem 0',
+          display:        'flex',
+          justifyContent: 'center',
+          margin:         '1rem 0',
         }}
       >
         <button
@@ -350,7 +354,7 @@ export default function QuestionsTable({
           }
           disabled={page === totalPages}
         >
-          Next →
+          Next →  
         </button>
       </div>
     </>
