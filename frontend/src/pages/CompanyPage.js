@@ -5,6 +5,8 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import BucketsTabs from '../components/BucketsTabs'
 import QuestionsTable from '../components/QuestionsTable'
 import TopicsDashboard from '../components/TopicsDashboard'
+import CompanyProgress from '../components/CompanyProgress'
+import { fetchCompanyProgress } from '../api'
 
 const BUCKET_ORDER = [
   '30Days',
@@ -33,6 +35,10 @@ export default function CompanyPage() {
   // --- buckets + loading flag ---
   const [buckets, setBuckets]         = useState([])
   const [bucketsLoading, setBucketsLoading] = useState(true)
+
+  // --- company-progress state + loading flag ---
+  const [progressData, setProgressData]   = useState([])
+  const [loadingProgress, setLoadingProgress] = useState(true)
 
   // --- other UI state ---
   const [refreshKey, setRefreshKey]       = useState(0)
@@ -92,6 +98,21 @@ export default function CompanyPage() {
       .finally(() => setBucketsLoading(false))
   }, [companyName, bucketFromUrl])
 
+  // ── Fetch company-progress when companyName changes ────────────────────
+  useEffect(() => {
+    if (!companyName) return
+    setLoadingProgress(true)
+    fetchCompanyProgress(companyName)
+      .then(res => {
+        setProgressData(res.data || [])
+      })
+      .catch(err => {
+        console.error('Failed to load company progress', err)
+        setProgressData([])
+      })
+      .finally(() => setLoadingProgress(false))
+  }, [companyName])
+
   // fetch analytics when toggled on
   useEffect(() => {
     if (!showAnalytics || !selectedBucket) return
@@ -114,6 +135,9 @@ export default function CompanyPage() {
   return (
     <div style={{ padding: '1rem', height: '100%', overflow: 'auto' }}>
       <h1>{companyName}</h1>
+
+      {/* ── Render company-progress widget ─────────────────────────────────── */}
+      <CompanyProgress data={progressData} loading={loadingProgress} />
 
       <div style={{ margin: '0.5rem 0' }}>
         <label>

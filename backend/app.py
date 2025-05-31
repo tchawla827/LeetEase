@@ -636,6 +636,96 @@ def batch_update_questions_meta():
 
     return jsonify(results), 200
 
+
+# ─── Company-wide progress (per bucket) ────────────────────────────────────
+@app.route('/api/companies/<company>/progress', methods=['GET'])
+@jwt_required()
+def company_progress(company):
+    """
+    Returns, for each predefined bucket, how many questions there are for <company>
+    and how many of those the current user has marked as solved.
+    Response format:
+      [
+        { "bucket": "30Days",      "total":  12, "solved": 7 },
+        { "bucket": "3Months",     "total":  45, "solved": 12 },
+        { "bucket": "6Months",     "total":  30, "solved": 4 },
+        { "bucket": "MoreThan6Months", "total": 20, "solved": 1 },
+        { "bucket": "All",         "total":  107, "solved": 24 }
+      ]
+    """
+    uid = get_jwt_identity()
+
+    # 1) Find the company document
+    co = COMPANIES.find_one({'name': company})
+    if not co:
+        abort(404, description=f"No company '{company}'")
+
+    # 2) Aggregate: for each bucket, count total vs. solved
+    #    We match company_id → lookup user_meta → group by bucket.
+    pipeline = [
+        { '$match': { 'company_id': co['_id'] } },
+        { '$lookup': {
+            'from': 'user_meta',
+            'let': { 'qid': '$question_id' },
+            'pipeline': [
+                { '$match': {
+                    '$expr': {
+                        '$and': [
+                            # user_meta.question_id is stored as STRING, so compare to stringified ObjectId
+                            { '$eq': [ '$question_id', { '$toString': '$$qid' } ] },
+                            { '$eq': [ '$user_id', uid ] }
+                        ]
+                    }
+                }},
+                { '$project': { 'solved': 1, '_id': 0 } }
+            ],
+            'as': 'meta'
+        }},
+        { '$group': {
+            '_id': '$bucket',
+            'total': { '$sum': 1 },
+            # If meta array is non-empty and meta[0].solved == true, count as solved
+            'solved': {
+                '$sum': {
+                    '$cond': [
+                        { 
+                          '$and': [
+                            { '$ne': [ '$meta', [] ] },
+                            { '$eq': [ { '$arrayElemAt': [ '$meta.solved', 0 ] }, True ] }
+                          ]
+                        },
+                        1,
+                        0
+                      ]
+                }
+            }
+        }},
+        # Ensure consistent order by bucket if you like; otherwise front-end can sort by our BUCKET_ORDER.
+        { '$project': {
+            'bucket': '$_id',
+            'total': 1,
+            'solved': 1,
+            '_id': 0
+        }}
+    ]
+
+    results = list(CQ.aggregate(pipeline))
+    # results is a list of dicts: { bucket: <name>, total: <int>, solved: <int> }
+
+    # It’s possible that some buckets have zero questions, so for completeness
+    # we’ll fill in any missing buckets with total=0, solved=0.
+
+    BUCKET_ORDER = ["30Days", "3Months", "6Months", "MoreThan6Months", "All"]
+    bucket_map = { r['bucket']: r for r in results }
+    final_list = []
+    for b in BUCKET_ORDER:
+        if b in bucket_map:
+            final_list.append(bucket_map[b])
+        else:
+            final_list.append({ 'bucket': b, 'total': 0, 'solved': 0 })
+    return jsonify(final_list), 200
+
+
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
     """Sync every user who has both handle & session saved."""

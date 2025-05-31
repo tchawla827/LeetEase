@@ -1,24 +1,20 @@
+// ─── Existing code ───
 import axios from 'axios'
 import Cookies from 'js-cookie'
 
-// Create a single Axios instance for the whole app
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '',
-  withCredentials: true, // send / receive cookies
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-/* ------------------------------------------------------------------ */
-/*              Attach CSRF token for state‐changing calls            */
-/* ------------------------------------------------------------------ */
 api.interceptors.request.use(
   config => {
-    // Methods that modify state need the CSRF header
     const needsCsrf = /^(post|put|patch|delete)$/i.test(config.method)
     if (needsCsrf) {
-      const csrf = Cookies.get('csrf_access_token') // set by Flask on login
+      const csrf = Cookies.get('csrf_access_token')
       if (csrf) {
         config.headers['X-CSRF-TOKEN'] = csrf
       }
@@ -27,5 +23,11 @@ api.interceptors.request.use(
   },
   error => Promise.reject(error)
 )
+
+// ─── NEW: Fetch company progress ────────────────────────────────────────
+export function fetchCompanyProgress(companyName) {
+  const path = `/api/companies/${encodeURIComponent(companyName)}/progress`
+  return api.get(path)
+}
 
 export default api
