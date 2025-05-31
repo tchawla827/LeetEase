@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode Tracker API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6b46c1 0%, #805ad5 100%);
+        }
+        .code-block {
+            font-family: 'Courier New', monospace;
+            background-color: #2d3748;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .method-get { color: #68d391; }
+        .method-post { color: #f6ad55; }
+        .method-patch { color: #f6e05e; }
+        .method-delete { color: #fc8181; }
+        .tab-active {
+            border-bottom: 3px solid #805ad5;
+            color: #805ad5;
+            font-weight: 600;
+        }
+        .sidebar-item:hover {
+            background-color: rgba(124, 58, 237, 0.1);
+        }
+        .sidebar-item.active {
+            background-color: rgba(124, 58, 237, 0.2);
+            border-left: 4px solid #805ad5;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex flex-col md:flex-row">
+        <!-- Sidebar -->
+        <div class="w-full md:w-64 bg-white shadow-lg md:h-screen sticky top-0">
+            <div class="p-4 gradient-bg text-white">
+                <h1 class="text-2xl font-bold">LeetCode API</h1>
+                <p class="text-sm opacity-80">Axios-based API client</p>
+            </div>
+            <div class="p-4">
+                <div class="mb-6">
+                    <h3 class="text-xs uppercase font-semibold text-gray-500 mb-2">Authentication</h3>
+                    <div class="space-y-1">
+                        <a href="#login" class="sidebar-item block px-3 py-2 rounded text-gray-700 active">login()</a>
+                        <a href="#register" class="sidebar-item block px-3 py-2 rounded text-gray-700">register()</a>
+                        <a href="#getProfile" class="sidebar-item block px-3 py-2 rounded text-gray-700">getProfile()</a>
+                        <a href="#logout" class="sidebar-item block px-3 py-2 rounded text-gray-700">logout()</a>
+                        <a href="#syncLeetCode" class="sidebar-item block px-3 py-2 rounded text-gray-700">syncLeetCodeProfile()</a>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-xs uppercase font-semibold text-gray-500 mb-2">Companies</h3>
+                    <div class="space-y-1">
+                        <a href="#getCompanies" class="sidebar-item block px-3 py-2 rounded text-gray-700">getCompanies()</a>
+                        <a href="#getTopics" class="sidebar-item block px-3 py-2 rounded text-gray-700">getTopics()</a>
+                        <a href="#companyProgress" class="sidebar-item block px-3 py-2 rounded text-gray-700">fetchCompanyProgress()</a>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-xs uppercase font-semibold text-gray-500 mb-2">Questions</h3>
+                    <div class="space-y-1">
+                        <a href="#getQuestions" class="sidebar-item block px-3 py-2 rounded text-gray-700">getQuestions()</a>
+                        <a href="#batchUpdateSolved" class="sidebar-item block px-3 py-2 rounded text-gray-700">batchUpdateSolved()</a>
+                        <a href="#batchUpdateDifficulty" class="sidebar-item block px-3 py-2 rounded text-gray-700">batchUpdateDifficulty()</a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xs uppercase font-semibold text-gray-500 mb-2">Admin</h3>
+                    <div class="space-y-1">
+                        <a href="#importQuestions" class="sidebar-item block px-3 py-2 rounded text-gray-700">importQuestionsExcel()</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6 md:p-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="gradient-bg text-white rounded-xl p-6 mb-8 shadow-lg">
+                    <h1 class="text-3xl font-bold mb-2">LeetCode Tracker API</h1>
+                    <p class="opacity-90">Axios-based API client for interacting with the LeetCode Tracker backend</p>
+                </div>
+
+                <!-- API Configuration -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">API Configuration</h2>
+                    <div class="code-block mb-4">
+                        <pre><code>import axios from 'axios'
+import Cookies from 'js-cookie'
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || '',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+api.interceptors.request.use(
+  config => {
+    const needsCsrf = /^(post|put|patch|delete)$/i.test(config.method)
+    if (needsCsrf) {
+      const csrf = Cookies.get('csrf_access_token')
+      if (csrf) {
+        config.headers['X-CSRF-TOKEN'] = csrf
+      }
+    }
+    return config
+  },
+  error => Promise.reject(error)
+)</code></pre>
+                    </div>
+                </div>
+
+                <!-- Authentication Methods -->
+                <div id="login" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-post mr-3"><i class="fas fa-sign-in-alt"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">login(credentials)</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Authenticates a user with email and password credentials.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function login(credentials) {
+  return api.post('/api/auth/login', credentials)
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Parameters:</strong> credentials (object) - { email: string, password: string }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="register" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-post mr-3"><i class="fas fa-user-plus"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">register(data)</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Registers a new user account.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function register(data) {
+  return api.post('/api/auth/register', data)
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Parameters:</strong> data (object) - { email: string, password: string, name: string }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="getProfile" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-get mr-3"><i class="fas fa-user"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">getProfile()</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Gets the current authenticated user's profile.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function getProfile() {
+  return api.get('/api/auth/me')
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                </div>
+
+                <div id="logout" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-post mr-3"><i class="fas fa-sign-out-alt"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">logout()</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Logs out the current authenticated user.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function logout() {
+  return api.post('/api/auth/logout')
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Company Methods -->
+                <div id="getCompanies" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-get mr-3"><i class="fas fa-building"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">getCompanies()</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Gets a list of all companies.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function getCompanies() {
+  return api.get('/api/companies')
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                </div>
+
+                <div id="companyProgress" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-get mr-3"><i class="fas fa-chart-line"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">fetchCompanyProgress(companyName)</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Gets progress data for a specific company.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function fetchCompanyProgress(companyName) {
+  const path = `/api/companies/${encodeURIComponent(companyName)}/progress`
+  return api.get(path)
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Parameters:</strong> companyName (string) - The name of the company to fetch progress for
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Methods -->
+                <div id="getQuestions" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-get mr-3"><i class="fas fa-question-circle"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">getQuestions(companyName, bucket, filters)</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Gets questions for a specific company and bucket with optional filters.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function getQuestions(companyName, bucket, filters) {
+  const params = {
+    company: companyName,
+    bucket,
+    search: filters?.search,
+    showUnsolved: filters?.showUnsolved
+  }
+  return api.get('/api/questions', { params })
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Parameters:</strong><br>
+                                    companyName (string) - The company name<br>
+                                    bucket (string) - The bucket type (e.g., "top", "recent")<br>
+                                    filters (object) - Optional filters { search: string, showUnsolved: boolean }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Batch Update Methods -->
+                <div id="batchUpdateSolved" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-patch mr-3"><i class="fas fa-check-circle"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">batchUpdateSolved(ids, solved)</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Updates the solved status for multiple questions at once.</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function batchUpdateSolved(ids, solved) {
+  return api.patch('/api/questions/batch-solved', { ids, solved })
+    .catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Parameters:</strong><br>
+                                    ids (array) - Array of question IDs to update<br>
+                                    solved (boolean) - New solved status
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Methods -->
+                <div id="importQuestions" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <div class="flex items-center mb-4">
+                        <span class="method-post mr-3"><i class="fas fa-file-import"></i></span>
+                        <h2 class="text-xl font-semibold text-gray-800">importQuestionsExcel(file)</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Imports questions from an Excel file (admin only).</p>
+                    <div class="code-block mb-4">
+                        <pre><code>export function importQuestionsExcel(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/api/admin/import-excel', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }).catch(error => Promise.reject(error.response.data))
+}</code></pre>
+                    </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    <strong>Parameters:</strong> file (File) - Excel file containing questions data
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="text-center text-gray-500 text-sm mt-12">
+                    <p>LeetCode Tracker API Documentation</p>
+                    <p class="mt-1">Built with Axios and TailwindCSS</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple navigation highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            
+            // Highlight active sidebar item based on hash
+            function highlightActiveItem() {
+                const hash = window.location.hash || '#login';
+                sidebarItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('href') === hash) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+            
+            // Initial highlight
+            highlightActiveItem();
+            
+            // Update highlight when hash changes
+            window.addEventListener('hashchange', highlightActiveItem);
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
