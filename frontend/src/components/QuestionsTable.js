@@ -1,10 +1,11 @@
 // frontend/src/components/QuestionsTable.js
 
-import React, { useEffect, useState } from 'react';
-import api from '../api';
-import './QuestionsTable.css';
+import React, { useEffect, useState } from 'react'
+import api from '../api'
+import { useAuth } from '../context/AuthContext'
+import './QuestionsTable.css'
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 50
 
 const SORT_FIELDS = {
   title:          'Title',
@@ -12,9 +13,9 @@ const SORT_FIELDS = {
   acceptanceRate: 'Acceptance',
   leetDifficulty: 'Leet Diff',
   userDifficulty: 'Your Diff',
-};
+}
 
-const difficultyRank = { Easy: 1, Medium: 2, Hard: 3 };
+const difficultyRank = { Easy: 1, Medium: 2, Hard: 3 }
 
 export default function QuestionsTable({
   company,
@@ -24,27 +25,42 @@ export default function QuestionsTable({
   tagFilter,
   refreshKey
 }) {
-  const [questions, setQuestions]           = useState([]);
-  const [page, setPage]                     = useState(1);
-  const [totalPages, setTotalPages]         = useState(1);
-  const [loading, setLoading]               = useState(false);
+  const { user } = useAuth()
 
-  const [sortField, setSortField]           = useState(null);
-  const [sortOrder, setSortOrder]           = useState('asc');
+  // ─── NEW: pull palette & mode from user.settings ───────────────────────
+  const defaults = {
+    colorMode: 'leet',
+    palette: {
+      easy:   '#8BC34A',
+      medium: '#FFB74D',
+      hard:   '#E57373',
+      solved: '#9E9E9E'
+    }
+  }
+  const { colorMode, palette } = user?.settings || defaults
+
+  // ─── existing state ───────────────────────────────────────────────────
+  const [questions, setQuestions]           = useState([])
+  const [page, setPage]                     = useState(1)
+  const [totalPages, setTotalPages]         = useState(1)
+  const [loading, setLoading]               = useState(false)
+
+  const [sortField, setSortField]           = useState(null)
+  const [sortOrder, setSortOrder]           = useState('asc')
 
   // batch‐actions state
-  const [selected, setSelected]             = useState([]);      // array of q.id's
-  const [batchDifficulty, setBatchDifficulty] = useState('');
+  const [selected, setSelected]             = useState([])      // array of q.id's
+  const [batchDifficulty, setBatchDifficulty] = useState('')
 
   // clear selection when questions change
   useEffect(() => {
-    setSelected([]);
-    setBatchDifficulty('');
-  }, [questions]);
+    setSelected([])
+    setBatchDifficulty('')
+  }, [questions])
 
   // reset to page 1 when filters/sorts/search/refresh change
   useEffect(() => {
-    setPage(1);
+    setPage(1)
   }, [
     company,
     bucket,
@@ -54,19 +70,19 @@ export default function QuestionsTable({
     searchTerm,
     tagFilter,
     refreshKey
-  ]);
+  ])
 
   // fetch questions
   useEffect(() => {
     if (!company || !bucket) {
-      setQuestions([]);
-      setTotalPages(1);
-      return;
+      setQuestions([])
+      setTotalPages(1)
+      return
     }
-    setLoading(true);
+    setLoading(true)
 
     const isDifficulty =
-      sortField === 'leetDifficulty' || sortField === 'userDifficulty';
+      sortField === 'leetDifficulty' || sortField === 'userDifficulty'
 
     const params = {
       page,
@@ -75,7 +91,7 @@ export default function QuestionsTable({
       ...(searchTerm && { search: searchTerm }),
       ...(!isDifficulty && sortField && { sortField, sortOrder }),
       ...(tagFilter && { tag: tagFilter }),
-    };
+    }
 
     api
       .get(
@@ -83,24 +99,24 @@ export default function QuestionsTable({
         { params }
       )
       .then(res => {
-        const { data, total } = res.data;
-        setTotalPages(Math.ceil(total / PAGE_SIZE));
+        const { data, total } = res.data
+        setTotalPages(Math.ceil(total / PAGE_SIZE))
 
-        let list = data;
+        let list = data
         if (showUnsolved) {
-          list = list.filter(q => !q.solved);
+          list = list.filter(q => !q.solved)
         }
         if (isDifficulty) {
           list = [...list].sort((a, b) => {
-            const ra = difficultyRank[a[sortField]] ?? 0;
-            const rb = difficultyRank[b[sortField]] ?? 0;
-            return sortOrder === 'asc' ? ra - rb : rb - ra;
-          });
+            const ra = difficultyRank[a[sortField]] ?? 0
+            const rb = difficultyRank[b[sortField]] ?? 0
+            return sortOrder === 'asc' ? ra - rb : rb - ra
+          })
         }
-        setQuestions(list);
+        setQuestions(list)
       })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => setLoading(false))
   }, [
     company,
     bucket,
@@ -111,78 +127,83 @@ export default function QuestionsTable({
     searchTerm,
     tagFilter,
     refreshKey
-  ]);
+  ])
 
   // sort handlers
   const onSort = field => {
     if (sortField === field) {
-      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
     } else {
-      setSortField(field);
-      setSortOrder('asc');
+      setSortField(field)
+      setSortOrder('asc')
     }
-  };
+  }
   const arrow = f =>
-    sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '';
+    sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''
 
   // single‐row update
   const updateField = (questionId, field, value) => {
     api
       .patch(`/api/questions/${questionId}`, { [field]: value })
       .then(res => {
-        const updates = Array.isArray(res.data) ? res.data : [res.data];
+        const updates = Array.isArray(res.data) ? res.data : [res.data]
         setQuestions(prev =>
           prev.map(q => {
-            const hit = updates.find(u => u.question_id === q.id);
-            if (!hit) return q;
+            const hit = updates.find(u => u.question_id === q.id)
+            if (!hit) return q
             return {
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
-            };
+            }
           })
-        );
+        )
       })
-      .catch(console.error);
-  };
+      .catch(console.error)
+  }
 
   // batch update helper
   const batchUpdate = fields => {
-    if (!selected.length) return;
+    if (!selected.length) return
     api
       .patch('/api/questions/batch-meta', {
         ids: selected,
         ...fields
       })
       .then(res => {
-        const updates = res.data;
+        const updates = res.data
         setQuestions(prev =>
           prev.map(q => {
-            const hit = updates.find(u => u.question_id === q.id);
-            if (!hit) return q;
+            const hit = updates.find(u => u.question_id === q.id)
+            if (!hit) return q
             return {
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
-            };
+            }
           })
-        );
-        setSelected([]);
-        setBatchDifficulty('');
+        )
+        setSelected([])
+        setBatchDifficulty('')
       })
-      .catch(console.error);
-  };
+      .catch(console.error)
+  }
 
-  // helper to pick a CSS class per row
-  const getRowClass = q => {
-    if (q.solved && !q.userDifficulty) return 'row-solved';
-    switch (q.userDifficulty) {
-      case 'Easy':   return 'row-easy';
-      case 'Medium': return 'row-medium';
-      case 'Hard':   return 'row-hard';
-      default:       return '';
+  // ─── NEW: compute inline style per row ────────────────────────────────
+  const getRowStyle = q => {
+    if (q.solved) {
+      return { backgroundColor: palette.solved }
     }
-  };
+    const difficulty = colorMode === 'leet'
+      ? q.leetDifficulty
+      : q.userDifficulty
+    switch (difficulty) {
+      case 'Easy':   return { backgroundColor: palette.easy }
+      case 'Medium': return { backgroundColor: palette.medium }
+      case 'Hard':   return { backgroundColor: palette.hard }
+      default:       return {}
+    }
+  }
 
   return (
     <>
@@ -230,7 +251,7 @@ export default function QuestionsTable({
             </tr>
           ) : questions.length ? (
             questions.map(q => (
-              <tr key={q.id} className={getRowClass(q)}>
+              <tr key={q.id} style={getRowStyle(q)}>
                 <td>
                   <input
                     type="checkbox"
@@ -354,9 +375,9 @@ export default function QuestionsTable({
           }
           disabled={page === totalPages}
         >
-          Next →  
+          Next →
         </button>
       </div>
     </>
-  );
+  )
 }

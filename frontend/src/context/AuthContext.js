@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
   const [syncResult, setSyncResult] = useState(null)
   const navigate                    = useNavigate()
 
-  // background‐sync helper
+  // ─── Background‐sync helper ─────────────────────────────────────────────
   const syncBackground = async () => {
     setSyncResult(null)
     setSyncing(true)
@@ -24,7 +24,19 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // On mount: restore from localStorage, then hit /auth/me
+  // ─── Save color & mode settings ─────────────────────────────────────────
+  const saveSettings = async (settings) => {
+    const res = await api.patch('/profile/settings', settings)
+    const newSettings = res.data
+    setUser(prev => {
+      const updated = { ...prev, settings: newSettings }
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
+    return newSettings
+  }
+
+  // ─── On mount: restore from localStorage, then hit /auth/me ─────────────
   useEffect(() => {
     const stored = localStorage.getItem('user')
     if (stored) {
@@ -45,7 +57,7 @@ export function AuthProvider({ children }) {
       })
   }, [])
 
-  // login + then sync if needed
+  // ─── login + then sync if needed ────────────────────────────────────────
   const login = async (email, password) => {
     await api.post('/auth/login', { email, password })
     const res = await api.get('/auth/me')
@@ -56,7 +68,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // logout + redirect
+  // ─── logout + redirect ──────────────────────────────────────────────────
   const logout = async () => {
     try {
       await api.post('/auth/logout')
@@ -79,7 +91,8 @@ export function AuthProvider({ children }) {
       logout,
       syncing,
       syncResult,
-      syncBackground
+      syncBackground,
+      saveSettings         // expose saveSettings to children
     }}>
       {children}
     </AuthContext.Provider>

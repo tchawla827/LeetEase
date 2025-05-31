@@ -3,21 +3,26 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api'
 
 export default function Profile() {
-  const { syncBackground } = useAuth()
+  const { user, saveSettings, syncBackground } = useAuth()
 
   const [loading, setLoading]             = useState(true)
   const [firstName, setFirstName]         = useState('')
   const [lastName, setLastName]           = useState('')
   const [email, setEmail]                 = useState('')
   const [college, setCollege]             = useState('')
-  const [role, setRole]                   = useState('')             // new
+  const [role, setRole]                   = useState('')
   const [leetcodeUsername, setLeetcodeUsername] = useState('')
   const [leetcodeSession, setLeetcodeSession]   = useState('')
   const [message, setMessage]             = useState('')
   const [error, setError]                 = useState('')
-  const [backfillLoading, setBackfillLoading] = useState(false)    // new
 
-  // load profile
+  // ─── NEW: Color & mode state ───────────────────────────────────────────
+  const [colorMode,   setColorMode]   = useState('leet')
+  const [easyColor,   setEasyColor]   = useState('#8BC34A')
+  const [mediumColor, setMediumColor] = useState('#FFB74D')
+  const [hardColor,   setHardColor]   = useState('#E57373')
+  const [solvedColor, setSolvedColor] = useState('#9E9E9E')
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -27,9 +32,17 @@ export default function Profile() {
         setLastName(data.lastName || '')
         setEmail(data.email || '')
         setCollege(data.college || '')
-        setRole(data.role || '')                             // new
+        setRole(data.role || '')
         setLeetcodeUsername(data.leetcode_username || '')
         setLeetcodeSession(data.leetcode_session || '')
+
+        // ─── NEW: seed color settings from data.settings ─────────────
+        const s = data.settings || {}
+        setColorMode(s.colorMode || 'leet')
+        setEasyColor(  s.palette?.easy   || '#8BC34A')
+        setMediumColor(s.palette?.medium || '#FFB74D')
+        setHardColor(  s.palette?.hard   || '#E57373')
+        setSolvedColor(s.palette?.solved || '#9E9E9E')
       } catch (err) {
         console.error(err)
         setError(err.response?.data?.description || 'Failed to load profile')
@@ -40,7 +53,7 @@ export default function Profile() {
     fetchProfile()
   }, [])
 
-  // save handle + sessionCookie
+  // save LeetCode handle + sessionCookie
   const saveHandle = async () => {
     setMessage('')
     setError('')
@@ -71,22 +84,6 @@ export default function Profile() {
     } catch (err) {
       console.error(err)
       setError(err.response?.data?.description || 'Sync failed')
-    }
-  }
-
-  // new: trigger backfill-tags
-  const backfillTags = async () => {
-    setMessage('')
-    setError('')
-    setBackfillLoading(true)
-    try {
-      await api.post('/api/admin/backfill-tags')
-      setMessage('Tags backfilled successfully')
-    } catch (err) {
-      console.error(err)
-      setError(err.response?.data?.description || 'Backfill failed')
-    } finally {
-      setBackfillLoading(false)
     }
   }
 
@@ -153,23 +150,87 @@ export default function Profile() {
         >
           Sync Solved Questions
         </button>
-        {role === 'admin' && (
-          <button
-            onClick={backfillTags}
-            disabled={backfillLoading}
-            style={{ padding: '0.5rem 1rem' }}
-          >
-            {backfillLoading ? 'Backfilling…' : 'Backfill Tags'}
-          </button>
-        )}
       </div>
 
-      {message && (
-        <p style={{ color: 'green', marginTop: '0.5rem' }}>{message}</p>
-      )}
-      {error && (
-        <p style={{ color: 'red', marginTop: '0.5rem' }}>{error}</p>
-      )}
+      <hr style={{ margin: '1rem 0' }} />
+
+      {/* ─── NEW: Color Settings Section ───────────────────────────────── */}
+      <h3>Color Settings</h3>
+
+      <label>
+        <strong>Color Mode:</strong>&nbsp;
+        <select
+          value={colorMode}
+          onChange={e => setColorMode(e.target.value)}
+          style={{ marginLeft: '0.5rem' }}
+        >
+          <option value="leet">Based on Leet difficulty</option>
+          <option value="user">Based on your difficulty</option>
+        </select>
+      </label>
+
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+        <label>
+          Easy:&nbsp;
+          <input
+            type="color"
+            value={easyColor}
+            onChange={e => setEasyColor(e.target.value)}
+          />
+        </label>
+        <label>
+          Medium:&nbsp;
+          <input
+            type="color"
+            value={mediumColor}
+            onChange={e => setMediumColor(e.target.value)}
+          />
+        </label>
+        <label>
+          Hard:&nbsp;
+          <input
+            type="color"
+            value={hardColor}
+            onChange={e => setHardColor(e.target.value)}
+          />
+        </label>
+        <label>
+          Solved:&nbsp;
+          <input
+            type="color"
+            value={solvedColor}
+            onChange={e => setSolvedColor(e.target.value)}
+          />
+        </label>
+      </div>
+
+      <button
+        onClick={async () => {
+          setMessage('')
+          setError('')
+          try {
+            await saveSettings({
+              colorMode,
+              palette: {
+                easy:   easyColor,
+                medium: mediumColor,
+                hard:   hardColor,
+                solved: solvedColor
+              }
+            })
+            setMessage('Color settings saved!')
+          } catch (err) {
+            console.error(err)
+            setError('Failed to save color settings')
+          }
+        }}
+        style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
+      >
+        Save Color Settings
+      </button>
+
+      {message && <p style={{ color: 'green', marginTop: '0.5rem' }}>{message}</p>}
+      {error && <p style={{ color: 'red', marginTop: '0.5rem' }}>{error}</p>}
     </div>
   )
 }

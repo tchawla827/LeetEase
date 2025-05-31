@@ -7,7 +7,6 @@ import threading
 import time
 from datetime import timedelta
 
-
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, abort, session
@@ -172,7 +171,16 @@ def verify():
         'role': 'user',
         'firstName': reg['firstName'],
         'lastName': reg['lastName'],
-        'college': reg.get('college')
+        'college': reg.get('college'),
+        'settings': {
+            'colorMode': 'leet',
+            'palette': {
+                'easy':   '#8BC34A',
+                'medium': '#FFB74D',
+                'hard':   '#E57373',
+                'solved': '#9E9E9E'
+            }
+        }
     })
     return jsonify({'msg': 'Registration complete'}), 201
 
@@ -286,6 +294,30 @@ def manual_leetcode_sync():
     )
     return jsonify({'synced': synced}), 200
 
+# ─── NEW: Update per‐user color settings ───────────────────────────────────
+@app.route('/profile/settings', methods=['PATCH'])
+@jwt_required()
+def update_profile_settings():
+    data = request.get_json() or {}
+    allowed = {'easy', 'medium', 'hard', 'solved'}
+    update = {}
+
+    if 'colorMode' in data and data['colorMode'] in ['leet', 'user']:
+        update['settings.colorMode'] = data['colorMode']
+
+    if 'palette' in data and isinstance(data['palette'], dict):
+        for k in allowed:
+            if k in data['palette']:
+                update[f'settings.palette.{k}'] = data['palette'][k]
+
+    if not update:
+        abort(400, description="No valid settings to update")
+
+    uid = get_jwt_identity()
+    USERS.update_one({'_id': ObjectId(uid)}, {'$set': update})
+    result = USERS.find_one({'_id': ObjectId(uid)}, {'settings': 1, '_id': 0})
+    return jsonify(result.get('settings', {})), 200
+
 # =============================================================================
 # Health-check
 # =============================================================================
@@ -311,7 +343,6 @@ def import_questions():
     reader = csv.DictReader(lines)
     created = 0
     for row in reader:
-        # 1) upsert question
         q_res = QUEST.find_one_and_update(
             {'link': row['link']},
             {'$setOnInsert': {
@@ -324,12 +355,10 @@ def import_questions():
         )
         qid = q_res['_id']
 
-        # 2) always fetch & store tags
         slug = row['link'].rstrip('/').split('/')[-1]
         tags = fetch_leetcode_tags(slug)
         QUEST.update_one({'_id': qid}, {'$set': {'tags': tags}})
 
-        # 3) upsert company
         co_res = COMPANIES.find_one_and_update(
             {'name': row['company']},
             {'$setOnInsert': {'name': row['company']}},
@@ -338,7 +367,6 @@ def import_questions():
         )
         cid = co_res['_id']
 
-        # 4) upsert company_questions
         CQ.replace_one(
             {'company_id': cid, 'question_id': qid, 'bucket': row['bucket']},
             {
@@ -395,12 +423,10 @@ def get_company_topics(company):
     if not co:
         abort(404, description=f"No company '{company}'")
 
-    # ── Read params ───────────────────────────────────────────────────────
     bucket   = request.args.get('bucket', 'All')
     unsolved = request.args.get('unsolved', 'false').lower() == 'true'
     uid      = get_jwt_identity()
 
-    # ── Base match on company & bucket ────────────────────────────────────
     match = {'company_id': co['_id']}
     if bucket != 'All':
         match['bucket'] = bucket
@@ -416,7 +442,6 @@ def get_company_topics(company):
         {'$unwind': '$q'}
     ]
 
-    # ── If unsolved, join user_meta and filter out solved ones ────────────
     if unsolved:
         pipeline += [
             {'$lookup': {
@@ -437,13 +462,12 @@ def get_company_topics(company):
             }},
             {'$match': {
                 '$or': [
-                    {'meta': {'$eq': []}},         # no entry => not solved
-                    {'meta.0.solved': False}       # entry exists but solved=false
+                    {'meta': {'$eq': []}},
+                    {'meta.0.solved': False}
                 ]
             }}
         ]
 
-    # ── Unwind tags, group & sort ────────────────────────────────────────
     pipeline += [
         {'$unwind': '$q.tags'},
         {'$group':   {'_id': '$q.tags', 'count': {'$sum': 1}}},
@@ -454,7 +478,6 @@ def get_company_topics(company):
     topics  = [{'tag': r['_id'], 'count': r['count']} for r in results]
     return jsonify({'data': topics}), 200
 
-
 @app.route('/api/companies/<company>/buckets/<bucket>/questions', methods=['GET'])
 @jwt_required()
 def list_questions(company, bucket):
@@ -462,7 +485,6 @@ def list_questions(company, bucket):
     if not co:
         abort(404, description=f"No company '{company}'")
 
-    # ── Parse query params ─────────────────────────────────────────────
     page         = int(request.args.get('page', 1))
     limit        = int(request.args.get('limit', 50))
     skip         = (page - 1) * limit
@@ -472,7 +494,6 @@ def list_questions(company, bucket):
     tag_filter   = request.args.get('tag')
     showUnsolved = request.args.get('showUnsolved', 'false').lower() == 'true'
 
-    # ── Base match stage ───────────────────────────────────────────────
     match = {'company_id': co['_id']}
     if bucket != 'All':
         match['bucket'] = bucket
@@ -488,11 +509,9 @@ def list_questions(company, bucket):
         {'$unwind': '$q'}
     ]
 
-    # ── Tag filter ─────────────────────────────────────────────────────
     if tag_filter:
         pipeline.append({'$match': {'q.tags': tag_filter}})
 
-    # ── Title search ───────────────────────────────────────────────────
     if search:
         pipeline.append({
             '$match': {
@@ -500,7 +519,6 @@ def list_questions(company, bucket):
             }
         })
 
-    # ── Sorting ────────────────────────────────────────────────────────
     fmap = {
         'title':          'q.title',
         'frequency':      'frequency',
@@ -512,11 +530,9 @@ def list_questions(company, bucket):
             '$sort': {fmap[sortField]: 1 if sortOrder == 'asc' else -1}
         })
 
-    # ── Total count before pagination ─────────────────────────────────
     total_count = list(CQ.aggregate(pipeline + [{'$count': 'c'}]))
     total = total_count[0]['c'] if total_count else 0
 
-    # ── Pagination ────────────────────────────────────────────────────
     pipeline += [
         {'$skip': skip},
         {'$limit': limit}
@@ -524,7 +540,6 @@ def list_questions(company, bucket):
 
     results = list(CQ.aggregate(pipeline))
 
-    # ── Attach user meta and apply unsolved filter server-side ──────────
     uid = get_jwt_identity()
     out = []
     for doc in results:
@@ -550,14 +565,11 @@ def list_questions(company, bucket):
 
     return jsonify({'data': out, 'total': total}), 200
 
-
-
 @app.route('/api/questions/<question_id>', methods=['PATCH'])
 @jwt_required()
 def update_question_meta(question_id):
     uid = get_jwt_identity()
 
-    # Validate question_id
     try:
         q_oid = ObjectId(question_id)
     except:
@@ -569,24 +581,20 @@ def update_question_meta(question_id):
     data = request.get_json() or {}
     update_fields = {}
 
-    # Only allow these two fields
     if 'solved' in data:
         update_fields['solved'] = bool(data['solved'])
     if 'userDifficulty' in data:
-        # store null or string
         update_fields['userDifficulty'] = data.get('userDifficulty') or None
 
     if not update_fields:
         abort(400, description="No valid fields to update (solved, userDifficulty)")
 
-    # Upsert the per-user metadata
     USER_META.update_one(
         {'user_id': uid, 'question_id': question_id},
         {'$set': update_fields},
         upsert=True
     )
 
-    # Re-read and return the updated record
     meta = USER_META.find_one({'user_id': uid, 'question_id': question_id})
     resp = {
         'question_id': question_id,
@@ -601,11 +609,9 @@ def batch_update_questions_meta():
     uid   = get_jwt_identity()
     data  = request.get_json() or {}
     ids   = data.get('ids')
-    # require a non‐empty array of question IDs
     if not isinstance(ids, list) or not ids:
         abort(400, description="Field 'ids' must be a non-empty list")
 
-    # only these two fields are allowed
     update_fields = {}
     if 'solved' in data:
         update_fields['solved'] = bool(data['solved'])
@@ -616,13 +622,11 @@ def batch_update_questions_meta():
 
     results = []
     for qid in ids:
-        # upsert per‐user metadata
         USER_META.update_one(
             {'user_id': uid, 'question_id': qid},
             {'$set': update_fields},
             upsert=True
         )
-        # re-read so we can return the actual saved state
         meta = USER_META.find_one({'user_id': uid, 'question_id': qid})
         results.append({
             'question_id':   qid,
