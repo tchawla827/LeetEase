@@ -1,23 +1,20 @@
-// frontend/src/components/BucketsTabs.js
-
 import React from 'react';
 
 export default function BucketsTabs({ buckets, selected, onSelect }) {
   return (
-    <div style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0' }}>
-      {buckets.map(bucket => (
+    <div className="flex gap-code mt-4 mb-4">
+      {buckets.map((bucket) => (
         <button
           key={bucket}
           onClick={() => onSelect(bucket)}
-          style={{
-            padding: '0.5rem 1rem',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            background: bucket === selected ? '#1976d2' : '#f0f0f0',
-            color:      bucket === selected ? '#fff'    : '#000',
-            fontWeight: bucket === selected ? '600'      : '400',
-          }}
+          className={`
+            font-mono text-code-sm rounded-code px-4 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/50
+            ${
+              bucket === selected
+                ? 'bg-primary text-white font-semibold ring-1 ring-primary/50'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 transition'
+            }
+          `}
         >
           {bucket}
         </button>
