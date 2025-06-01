@@ -1,6 +1,6 @@
-// frontend/src/App.js
+// src/App.js
 
-import React from 'react'
+import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
@@ -15,31 +15,27 @@ import CompanyPage  from './pages/CompanyPage'
 import Profile      from './pages/Profile'
 
 function AppContent() {
+  // ─── Sidebar open/closed state ─────────────────────────────────────────
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const { syncing, syncResult } = useAuth()
   const showToast = syncing || syncResult != null
 
   return (
-    <>
+    // ─── This container is now 100vh tall and flex, column direction ───
+    <div className="h-screen flex flex-col overflow-hidden bg-surface">
       {showToast && <SyncToast />}
 
-      <Navbar />
+      {/* ─── Navbar (60px high) ──────────────────────────────────────────── */}
+      <Navbar
+        sidebarOpen={sidebarOpen}
+        toggleSidebar={() => setSidebarOpen(prev => !prev)}
+      />
 
-      <div
-        style={{
-          display:    'flex',
-          height:     'calc(100vh - 60px)', // subtract navbar height
-          paddingTop: '60px'                // push content below fixed navbar
-        }}
-      >
-        <Sidebar />
+      {/* ─── Below Navbar: sidebar + main share remaining space ───────────── */}
+      <div className="flex flex-1 overflow-hidden">
+        {sidebarOpen && <Sidebar />}
 
-        <main
-          style={{
-            flex:       1,
-            overflowY:  'auto',
-            padding:    '1rem'
-          }}
-        >
+        <main className="flex-1 overflow-auto p-4">
           <Routes>
             <Route path="/login"    element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -82,7 +78,7 @@ function AppContent() {
           </Routes>
         </main>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -133,9 +129,9 @@ function SyncToast() {
 
 function Welcome() {
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>Welcome to LeetEase</h2>
-      <p>Select a company from the sidebar to get started.</p>
+    <div>
+      <h2 className="text-xl text-gray-100">Welcome to LeetEase</h2>
+      <p className="text-gray-300">Select a company from the sidebar to get started.</p>
     </div>
   )
 }

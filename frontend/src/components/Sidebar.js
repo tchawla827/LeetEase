@@ -1,64 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import api from '../api';
-import { useAuth } from '../context/AuthContext';
+// src/components/Sidebar.js
+
+import React, { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import api from '../api'
+import { useAuth } from '../context/AuthContext'
 
 export default function Sidebar() {
-  const { user } = useAuth();
-  const [filter, setFilter] = useState('');
-  const [companies, setCompanies] = useState([]);
-  const [expandedCompanies, setExpandedCompanies] = useState({});
-  const location = useLocation();
+  const { user } = useAuth()
+  const [filter, setFilter] = useState('')
+  const [companies, setCompanies] = useState([])
+  const [expandedCompanies, setExpandedCompanies] = useState({})
+  const location = useLocation()
 
   // extract active company slug from URL
   const activeCompany = decodeURIComponent(
     (location.pathname.split('/company/')[1] || '').split('/')[0]
-  );
+  )
 
-  // re-fetch whenever `user` changes
+  // re‐fetch whenever `user` changes
   useEffect(() => {
     if (!user) {
       // clear list on logout
-      setCompanies([]);
-      return;
+      setCompanies([])
+      return
     }
 
-    api.get('/api/companies')
+    api
+      .get('/api/companies')
       .then(res => setCompanies(res.data))
-      .catch(err => console.error('Failed to load companies', err));
-  }, [user]);
+      .catch(err => console.error('Failed to load companies', err))
+  }, [user])
 
   // filter by prefix
-  const prefix = filter.trim().toLowerCase();
+  const prefix = filter.trim().toLowerCase()
   const filteredCompanies =
     prefix === ''
       ? companies
-      : companies.filter(c =>
-          c.toLowerCase().startsWith(prefix)
-        );
+      : companies.filter(c => c.toLowerCase().startsWith(prefix))
 
-  const toggleCompany = (company) => {
+  const toggleCompany = company => {
     setExpandedCompanies(prev => ({
       ...prev,
-      [company]: !prev[company]
-    }));
-  };
+      [company]: !prev[company],
+    }))
+  }
 
   const handleBucketClick = (company, bucket) => {
-    console.log(`Selected ${bucket} for ${company}`);
-    // Your bucket click handler logic here
-  };
+    console.log(`Selected ${bucket} for ${company}`)
+    // … your bucket‐click logic here …
+  }
 
   const timeBuckets = [
     '30 Days',
     '3 Months',
     '6 Months',
     'More Than 6 Months',
-    'All'
-  ];
+    'All',
+  ]
 
   return (
-    <aside className="hidden md:block fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-surface border-r border-gray-800 shadow-elevation overflow-y-auto px-card py-2">
+    <aside className="hidden md:block w-64 h-full bg-surface border-r border-gray-800 shadow-elevation overflow-y-auto px-card py-2">
       <h2 className="font-mono text-code-base text-gray-100 mb-2">Companies</h2>
 
       <input
@@ -71,22 +72,28 @@ export default function Sidebar() {
 
       <ul className="space-y-1">
         {filteredCompanies.map(company => {
-          const isActive = company === activeCompany;
-          const isExpanded = expandedCompanies[company];
+          const isActive = company === activeCompany
+          const isExpanded = expandedCompanies[company]
 
           return (
             <li key={company} className="flex flex-col">
               <div className="flex items-center justify-between">
                 <Link
                   to={`/company/${encodeURIComponent(company)}`}
-                  className={`font-mono text-code-base ${isActive ? 'text-primary font-medium' : 'text-gray-300'} hover:text-primary transition-colors duration-150`}
+                  className={`font-mono text-code-base ${
+                    isActive
+                      ? 'text-primary font-medium'
+                      : 'text-gray-300'
+                  } hover:text-primary transition-colors duration-150`}
                 >
                   {company}
                 </Link>
                 <button
                   onClick={() => toggleCompany(company)}
                   className="text-gray-400 hover:text-primary p-1 transition-colors duration-150"
-                  aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                  aria-label={
+                    isExpanded ? 'Collapse' : 'Expand'
+                  }
                 >
                   {isExpanded ? '−' : '+'}
                 </button>
@@ -97,7 +104,9 @@ export default function Sidebar() {
                   {timeBuckets.map(bucket => (
                     <li key={bucket}>
                       <button
-                        onClick={() => handleBucketClick(company, bucket)}
+                        onClick={() =>
+                          handleBucketClick(company, bucket)
+                        }
                         className="font-mono text-code-sm text-gray-400 hover:text-primary hover:bg-gray-800 w-full text-left px-2 py-1 rounded-code transition-colors duration-150"
                       >
                         {bucket}
@@ -107,9 +116,9 @@ export default function Sidebar() {
                 </ul>
               )}
             </li>
-          );
+          )
         })}
       </ul>
     </aside>
-  );
+  )
 }

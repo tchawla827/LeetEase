@@ -1,27 +1,71 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+// src/components/Navbar.jsx
 
-export default function Navbar() {
-  const { user, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+export default function Navbar({ sidebarOpen, toggleSidebar }) {
+  const { user, logout } = useAuth()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const toggleMenu = () => setIsMenuOpen(prev => !prev)
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-800 shadow-elevation">
       <div className="flex items-center justify-between h-16 px-card">
-        {/* Left: Brand/Logo */}
-        <div className="flex-shrink-0">
-          <Link 
-            to="/" 
-            className="font-mono text-code-base font-medium text-gray-100 hover:text-primary transition-colors duration-150"
+        {/* ─── Left side: Sidebar toggle + Brand/Logo ───────────────────── */}
+        <div className="flex items-center">
+          {/* Sidebar Toggle Button (only visible on md and up) */}
+          <button
+            onClick={toggleSidebar}
+            className="hidden md:block text-gray-400 hover:text-gray-100 focus:outline-none mr-4"
+            aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
-            LeetEase
-          </Link>
+            {sidebarOpen ? (
+              // Chevron-Left Icon
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            ) : (
+              // Chevron-Right Icon
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19l7-7-7-7"
+                />
+              </svg>
+            )}
+          </button>
+
+          {/* Brand/Logo */}
+          <div className="flex-shrink-0">
+            <Link
+              to="/"
+              className="font-mono text-code-base font-medium text-gray-100 hover:text-primary transition-colors duration-150"
+            >
+              LeetEase
+            </Link>
+          </div>
         </div>
 
-        {/* Center: Navigation Links (Desktop) - Only shown if user exists */}
+        {/* ─── Center: Navigation Links (Desktop) ───────────────────────── */}
         {user && (
           <nav className="hidden md:flex md:items-center md:gap-code">
             <Link
@@ -39,7 +83,7 @@ export default function Navbar() {
           </nav>
         )}
 
-        {/* Right: User Section */}
+        {/* ─── Right: User / Mobile‐menu toggle ───────────────────────────── */}
         <div className="flex items-center gap-code">
           {user ? (
             <>
@@ -69,8 +113,8 @@ export default function Navbar() {
               </Link>
             </>
           )}
-          
-          {/* Mobile menu button */}
+
+          {/* Mobile Menu Button */}
           <button
             onClick={toggleMenu}
             className="md:hidden text-gray-400 hover:text-gray-100 focus:outline-none"
@@ -78,16 +122,26 @@ export default function Navbar() {
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               )}
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu - Only shown if user exists */}
+      {/* ─── Mobile Menu (if user is logged in) ─────────────────────────── */}
       {isMenuOpen && user && (
         <div className="md:hidden bg-surface border-t border-gray-800">
           <div className="px-card py-2 space-y-1">
@@ -111,8 +165,8 @@ export default function Navbar() {
               </div>
               <button
                 onClick={() => {
-                  logout();
-                  toggleMenu();
+                  logout()
+                  toggleMenu()
                 }}
                 className="w-full text-left font-mono text-code-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
               >
@@ -123,5 +177,5 @@ export default function Navbar() {
         </div>
       )}
     </header>
-  );
+  )
 }
