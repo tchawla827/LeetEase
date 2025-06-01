@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+// frontend/src/pages/Register.jsx
+
+import React, { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import api from '../api'
 
 export default function Register() {
-  const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const navigate = useNavigate()
+  const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   // Form data
   const [formData, setFormData] = useState({
@@ -16,59 +18,87 @@ export default function Register() {
     leetcodeUsername: '',
     email: '',
     password: ''
-  });
+  })
 
   // OTP
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState('')
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
+  // STEP 1: Request OTP via POST /auth/register
   const handleSubmitForm = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const { firstName, lastName, email, password } = formData
+    if (!firstName || !lastName || !email || !password) {
+      setError('First name, last name, email, and password are required.')
+      setLoading(false)
+      return
+    }
 
     try {
-      // Mock API call to request OTP
-      await axios.post('/api/register/request-otp', {
-        email: formData.email
-      });
-      setStep(2);
+      // Send all form fields; backend /auth/register will pick out the ones it needs
+      await api.post('/auth/register', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        college: formData.college || undefined,
+        leetcodeUsername: formData.leetcodeUsername || undefined,
+        email: formData.email,
+        password: formData.password
+      })
+      // On success, backend has stored reg_data in session and emailed OTP
+      setStep(2)
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to request OTP');
+      console.error('Request OTP error:', err)
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Failed to request OTP'
+      setError(msg)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
+  // STEP 2: Verify OTP via POST /auth/verify
   const handleSubmitOtp = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    if (!otp) {
+      setError('Please enter the 6-digit OTP.')
+      setLoading(false)
+      return
+    }
 
     try {
-      // Mock API call to verify OTP and complete registration
-      await axios.post('/api/register/verify', {
-        ...formData,
-        otp
-      });
-      navigate('/login');
+      await api.post('/auth/verify', { otp })
+      // On success, registration is complete; redirect to login
+      navigate('/login')
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      console.error('Verify OTP error:', err)
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Invalid or expired OTP'
+      setError(msg)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
-      <div className="w-full max-w-md bg-surface border border-gray-800 rounded-card shadow-elevation px-card py-6">
+      <div className="relative w-full max-w-md bg-surface border border-gray-800 rounded-card shadow-elevation px-card py-6">
         {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-gray-800/70 flex items-center justify-center z-50 rounded-card">
@@ -79,11 +109,23 @@ export default function Register() {
         {/* Step Indicator */}
         <div className="flex justify-center mb-6">
           <div className="flex items-center">
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step === 1 ? 'bg-primary' : 'bg-gray-700'}`}>
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                step === 1 ? 'bg-primary' : 'bg-gray-700'
+              }`}
+            >
               <span className="text-code-sm font-mono">1</span>
             </div>
-            <div className={`w-12 h-1 mx-2 ${step === 2 ? 'bg-primary' : 'bg-gray-700'}`}></div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step === 2 ? 'bg-primary' : 'bg-gray-700'}`}>
+            <div
+              className={`w-12 h-1 mx-2 ${
+                step === 2 ? 'bg-primary' : 'bg-gray-700'
+              }`}
+            ></div>
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                step === 2 ? 'bg-primary' : 'bg-gray-700'
+              }`}
+            >
               <span className="text-code-sm font-mono">2</span>
             </div>
           </div>
@@ -144,7 +186,7 @@ export default function Register() {
                 value={formData.college}
                 onChange={handleChange}
                 className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                placeholder="MIT"
+                placeholder="MIT (optional)"
               />
             </div>
 
@@ -157,7 +199,6 @@ export default function Register() {
                 name="leetcodeUsername"
                 value={formData.leetcodeUsername}
                 onChange={handleChange}
-                required
                 className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                 placeholder="leetcode_john"
               />
@@ -209,10 +250,10 @@ export default function Register() {
           <form onSubmit={handleSubmitOtp} className="space-y-4">
             <div>
               <p className="text-code-sm text-gray-300 font-mono mb-4">
-                We've sent a 6-digit verification code to <span className="text-primary">{formData.email}</span>.
-                Please enter it below.
+                A 6-digit code was sent to{' '}
+                <span className="text-primary">{formData.email}</span>. Enter it below:
               </p>
-              
+
               <label className="block text-code-sm text-gray-300 font-mono mb-1">
                 Verification Code
               </label>
@@ -250,15 +291,12 @@ export default function Register() {
         <div className="mt-6 text-center">
           <p className="text-code-sm text-gray-400 font-mono">
             Already have an account?{' '}
-            <Link
-              to="/login"
-              className="text-primary hover:underline"
-            >
+            <Link to="/login" className="text-primary hover:underline">
               Login instead
             </Link>
           </p>
         </div>
       </div>
     </div>
-  );
+  )
 }
