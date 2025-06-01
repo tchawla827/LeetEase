@@ -3,12 +3,12 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
-  const { login }               = useAuth()
-  const [email, setEmail]       = useState('')
+  const { login } = useAuth()
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
-  const navigate                = useNavigate()
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async e => {
     e.preventDefault()
@@ -16,9 +16,7 @@ export default function Login() {
     setLoading(true)
 
     try {
-      // perform login
       await login(email, password)
-      // redirect home—this will remount Sidebar and fetch companies
       navigate('/')
     } catch (err) {
       console.error(err)
@@ -29,95 +27,73 @@ export default function Login() {
   }
 
   return (
-    <div
-      style={{
-        padding:    '1rem',
-        maxWidth:   400,
-        margin:     '0 auto',
-        position:   'relative'
-      }}
-    >
-      <h2>Login</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+      <div className="relative max-w-sm w-full bg-surface border border-gray-700 rounded-card shadow-elevation px-card py-6 space-y-4">
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="absolute inset-0 bg-gray-800/70 flex flex-col items-center justify-center z-50 rounded-card">
+            <div className="w-12 h-12 border-4 border-gray-600 border-t-primary rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-300 text-code-base">Signing in…</p>
+          </div>
+        )}
 
-      {loading && (
-        <div
-          style={{
-            position:        'absolute',
-            top: 0, left: 0,
-            width:           '100%',
-            height:          '100%',
-            background:      'rgba(255,255,255,0.7)',
-            display:         'flex',
-            flexDirection:   'column',
-            alignItems:      'center',
-            justifyContent:  'center',
-            zIndex:          1000
-          }}
-        >
-          <div
-            style={{
-              border:       '4px solid #ddd',
-              borderTop:    '4px solid #333',
-              borderRadius: '50%',
-              width:        '3rem',
-              height:       '3rem',
-              animation:    'spin 1s linear infinite',
-              marginBottom: '1rem'
-            }}
-          />
-          <p>Signing in…</p>
-        </div>
-      )}
+        {/* Form Header */}
+        <h1 className="text-code-lg text-primary font-mono text-center">Login</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '0.75rem' }}>
-          <label>
-            Email:&nbsp;
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="block text-code-sm text-gray-300 font-mono">
+              Email
+            </label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
+              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             />
-          </label>
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>
-            Password:&nbsp;
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-code-sm text-gray-300 font-mono">
+              Password
+            </label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
+              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             />
-          </label>
-        </div>
-        <button
-          type="submit"
-          style={{ padding: '0.5rem 1rem' }}
-          disabled={loading}
-        >
-          {loading ? 'Signing in…' : 'Login'}
-        </button>
-        {error && (
-          <p style={{ color: 'red', marginTop: '0.5rem' }}>{error}</p>
-        )}
-      </form>
+          </div>
 
-      <p style={{ marginTop: '1rem' }}>
-        Don’t have an account? <Link to="/register">Register</Link>
-      </p>
+          {error && (
+            <p className="text-red-400 text-code-sm font-mono">{error}</p>
+          )}
 
-      {/* spinner keyframes */}
-      <style>
-        {`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}
-      </style>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary hover:bg-primary/90 text-white font-mono text-code-base py-2 px-4 rounded-code transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Signing in…' : 'Login'}
+          </button>
+        </form>
+
+        {/* Registration Link */}
+        <p className="text-center text-code-sm text-gray-400 font-mono">
+          Don't have an account?{' '}
+          <Link
+            to="/register"
+            className="text-primary hover:underline"
+          >
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }
