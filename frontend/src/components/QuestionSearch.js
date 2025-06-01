@@ -28,7 +28,7 @@ export default function QuestionSearch({ company, bucket, onSearch }) {
 
   const onChange = (_, { newValue }) => {
     setValue(newValue);
-    onSearch(newValue); // push up for full-table filtering
+    onSearch(newValue);
   };
 
   const onSuggestionsFetchRequested = ({ value }) => {
@@ -45,31 +45,31 @@ export default function QuestionSearch({ company, bucket, onSearch }) {
     setSuggestions([]);
   };
 
-  // 🔍 Highlight any matching substring in question title
+  // Highlight any matching substring in question title
   const renderSuggestion = (sug, { query }) => {
     const idx = sug.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1) return <div className="p-2">{sug}</div>;
+    if (idx === -1) return <div className="p-2 text-code-sm text-gray-100">{sug}</div>;
 
     const before = sug.slice(0, idx);
     const match = sug.slice(idx, idx + query.length);
     const after = sug.slice(idx + query.length);
 
     return (
-      <div className="p-2 hover:bg-gray-100">
-        {before}<strong>{match}</strong>{after}
+      <div className="p-2 text-code-sm text-gray-100 hover:bg-gray-800 cursor-pointer transition-colors duration-150">
+        {before}<strong className="text-yellow-400 font-medium">{match}</strong>{after}
       </div>
     );
   };
 
   const inputProps = {
-    placeholder: 'Search questions…',
+    placeholder: 'Search questions...',
     value,
     onChange,
-    className: 'w-full p-2 border rounded'
+    className: 'w-full px-3 py-2 text-code-sm bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-code focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50'
   };
 
   return (
-    <div className="my-4">
+    <div className="relative my-4">
       <Autosuggest
         suggestions={suggestions}
         onSuggestionsFetchRequested={onSuggestionsFetchRequested}
@@ -78,6 +78,11 @@ export default function QuestionSearch({ company, bucket, onSearch }) {
         renderSuggestion={renderSuggestion}
         onSuggestionSelected={onSuggestionSelected}
         inputProps={inputProps}
+        theme={{
+          container: 'relative',
+          suggestionsContainer: 'absolute w-full bg-gray-800 border border-gray-600 mt-1 rounded-code shadow-lg z-10',
+          suggestionsList: 'list-none p-0 m-0',
+        }}
       />
     </div>
   );
