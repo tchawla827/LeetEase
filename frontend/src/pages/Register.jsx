@@ -1,159 +1,264 @@
-// frontend/src/pages/Register.js
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api';
+import axios from 'axios';
 
 export default function Register() {
-  const [step, setStep]                   = useState('form'); // 'form' or 'otp'
-  const [firstName, setFirstName]         = useState('');
-  const [lastName, setLastName]           = useState('');
-  const [college, setCollege]             = useState('');
-  const [leetcodeUsername, setLeetcodeUsername] = useState('');  // ← NEW
-  const [email, setEmail]                 = useState('');
-  const [password, setPassword]           = useState('');
-  const [otp, setOtp]                     = useState('');
-  const [error, setError]                 = useState('');
-  const navigate                          = useNavigate();
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const submitForm = async e => {
+  // Form data
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    college: '',
+    leetcodeUsername: '',
+    email: '',
+    password: ''
+  });
+
+  // OTP
+  const [otp, setOtp] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
+
     try {
-      await api.post('/auth/register', {
-        firstName,
-        lastName,
-        college: college || undefined,
-        leetcode_username: leetcodeUsername || undefined,  // ← SENDS username
-        email,
-        password
+      // Mock API call to request OTP
+      await axios.post('/api/register/request-otp', {
+        email: formData.email
       });
-      setStep('otp');
+      setStep(2);
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.description || 'Registration failed');
+      setError(err.response?.data?.message || 'Failed to request OTP');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const submitOtp = async e => {
+  const handleSubmitOtp = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
+
     try {
-      await api.post('/auth/verify', { otp });
+      // Mock API call to verify OTP and complete registration
+      await axios.post('/api/register/verify', {
+        ...formData,
+        otp
+      });
       navigate('/login');
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.description || 'Invalid OTP');
+      setError(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (step === 'form') {
-    return (
-      <div style={{ padding: '1rem', maxWidth: 400, margin: '0 auto' }}>
-        <h2>Register</h2>
-        <form onSubmit={submitForm}>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label>
-              First Name:&nbsp;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+      <div className="w-full max-w-md bg-surface border border-gray-800 rounded-card shadow-elevation px-card py-6">
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="absolute inset-0 bg-gray-800/70 flex items-center justify-center z-50 rounded-card">
+            <div className="w-12 h-12 border-4 border-gray-600 border-t-primary rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        {/* Step Indicator */}
+        <div className="flex justify-center mb-6">
+          <div className="flex items-center">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step === 1 ? 'bg-primary' : 'bg-gray-700'}`}>
+              <span className="text-code-sm font-mono">1</span>
+            </div>
+            <div className={`w-12 h-1 mx-2 ${step === 2 ? 'bg-primary' : 'bg-gray-700'}`}></div>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step === 2 ? 'bg-primary' : 'bg-gray-700'}`}>
+              <span className="text-code-sm font-mono">2</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Header */}
+        <h1 className="text-code-lg text-primary font-mono text-center mb-6">
+          {step === 1 ? 'Create Account' : 'Verify Email'}
+        </h1>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-code">
+            <p className="text-red-400 text-code-sm font-mono">{error}</p>
+          </div>
+        )}
+
+        {/* Step 1: Registration Form */}
+        {step === 1 && (
+          <form onSubmit={handleSubmitForm} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  placeholder="John"
+                />
+              </div>
+              <div>
+                <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                College/University
+              </label>
               <input
                 type="text"
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
+                name="college"
+                value={formData.college}
+                onChange={handleChange}
+                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                placeholder="MIT"
+              />
+            </div>
+
+            <div>
+              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                LeetCode Username
+              </label>
+              <input
+                type="text"
+                name="leetcodeUsername"
+                value={formData.leetcodeUsername}
+                onChange={handleChange}
                 required
+                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                placeholder="leetcode_john"
               />
-            </label>
-          </div>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label>
-              Last Name:&nbsp;
-              <input
-                type="text"
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-                required
-              />
-            </label>
-          </div>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label>
-              College (optional):&nbsp;
-              <input
-                type="text"
-                value={college}
-                onChange={e => setCollege(e.target.value)}
-              />
-            </label>
-          </div>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label>
-              LeetCode Username (optional):&nbsp;
-              <input
-                type="text"
-                value={leetcodeUsername}
-                onChange={e => setLeetcodeUsername(e.target.value)}
-                placeholder="e.g. your_handle"
-              />
-            </label>
-          </div>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <label>
-              Email:&nbsp;
+            </div>
+
+            <div>
+              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                Email
+              </label>
               <input
                 type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 required
+                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                placeholder="john@example.com"
               />
-            </label>
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label>
-              Password:&nbsp;
+            </div>
+
+            <div>
+              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                Password
+              </label>
               <input
                 type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 required
+                minLength="8"
+                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                placeholder="••••••••"
               />
-            </label>
-          </div>
-          <button type="submit" style={{ padding: '0.5rem 1rem' }}>
-            Request OTP
-          </button>
-          {error && (
-            <p style={{ color: 'red', marginTop: '0.5rem' }}>{error}</p>
-          )}
-        </form>
-        <p style={{ marginTop: '1rem' }}>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
-      </div>
-    );
-  }
+            </div>
 
-  // OTP step
-  return (
-    <div style={{ padding: '1rem', maxWidth: 400, margin: '0 auto' }}>
-      <h2>Enter OTP</h2>
-      <form onSubmit={submitOtp}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>
-            OTP:&nbsp;
-            <input
-              type="text"
-              value={otp}
-              onChange={e => setOtp(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <button type="submit" style={{ padding: '0.5rem 1rem' }}>
-          Verify
-        </button>
-        {error && (
-          <p style={{ color: 'red', marginTop: '0.5rem' }}>{error}</p>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-mono text-code-base py-2 px-4 rounded-code transition-colors disabled:opacity-50"
+            >
+              Request OTP
+            </button>
+          </form>
         )}
-      </form>
+
+        {/* Step 2: OTP Verification */}
+        {step === 2 && (
+          <form onSubmit={handleSubmitOtp} className="space-y-4">
+            <div>
+              <p className="text-code-sm text-gray-300 font-mono mb-4">
+                We've sent a 6-digit verification code to <span className="text-primary">{formData.email}</span>.
+                Please enter it below.
+              </p>
+              
+              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                Verification Code
+              </label>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+                pattern="\d{6}"
+                maxLength="6"
+                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50 text-center tracking-widest"
+                placeholder="123456"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-mono text-code-base py-2 px-4 rounded-code transition-colors disabled:opacity-50"
+            >
+              Complete Registration
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="w-full border border-gray-700 text-gray-300 font-mono text-code-base py-2 px-4 rounded-code transition-colors hover:bg-gray-800/50"
+            >
+              Back
+            </button>
+          </form>
+        )}
+
+        {/* Footer Links */}
+        <div className="mt-6 text-center">
+          <p className="text-code-sm text-gray-400 font-mono">
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              className="text-primary hover:underline"
+            >
+              Login instead
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
