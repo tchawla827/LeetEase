@@ -1,21 +1,18 @@
-// frontend/src/components/QuestionsTable.js
+import React, { useEffect, useState } from 'react';
+import api from '../api';
+import { useAuth } from '../context/AuthContext';
 
-import React, { useEffect, useState } from 'react'
-import api from '../api'
-import { useAuth } from '../context/AuthContext'
-import './QuestionsTable.css'
-
-const PAGE_SIZE = 50
+const PAGE_SIZE = 50;
 
 const SORT_FIELDS = {
-  title:          'Title',
-  frequency:      'Frequency',
+  title: 'Title',
+  frequency: 'Frequency',
   acceptanceRate: 'Acceptance',
-  leetDifficulty: 'Leet Diff',
-  userDifficulty: 'Your Diff',
-}
+  leetDifficulty: 'Difficulty',
+  userDifficulty: 'Your Rating',
+};
 
-const difficultyRank = { Easy: 1, Medium: 2, Hard: 3 }
+const difficultyRank = { Easy: 1, Medium: 2, Hard: 3 };
 
 export default function QuestionsTable({
   company,
@@ -25,64 +22,37 @@ export default function QuestionsTable({
   tagFilter,
   refreshKey
 }) {
-  const { user } = useAuth()
+  const { user } = useAuth();
+  const [questions, setQuestions] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [selected, setSelected] = useState([]);
+  const [batchDifficulty, setBatchDifficulty] = useState('');
 
-  // ─── NEW: pull palette & mode from user.settings ───────────────────────
-  const defaults = {
-    colorMode: 'leet',
-    palette: {
-      easy:   '#8BC34A',
-      medium: '#FFB74D',
-      hard:   '#E57373',
-      solved: '#9E9E9E'
-    }
-  }
-  const { colorMode, palette } = user?.settings || defaults
-
-  // ─── existing state ───────────────────────────────────────────────────
-  const [questions, setQuestions]           = useState([])
-  const [page, setPage]                     = useState(1)
-  const [totalPages, setTotalPages]         = useState(1)
-  const [loading, setLoading]               = useState(false)
-
-  const [sortField, setSortField]           = useState(null)
-  const [sortOrder, setSortOrder]           = useState('asc')
-
-  // batch‐actions state
-  const [selected, setSelected]             = useState([])      // array of q.id's
-  const [batchDifficulty, setBatchDifficulty] = useState('')
-
-  // clear selection when questions change
+  // Clear selection when questions change
   useEffect(() => {
-    setSelected([])
-    setBatchDifficulty('')
-  }, [questions])
+    setSelected([]);
+    setBatchDifficulty('');
+  }, [questions]);
 
-  // reset to page 1 when filters/sorts/search/refresh change
+  // Reset to page 1 when filters change
   useEffect(() => {
-    setPage(1)
-  }, [
-    company,
-    bucket,
-    showUnsolved,
-    sortField,
-    sortOrder,
-    searchTerm,
-    tagFilter,
-    refreshKey
-  ])
+    setPage(1);
+  }, [company, bucket, showUnsolved, sortField, sortOrder, searchTerm, tagFilter, refreshKey]);
 
-  // fetch questions
+  // Fetch questions
   useEffect(() => {
     if (!company || !bucket) {
-      setQuestions([])
-      setTotalPages(1)
-      return
+      setQuestions([]);
+      setTotalPages(1);
+      return;
     }
-    setLoading(true)
+    setLoading(true);
 
-    const isDifficulty =
-      sortField === 'leetDifficulty' || sortField === 'userDifficulty'
+    const isDifficulty = sortField === 'leetDifficulty' || sortField === 'userDifficulty';
 
     const params = {
       page,
@@ -91,7 +61,7 @@ export default function QuestionsTable({
       ...(searchTerm && { search: searchTerm }),
       ...(!isDifficulty && sortField && { sortField, sortOrder }),
       ...(tagFilter && { tag: tagFilter }),
-    }
+    };
 
     api
       .get(
@@ -99,243 +69,222 @@ export default function QuestionsTable({
         { params }
       )
       .then(res => {
-        const { data, total } = res.data
-        setTotalPages(Math.ceil(total / PAGE_SIZE))
+        const { data, total } = res.data;
+        setTotalPages(Math.ceil(total / PAGE_SIZE));
 
-        let list = data
+        let list = data;
         if (showUnsolved) {
-          list = list.filter(q => !q.solved)
+          list = list.filter(q => !q.solved);
         }
         if (isDifficulty) {
           list = [...list].sort((a, b) => {
-            const ra = difficultyRank[a[sortField]] ?? 0
-            const rb = difficultyRank[b[sortField]] ?? 0
-            return sortOrder === 'asc' ? ra - rb : rb - ra
-          })
+            const ra = difficultyRank[a[sortField]] ?? 0;
+            const rb = difficultyRank[b[sortField]] ?? 0;
+            return sortOrder === 'asc' ? ra - rb : rb - ra;
+          });
         }
-        setQuestions(list)
+        setQuestions(list);
       })
       .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [
-    company,
-    bucket,
-    page,
-    showUnsolved,
-    sortField,
-    sortOrder,
-    searchTerm,
-    tagFilter,
-    refreshKey
-  ])
+      .finally(() => setLoading(false));
+  }, [company, bucket, page, showUnsolved, sortField, sortOrder, searchTerm, tagFilter, refreshKey]);
 
-  // sort handlers
+  // Sort handlers
   const onSort = field => {
     if (sortField === field) {
-      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
-      setSortField(field)
-      setSortOrder('asc')
+      setSortField(field);
+      setSortOrder('asc');
     }
-  }
-  const arrow = f =>
-    sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''
+  };
 
-  // single‐row update
+  const arrow = f =>
+    sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '';
+
+  // Update single question
   const updateField = (questionId, field, value) => {
     api
       .patch(`/api/questions/${questionId}`, { [field]: value })
       .then(res => {
-        const updates = Array.isArray(res.data) ? res.data : [res.data]
+        const updates = Array.isArray(res.data) ? res.data : [res.data];
         setQuestions(prev =>
           prev.map(q => {
-            const hit = updates.find(u => u.question_id === q.id)
-            if (!hit) return q
+            const hit = updates.find(u => u.question_id === q.id);
+            if (!hit) return q;
             return {
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
-            }
+            };
           })
-        )
+        );
       })
-      .catch(console.error)
-  }
+      .catch(console.error);
+  };
 
-  // batch update helper
+  // Batch update
   const batchUpdate = fields => {
-    if (!selected.length) return
+    if (!selected.length) return;
     api
       .patch('/api/questions/batch-meta', {
         ids: selected,
         ...fields
       })
       .then(res => {
-        const updates = res.data
+        const updates = res.data;
         setQuestions(prev =>
           prev.map(q => {
-            const hit = updates.find(u => u.question_id === q.id)
-            if (!hit) return q
+            const hit = updates.find(u => u.question_id === q.id);
+            if (!hit) return q;
             return {
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
-            }
+            };
           })
-        )
-        setSelected([])
-        setBatchDifficulty('')
+        );
+        setSelected([]);
+        setBatchDifficulty('');
       })
-      .catch(console.error)
-  }
-
-  // ─── NEW: compute inline style per row ────────────────────────────────
-  const getRowStyle = q => {
-    if (q.solved) {
-      return { backgroundColor: palette.solved }
-    }
-    const difficulty = colorMode === 'leet'
-      ? q.leetDifficulty
-      : q.userDifficulty
-    switch (difficulty) {
-      case 'Easy':   return { backgroundColor: palette.easy }
-      case 'Medium': return { backgroundColor: palette.medium }
-      case 'Hard':   return { backgroundColor: palette.hard }
-      default:       return {}
-    }
-  }
+      .catch(console.error);
+  };
 
   return (
-    <>
-      <table
-        style={{ width: '100%', borderCollapse: 'collapse' }}
-        border="1"
-        cellPadding="8"
-      >
-        <thead>
-          <tr>
-            <th>
-              <input
-                type="checkbox"
-                checked={
-                  questions.length > 0 &&
-                  selected.length === questions.length
-                }
-                onChange={() =>
-                  selected.length === questions.length
-                    ? setSelected([])
-                    : setSelected(questions.map(q => q.id))
-                }
-              />
-            </th>
-            {Object.entries(SORT_FIELDS).map(([field, label]) => (
-              <th
-                key={field}
-                onClick={() => onSort(field)}
-                style={{ cursor: 'pointer', userSelect: 'none' }}
-              >
-                {label}
-                {arrow(field)}
+    <div className="space-y-2">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse font-mono text-code-sm">
+          <thead>
+            <tr className="border-b border-gray-800 bg-gray-900 text-gray-400">
+              <th className="px-card py-2 text-left">
+                <input
+                  type="checkbox"
+                  checked={questions.length > 0 && selected.length === questions.length}
+                  onChange={() =>
+                    selected.length === questions.length
+                      ? setSelected([])
+                      : setSelected(questions.map(q => q.id))
+                  }
+                  className="rounded-code border-gray-700 bg-gray-800 text-primary focus:ring-primary/50"
+                />
               </th>
-            ))}
-            <th>Link</th>
-            <th>Solved</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan="8" style={{ textAlign: 'center' }}>
-                Loading…
-              </td>
+              {Object.entries(SORT_FIELDS).map(([field, label]) => (
+                <th
+                  key={field}
+                  onClick={() => onSort(field)}
+                  className="px-card py-2 text-left cursor-pointer select-none hover:text-gray-300"
+                >
+                  {label}
+                  <span className="text-gray-500">{arrow(field)}</span>
+                </th>
+              ))}
+              <th className="px-card py-2 text-left">Link</th>
+              <th className="px-card py-2 text-left">Status</th>
             </tr>
-          ) : questions.length ? (
-            questions.map(q => (
-              <tr key={q.id} style={getRowStyle(q)}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(q.id)}
-                    onChange={() =>
-                      setSelected(sel =>
-                        sel.includes(q.id)
-                          ? sel.filter(x => x !== q.id)
-                          : [...sel, q.id]
-                      )
-                    }
-                  />
-                </td>
-                <td>{q.title}</td>
-                <td>{q.frequency}</td>
-                <td>{(q.acceptanceRate * 100).toFixed(1)}%</td>
-                <td>{q.leetDifficulty}</td>
-                <td>
-                  <select
-                    value={q.userDifficulty || ''}
-                    onChange={e =>
-                      updateField(q.id, 'userDifficulty', e.target.value)
-                    }
-                  >
-                    <option value="">–</option>
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                  </select>
-                </td>
-                <td>
-                  <a
-                    href={q.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View
-                  </a>
-                </td>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={q.solved}
-                    onChange={e =>
-                      updateField(q.id, 'solved', e.target.checked)
-                    }
-                  />
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+            {loading ? (
+              <tr>
+                <td colSpan={Object.keys(SORT_FIELDS).length + 3} className="px-card py-4 text-center text-gray-400">
+                  Loading...
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="8" style={{ textAlign: 'center' }}>
-                No questions found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            ) : questions.length ? (
+              questions.map(q => (
+                <tr
+                  key={q.id}
+                  className={`border-gray-800 hover:bg-gray-900/50 transition-colors duration-150 ${
+                    q.solved ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
+                  <td className="px-card py-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(q.id)}
+                      onChange={() =>
+                        setSelected(sel =>
+                          sel.includes(q.id)
+                            ? sel.filter(x => x !== q.id)
+                            : [...sel, q.id]
+                        )
+                      }
+                      className="rounded-code border-gray-700 bg-gray-800 text-primary focus:ring-primary/50"
+                    />
+                  </td>
+                  <td className="px-card py-2">{q.title}</td>
+                  <td className="px-card py-2">{q.frequency}</td>
+                  <td className="px-card py-2">{(q.acceptanceRate * 100).toFixed(1)}%</td>
+                  <td className="px-card py-2">
+                    <span className={
+                      q.leetDifficulty === 'Easy' ? 'text-green-400' :
+                      q.leetDifficulty === 'Medium' ? 'text-yellow-400' :
+                      q.leetDifficulty === 'Hard' ? 'text-red-400' : 'text-gray-400'
+                    }>
+                      {q.leetDifficulty}
+                    </span>
+                  </td>
+                  <td className="px-card py-2">
+                    <select
+                      value={q.userDifficulty || ''}
+                      onChange={e => updateField(q.id, 'userDifficulty', e.target.value)}
+                      className="bg-gray-800 border border-gray-700 rounded-code px-1 py-0.5 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                    >
+                      <option value="">–</option>
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                    </select>
+                  </td>
+                  <td className="px-card py-2">
+                    <a
+                      href={q.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      View
+                    </a>
+                  </td>
+                  <td className="px-card py-2">
+                    <input
+                      type="checkbox"
+                      checked={q.solved}
+                      onChange={e => updateField(q.id, 'solved', e.target.checked)}
+                      className="rounded-code border-gray-700 bg-gray-800 text-primary focus:ring-primary/50"
+                    />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={Object.keys(SORT_FIELDS).length + 3} className="px-card py-4 text-center text-gray-400">
+                  No questions found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {selected.length > 0 && (
-        <div
-          style={{
-            position:   'sticky',
-            bottom:     0,
-            background: '#fff',
-            padding:    '0.75rem 1rem',
-            borderTop:  '1px solid #ccc',
-            display:    'flex',
-            alignItems: 'center',
-            gap:        '0.75rem',
-            zIndex:     10
-          }}
-        >
-          <strong>{selected.length} selected</strong>
-          <button onClick={() => batchUpdate({ solved: true })}>
+        <div className="sticky bottom-0 bg-surface border-t border-gray-800 px-card py-2 flex items-center gap-code z-10">
+          <strong className="text-gray-300">{selected.length} selected</strong>
+          <button
+            onClick={() => batchUpdate({ solved: true })}
+            className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-2 py-1 rounded-code border border-gray-700 transition-colors duration-150"
+          >
             Mark Solved
           </button>
-          <button onClick={() => batchUpdate({ solved: false })}>
+          <button
+            onClick={() => batchUpdate({ solved: false })}
+            className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-2 py-1 rounded-code border border-gray-700 transition-colors duration-150"
+          >
             Mark Unsolved
           </button>
           <select
             value={batchDifficulty}
             onChange={e => setBatchDifficulty(e.target.value)}
+            className="font-mono text-code-sm bg-gray-800 border border-gray-700 rounded-code px-2 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
           >
             <option value="">Set difficulty…</option>
             <option value="Easy">Easy</option>
@@ -344,40 +293,33 @@ export default function QuestionsTable({
           </select>
           <button
             disabled={!batchDifficulty}
-            onClick={() =>
-              batchUpdate({ userDifficulty: batchDifficulty })
-            }
+            onClick={() => batchUpdate({ userDifficulty: batchDifficulty })}
+            className="font-mono text-code-sm bg-primary hover:bg-[#2a7aeb] text-white px-2 py-1 rounded-code transition-colors duration-150 disabled:opacity-50"
           >
-            Apply Difficulty
+            Apply
           </button>
         </div>
       )}
 
-      <div
-        style={{
-          display:        'flex',
-          justifyContent: 'center',
-          margin:         '1rem 0',
-        }}
-      >
+      <div className="flex justify-center items-center gap-code my-2">
         <button
           onClick={() => setPage(p => Math.max(p - 1, 1))}
           disabled={page === 1}
+          className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded-code border border-gray-700 transition-colors duration-150 disabled:opacity-50"
         >
           ← Prev
         </button>
-        <span style={{ margin: '0 1rem' }}>
+        <span className="text-gray-300">
           Page {page} of {totalPages}
         </span>
         <button
-          onClick={() =>
-            setPage(p => Math.min(p + 1, totalPages))
-          }
+          onClick={() => setPage(p => Math.min(p + 1, totalPages))}
           disabled={page === totalPages}
+          className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded-code border border-gray-700 transition-colors duration-150 disabled:opacity-50"
         >
           Next →
         </button>
       </div>
-    </>
-  )
+    </div>
+  );
 }
