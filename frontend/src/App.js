@@ -32,7 +32,7 @@ function AppContent() {
       />
 
       {/* ─── Below Navbar: sidebar + main share remaining space ───────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden pt-16">
         {sidebarOpen && <Sidebar />}
 
         <main className="flex-1 overflow-auto p-4">
