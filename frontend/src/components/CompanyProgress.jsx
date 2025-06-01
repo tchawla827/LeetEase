@@ -11,7 +11,11 @@ import PropTypes from 'prop-types'
  */
 export default function CompanyProgress({ data, loading }) {
   if (loading) {
-    return <div>Loading progress…</div>
+    return (
+      <div className="font-mono text-code-sm text-gray-500 italic">
+        Loading progress…
+      </div>
+    )
   }
 
   // Filter out any bucket with total === 0
@@ -19,46 +23,35 @@ export default function CompanyProgress({ data, loading }) {
 
   // If no buckets remain after filtering, show placeholder
   if (nonEmpty.length === 0) {
-    return <div>No questions loaded for this company yet.</div>
+    return (
+      <div className="font-mono text-code-sm text-gray-500 italic">
+        No questions loaded for this company yet.
+      </div>
+    )
   }
 
   return (
-    <div style={{ margin: '1rem 0', padding: '0.5rem', border: '1px solid #ddd', borderRadius: 4 }}>
-      <h3 style={{ margin: '0 0 0.5rem 0' }}>Your Progress by Bucket</h3>
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+    <div className="bg-surface border border-gray-800 rounded-code shadow-elevation px-card py-3 mt-4">
+      <h3 className="font-mono text-code-sm text-gray-300 mb-3">
+        Your Progress by Bucket
+      </h3>
+      <ul className="list-none p-0 m-0">
         {nonEmpty.map(({ bucket, total, solved }) => {
           const pct = Math.round((solved / total) * 100)
-          // Inline styling for the bar container and filled portion
-          const barContainer = {
-            width: '100%',
-            height: '0.8rem',
-            background: '#f0f0f0',
-            borderRadius: 2,
-            overflow: 'hidden',
-            marginTop: '0.2rem',
-          }
-          const barFilled = {
-            width: `${pct}%`,
-            height: '100%',
-            background: '#4caf50',
-          }
 
           return (
-            <li key={bucket} style={{ marginBottom: '0.8rem' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.9rem',
-                }}
-              >
+            <li key={bucket} className="mb-3 last:mb-0">
+              <div className="flex justify-between items-center font-mono text-code-sm text-gray-300 mb-1">
                 <span>{bucket}</span>
                 <span>
-                  {solved} / {total} ({pct}%)
+                  {solved} / {total} (<span className="text-primary">{pct}%</span>)
                 </span>
               </div>
-              <div style={barContainer}>
-                <div style={barFilled} />
+              <div className="w-full bg-gray-800 h-2 rounded overflow-hidden">
+                <div
+                  className="bg-green-500 h-full transition-all duration-300"
+                  style={{ width: `${pct}%` }}
+                />
               </div>
             </li>
           )
