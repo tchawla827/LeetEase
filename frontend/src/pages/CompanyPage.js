@@ -133,26 +133,27 @@ export default function CompanyPage() {
   }, [companyName, showAnalytics, selectedBucket, showUnsolved])
 
   return (
-    <div style={{ padding: '1rem', height: '100%', overflow: 'auto' }}>
-      <h1>{companyName}</h1>
+    <div className="px-4 py-6 md:px-6 max-w-6xl mx-auto h-full overflow-auto">
+      <h1 className="text-2xl font-mono text-gray-100 mb-4">{companyName}</h1>
 
       {/* ── Render company-progress widget ─────────────────────────────────── */}
       <CompanyProgress data={progressData} loading={loadingProgress} />
 
-      <div style={{ margin: '0.5rem 0' }}>
-        <label>
+      <div className="flex items-center mb-4">
+        <label className="flex items-center text-gray-300 cursor-pointer">
           <input
             type="checkbox"
+            className="form-checkbox h-4 w-4 text-primary rounded-code focus:ring-primary border-gray-600 bg-gray-800"
             checked={showUnsolved}
             onChange={e => setShowUnsolved(e.target.checked)}
-          />{' '}
-          Unsolved only
+          />
+          <span className="ml-2">Unsolved only</span>
         </label>
       </div>
 
       {/* only render tabs when we've got our bucket list */}
       {bucketsLoading ? (
-        <div>Loading buckets…</div>
+        <div className="text-sm text-gray-500 italic">Loading buckets...</div>
       ) : buckets.length > 0 ? (
         <BucketsTabs
           buckets={buckets}
@@ -165,37 +166,32 @@ export default function CompanyPage() {
           }}
         />
       ) : (
-        <p>No buckets found for this company.</p>
+        <p className="text-gray-400">No buckets found for this company.</p>
       )}
 
       {/* once we have a selectedBucket, show search / table / analytics */}
       {selectedBucket && (
         <>
-          <div style={{ margin: '1rem 0', display: 'flex', gap: '1rem' }}>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Search questions…"
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                fontSize: '1rem',
-                boxSizing: 'border-box'
-              }}
+              placeholder="Search questions..."
+              className="flex-1 px-4 py-2 bg-gray-900 text-gray-100 border border-gray-700 rounded-code placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
             />
             <button
               onClick={() => {
                 setRefreshKey(k => k + 1)
                 setSelectedTag(null)
               }}
-              style={{ padding: '0.5rem 1rem' }}
+              className="px-4 py-2 bg-gray-800 text-gray-100 rounded-code hover:bg-gray-700 transition"
             >
               Refresh
             </button>
             <button
               onClick={() => setShowAnalytics(a => !a)}
-              style={{ padding: '0.5rem 1rem' }}
+              className="px-4 py-2 bg-gray-800 text-gray-100 rounded-code hover:bg-gray-700 transition"
             >
               {showAnalytics ? 'Back to Questions' : 'Show Analytics'}
             </button>
@@ -203,38 +199,42 @@ export default function CompanyPage() {
 
           {showAnalytics ? (
             loadingTopics ? (
-              <div>Loading analytics…</div>
+              <div className="text-sm text-gray-500 italic">Loading analytics...</div>
             ) : (
-              <TopicsDashboard
-                data={topics}
-                onTagClick={tag => {
-                  setSelectedTag(tag)
-                  setShowAnalytics(false)
-                }}
-              />
+              <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4 mb-4">
+                <TopicsDashboard
+                  data={topics}
+                  onTagClick={tag => {
+                    setSelectedTag(tag)
+                    setShowAnalytics(false)
+                  }}
+                />
+              </div>
             )
           ) : (
             <>
               {selectedTag && (
-                <div style={{ margin: '0.5rem 0' }}>
+                <div className="text-sm text-gray-400 mb-2">
                   <strong>Filtered by topic:</strong> {selectedTag}{' '}
                   <button
                     onClick={() => setSelectedTag(null)}
-                    style={{ marginLeft: '0.5rem' }}
+                    className="ml-2 text-blue-400 hover:underline text-sm"
                   >
                     Clear
                   </button>
                 </div>
               )}
-              <QuestionsTable
-                key={refreshKey}
-                company={companyName}
-                bucket={selectedBucket}
-                showUnsolved={showUnsolved}
-                searchTerm={searchTerm}
-                tagFilter={selectedTag}
-                refreshKey={refreshKey}
-              />
+              <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+                <QuestionsTable
+                  key={refreshKey}
+                  company={companyName}
+                  bucket={selectedBucket}
+                  showUnsolved={showUnsolved}
+                  searchTerm={searchTerm}
+                  tagFilter={selectedTag}
+                  refreshKey={refreshKey}
+                />
+              </div>
             </>
           )}
         </>
