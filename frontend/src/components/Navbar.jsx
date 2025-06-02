@@ -4,6 +4,9 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+// Import your logo PNG (make sure the path matches where you placed logo.png)
+import logo from '../assets/logo.png'
+
 export default function Navbar({ sidebarOpen, toggleSidebar }) {
   const { user, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -13,7 +16,7 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-800 shadow-elevation">
       <div className="flex items-center justify-between h-16 px-card">
-        {/* ─── Left side: Sidebar toggle + Brand/Logo ───────────────────── */}
+        {/* ─── Left side: Sidebar toggle + Logo ───────────────────── */}
         <div className="flex items-center">
           {/* Sidebar Toggle Button (only visible on md and up) */}
           <button
@@ -54,13 +57,14 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
             )}
           </button>
 
-          {/* Brand/Logo */}
+          {/* Logo */}
           <div className="flex-shrink-0">
-            <Link
-              to="/"
-              className="font-mono text-code-base font-medium text-gray-100 hover:text-primary transition-colors duration-150"
-            >
-              LeetEase
+            <Link to="/">
+              <img
+                src={logo}
+                alt="LeetEase Logo"
+                className="h-8 w-auto"  // Adjust height (h-6, h-8, etc.) as needed
+              />
             </Link>
           </div>
         </div>
