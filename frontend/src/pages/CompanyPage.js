@@ -61,7 +61,7 @@ export default function CompanyPage() {
     return () => window.removeEventListener('leetSync', onSync)
   }, [])
 
-  // ── Fetch bucket list when company changes (fixed dependency) ──────────
+  // ── Fetch bucket list when company OR bucketFromUrl changes ────────────
   useEffect(() => {
     setBucketsLoading(true)
     setBuckets([])
@@ -94,7 +94,7 @@ export default function CompanyPage() {
       })
       .catch(console.error)
       .finally(() => setBucketsLoading(false))
-  }, [companyName])               // ← bucketFromUrl removed
+  }, [companyName, bucketFromUrl])  // ← added bucketFromUrl here
 
   // ── Fetch company progress when company changes ────────────────────────
   useEffect(() => {
@@ -133,7 +133,8 @@ export default function CompanyPage() {
     <div className="px-4 py-6 md:px-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-mono text-gray-100 mb-4">{companyName}</h1>
 
-      <CompanyProgress data={progressData} loading={loadingProgress} />
+      {/* ── REMOVED: Unconditional CompanyProgress ───────────────────────────── */}
+      {/* <CompanyProgress data={progressData} loading={loadingProgress} /> */}
 
       <div className="flex items-center mb-4">
         <label className="flex items-center text-gray-300 cursor-pointer">
@@ -195,14 +196,22 @@ export default function CompanyPage() {
             loadingTopics ? (
               <div className="text-sm text-gray-500 italic">Loading analytics...</div>
             ) : (
-              <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4 mb-4">
-                <TopicsDashboard
-                  data={topics}
-                  onTagClick={tag => {
-                    setSelectedTag(tag)
-                    setShowAnalytics(false)
-                  }}
-                />
+              <div className="space-y-8">
+                {/* ── 1) CompanyProgress is now only shown here ───────────────────── */}
+                <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+                  <CompanyProgress data={progressData} loading={loadingProgress} />
+                </div>
+
+                {/* ── 2) Then show TopicsDashboard below it ───────────────────────── */}
+                <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+                  <TopicsDashboard
+                    data={topics}
+                    onTagClick={tag => {
+                      setSelectedTag(tag)
+                      setShowAnalytics(false)
+                    }}
+                  />
+                </div>
               </div>
             )
           ) : (
