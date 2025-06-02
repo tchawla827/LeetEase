@@ -130,7 +130,7 @@ export default function CompanyPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="px-4 py-6 md:px-6 max-w-6xl mx-auto h-full overflow-auto">
+    <div className="px-4 py-6 md:px-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-mono text-gray-100 mb-4">{companyName}</h1>
 
       <CompanyProgress data={progressData} loading={loadingProgress} />
