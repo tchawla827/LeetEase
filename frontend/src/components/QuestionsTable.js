@@ -302,7 +302,8 @@ export default function QuestionsTable({
               questions.map(q => (
                 <tr
                   key={q.id}
-                  className="border-gray-800 hover:bg-gray-900/50 transition-colors duration-150"
+                  className={`border-gray-800 hover:bg-gray-900/50 transition-colors duration-150 ${!q.solved ? 'font-bold' : 'font-normal'}`}
+                  style={{ opacity: q.solved ? 0.75 : 1 }}
                 >
                   {/* Row‐level checkbox */}
                   <td className="px-4 py-3">
