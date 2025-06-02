@@ -739,5 +739,5 @@ def _startup_sync():
             app.logger.warning("Startup sync failed for %s: %s", u['_id'], e)
 
 if __name__ == '__main__':
-    _startup_sync()
+    # _startup_sync()
     app.run(debug=True)
