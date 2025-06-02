@@ -25,8 +25,9 @@ export default function QuestionsTable({
 }) {
   const { user } = useAuth();
 
-  // ─── 1) Grab colorMode + palette from user.settings ───────────────
-  const colorMode = user?.settings?.colorMode || 'leet'; // 'leet' or 'user'
+  // ─── 1) Pull colorMode + palette out of user.settings ───────────────
+  // colorMode is either 'leet' or 'user'
+  const colorMode = user?.settings?.colorMode || 'leet';
   const palette = user?.settings?.palette || {
     easy:   '#8BC34A',
     medium: '#FFB74D',
@@ -47,15 +48,18 @@ export default function QuestionsTable({
   const [selected, setSelected]       = useState([]);
   const [batchDifficulty, setBatchDifficulty] = useState('');
 
+  // Whenever the list of questions changes, clear any batch selection
   useEffect(() => {
     setSelected([]);
     setBatchDifficulty('');
   }, [questions]);
 
+  // Reset to page 1 whenever filters/sort/search change
   useEffect(() => {
     setPage(1);
   }, [company, bucket, showUnsolved, sortField, sortOrder, searchTerm, tagFilter, refreshKey]);
 
+  // Fetch questions from the backend
   useEffect(() => {
     if (!company || !bucket) {
       setQuestions([]);
@@ -64,13 +68,15 @@ export default function QuestionsTable({
     }
     setLoading(true);
 
-    const isDifficulty = sortField === 'leetDifficulty' || sortField === 'userDifficulty';
+    const isDifficultySort =
+      sortField === 'leetDifficulty' || sortField === 'userDifficulty';
+
     const params = {
       page,
       limit: PAGE_SIZE,
       showUnsolved,
       ...(searchTerm && { search: searchTerm }),
-      ...(!isDifficulty && sortField && { sortField, sortOrder }),
+      ...(!isDifficultySort && sortField && { sortField, sortOrder }),
       ...(tagFilter && { tag: tagFilter }),
     };
 
@@ -87,7 +93,7 @@ export default function QuestionsTable({
         if (showUnsolved) {
           list = list.filter(q => !q.solved);
         }
-        if (isDifficulty) {
+        if (isDifficultySort) {
           list = [...list].sort((a, b) => {
             const ra = difficultyRank[a[sortField]] ?? 0;
             const rb = difficultyRank[b[sortField]] ?? 0;
@@ -98,8 +104,19 @@ export default function QuestionsTable({
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [company, bucket, page, showUnsolved, sortField, sortOrder, searchTerm, tagFilter, refreshKey]);
+  }, [
+    company,
+    bucket,
+    page,
+    showUnsolved,
+    sortField,
+    sortOrder,
+    searchTerm,
+    tagFilter,
+    refreshKey
+  ]);
 
+  // Sorting helper
   const onSort = field => {
     if (sortField === field) {
       setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
@@ -110,6 +127,7 @@ export default function QuestionsTable({
   };
   const arrow = f => (sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '');
 
+  // Update a single question’s field (either userDifficulty or solved)
   const updateField = (questionId, field, value) => {
     api
       .patch(`/api/questions/${questionId}`, { [field]: value })
@@ -130,6 +148,7 @@ export default function QuestionsTable({
       .catch(console.error);
   };
 
+  // Batch‐update (solved/un‐solved or set userDifficulty for multiple)
   const batchUpdate = fields => {
     if (!selected.length) return;
     api
@@ -157,8 +176,11 @@ export default function QuestionsTable({
   };
 
   // ─── 2) Helper Functions for Coloring ────────────────────────────────
+
+  // a) Title color: depends on mode
   const getTitleColor = q => {
     if (colorMode === 'user') {
+      // “Your difficulty” mode:
       if (q.userDifficulty) {
         switch (q.userDifficulty) {
           case 'Easy':   return easyColor;
@@ -167,8 +189,10 @@ export default function QuestionsTable({
           default:       return undefined;
         }
       }
+      // Fallback: if solved → solvedColor, otherwise default
       return q.solved ? solvedColor : undefined;
     } else {
+      // “Leet difficulty” mode:
       if (q.leetDifficulty) {
         switch (q.leetDifficulty) {
           case 'Easy':   return easyColor;
@@ -181,18 +205,7 @@ export default function QuestionsTable({
     }
   };
 
-  const getYourRatingColor = q => {
-    if (q.userDifficulty) {
-      switch (q.userDifficulty) {
-        case 'Easy':   return easyColor;
-        case 'Medium': return mediumColor;
-        case 'Hard':   return hardColor;
-        default:       return undefined;
-      }
-    }
-    return undefined;
-  };
-
+  // b) Difficulty column color (always Leet‐based)
   const getDifficultyColor = q => {
     if (q.leetDifficulty) {
       switch (q.leetDifficulty) {
@@ -205,13 +218,45 @@ export default function QuestionsTable({
     return undefined;
   };
 
+  // c) “Your Rating” text color: selected value (closed <select>)
+  const getYourRatingColor = q => {
+    if (q.userDifficulty) {
+      // If userDifficulty is explicitly set, color by that
+      switch (q.userDifficulty) {
+        case 'Easy':   return easyColor;
+        case 'Medium': return mediumColor;
+        case 'Hard':   return hardColor;
+        default:       return undefined;
+      }
+    }
+    // If no userDifficulty AND we’re in “Your difficulty” mode AND solved:
+    // fallback to solvedColor
+    if (colorMode === 'user' && q.solved) {
+      return solvedColor;
+    }
+    // Otherwise, default color
+    return undefined;
+  };
+
+  // d) Option‐item color: depends on mode, but both use the same base palette
+  const getOptionColor = difficultyValue => {
+    // difficultyValue is one of 'Easy', 'Medium', 'Hard'
+    if (!difficultyValue) return undefined;
+    switch (difficultyValue) {
+      case 'Easy':   return easyColor;
+      case 'Medium': return mediumColor;
+      case 'Hard':   return hardColor;
+      default:       return undefined;
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse font-mono text-code-sm">
           <thead>
             <tr className="border-b border-gray-800 bg-gray-900 text-gray-400">
-              {/* ─── Header checkbox for “select all” ───────────────────────── */}
+              {/* “Select All” checkbox in header */}
               <th className="px-4 py-3 text-left">
                 <input
                   type="checkbox"
@@ -259,23 +304,23 @@ export default function QuestionsTable({
                   key={q.id}
                   className="border-gray-800 hover:bg-gray-900/50 transition-colors duration-150"
                 >
-                  {/* ─── Row‐level checkbox ──────────────────────────────────────── */}
+                  {/* Row‐level checkbox */}
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selected.includes(q.id)}
                       onChange={() =>
-                        setSelected(sel =>
-                          sel.includes(q.id)
-                            ? sel.filter(x => x !== q.id)
-                            : [...sel, q.id]
+                        setSelected(prev =>
+                          prev.includes(q.id)
+                            ? prev.filter(x => x !== q.id)
+                            : [...prev, q.id]
                         )
                       }
                       className="rounded border-gray-700 bg-gray-800 text-primary focus:ring-primary/50"
                     />
                   </td>
 
-                  {/* ─── Title (colored by getTitleColor) ───────────────────────── */}
+                  {/* Title (colored via getTitleColor) */}
                   <td
                     className="px-4 py-3"
                     style={{ color: getTitleColor(q) }}
@@ -283,39 +328,58 @@ export default function QuestionsTable({
                     {q.title}
                   </td>
 
-                  {/* ─── Frequency (default text color) ─────────────────────────── */}
+                  {/* Frequency (default color) */}
                   <td className="px-4 py-3">{q.frequency}</td>
 
-                  {/* ─── Acceptance Rate (default text color) ───────────────────── */}
+                  {/* Acceptance Rate (default color) */}
                   <td className="px-4 py-3">
                     {(q.acceptanceRate * 100).toFixed(1)}%
                   </td>
 
-                  {/* ─── Difficulty (always Leet‐based) ───────────────────────────── */}
+                  {/* Difficulty (always Leet‐based via getDifficultyColor) */}
                   <td className="px-4 py-3">
                     <span style={{ color: getDifficultyColor(q) }}>
                       {q.leetDifficulty}
                     </span>
                   </td>
 
-                  {/* ─── Your Rating (dropdown itself colored by getYourRatingColor) ─ */}
+                  {/* Your Rating dropdown */}
                   <td className="px-4 py-3">
                     <select
                       value={q.userDifficulty || ''}
                       onChange={e =>
                         updateField(q.id, 'userDifficulty', e.target.value)
                       }
+                      // Closed‐select text color = getYourRatingColor(q)
                       style={{ color: getYourRatingColor(q) || 'inherit' }}
                       className="bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
                     >
+                      {/* “–” placeholder → use default text color */}
                       <option value="">–</option>
-                      <option value="Easy">Easy</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Hard">Hard</option>
+
+                      {/* Each option’s text color = palette color (same logic for both modes) */}
+                      <option
+                        value="Easy"
+                        style={{ color: getOptionColor('Easy') }}
+                      >
+                        Easy
+                      </option>
+                      <option
+                        value="Medium"
+                        style={{ color: getOptionColor('Medium') }}
+                      >
+                        Medium
+                      </option>
+                      <option
+                        value="Hard"
+                        style={{ color: getOptionColor('Hard') }}
+                      >
+                        Hard
+                      </option>
                     </select>
                   </td>
 
-                  {/* ─── Link ────────────────────────────────────────────────────── */}
+                  {/* Link */}
                   <td className="px-4 py-3">
                     <a
                       href={q.link}
@@ -327,7 +391,7 @@ export default function QuestionsTable({
                     </a>
                   </td>
 
-                  {/* ─── Status (solved checkbox) ───────────────────────────────── */}
+                  {/* Status (solved checkbox) */}
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
@@ -354,6 +418,7 @@ export default function QuestionsTable({
         </table>
       </div>
 
+      {/* Batch action bar */}
       {selected.length > 0 && (
         <div className="sticky bottom-0 bg-surface border-t border-gray-800 px-4 py-3 flex items-center gap-4 z-10">
           <strong className="text-gray-300">{selected.length} selected</strong>
@@ -389,6 +454,7 @@ export default function QuestionsTable({
         </div>
       )}
 
+      {/* Pagination controls */}
       <div className="flex justify-center items-center gap-4 my-2">
         <button
           onClick={() => setPage(p => Math.max(p - 1, 1))}
