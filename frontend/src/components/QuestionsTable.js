@@ -21,7 +21,7 @@ export default function QuestionsTable({
   showUnsolved,
   searchTerm,
   tagFilter,
-  refreshKey
+  refreshKey,
 }) {
   const { user } = useAuth();
 
@@ -32,34 +32,35 @@ export default function QuestionsTable({
     easy:   '#8BC34A',
     medium: '#FFB74D',
     hard:   '#E57373',
-    solved: '#9E9E9E'
+    solved: '#9E9E9E',
   };
   const easyColor   = palette.easy;
   const mediumColor = palette.medium;
   const hardColor   = palette.hard;
   const solvedColor = palette.solved;
 
-  const [questions, setQuestions]     = useState([]);
-  const [page, setPage]               = useState(1);
-  const [totalPages, setTotalPages]   = useState(1);
-  const [loading, setLoading]         = useState(false);
-  const [sortField, setSortField]     = useState(null);
-  const [sortOrder, setSortOrder]     = useState('asc');
-  const [selected, setSelected]       = useState([]);
-  const [batchDifficulty, setBatchDifficulty] = useState('');
+  // ─── Component state ───────────────────────────────────────────────────
+  const [questions, setQuestions]               = useState([]);
+  const [page, setPage]                         = useState(1);
+  const [totalPages, setTotalPages]             = useState(1);
+  const [loading, setLoading]                   = useState(false);
+  const [sortField, setSortField]               = useState(null);
+  const [sortOrder, setSortOrder]               = useState('asc');
+  const [selected, setSelected]                 = useState([]);
+  const [batchDifficulty, setBatchDifficulty]   = useState('');
 
-  // Whenever the list of questions changes, clear any batch selection
+  // ─── Whenever the list of questions changes, clear any batch selection ─
   useEffect(() => {
     setSelected([]);
     setBatchDifficulty('');
   }, [questions]);
 
-  // Reset to page 1 whenever filters/sort/search change
+  // ─── Reset to page 1 whenever filters/sort/search change ─────────────────
   useEffect(() => {
     setPage(1);
   }, [company, bucket, showUnsolved, sortField, sortOrder, searchTerm, tagFilter, refreshKey]);
 
-  // Fetch questions from the backend
+  // ─── Fetch questions from the backend ───────────────────────────────────
   useEffect(() => {
     if (!company || !bucket) {
       setQuestions([]);
@@ -113,10 +114,10 @@ export default function QuestionsTable({
     sortOrder,
     searchTerm,
     tagFilter,
-    refreshKey
+    refreshKey,
   ]);
 
-  // Sorting helper
+  // ─── Sorting helper ─────────────────────────────────────────────────────
   const onSort = field => {
     if (sortField === field) {
       setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
@@ -127,7 +128,7 @@ export default function QuestionsTable({
   };
   const arrow = f => (sortField === f ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '');
 
-  // Update a single question’s field (either userDifficulty or solved)
+  // ─── Update a single question’s field (userDifficulty or solved) ────────
   const updateField = (questionId, field, value) => {
     api
       .patch(`/api/questions/${questionId}`, { [field]: value })
@@ -148,13 +149,13 @@ export default function QuestionsTable({
       .catch(console.error);
   };
 
-  // Batch‐update (solved/un‐solved or set userDifficulty for multiple)
+  // ─── Batch‐update (solved/un‐solved or set userDifficulty for multiple) ─
   const batchUpdate = fields => {
     if (!selected.length) return;
     api
       .patch('/api/questions/batch-meta', {
         ids: selected,
-        ...fields
+        ...fields,
       })
       .then(res => {
         const updates = res.data;
@@ -175,12 +176,11 @@ export default function QuestionsTable({
       .catch(console.error);
   };
 
-  // ─── 2) Helper Functions for Coloring ────────────────────────────────
+  // ─── 2) Helper Functions for Coloring ───────────────────────────────────
 
-  // a) Title color: depends on mode
+  // a) Title color: based on mode (user vs. leet)
   const getTitleColor = q => {
     if (colorMode === 'user') {
-      // “Your difficulty” mode:
       if (q.userDifficulty) {
         switch (q.userDifficulty) {
           case 'Easy':   return easyColor;
@@ -189,10 +189,8 @@ export default function QuestionsTable({
           default:       return undefined;
         }
       }
-      // Fallback: if solved → solvedColor, otherwise default
       return q.solved ? solvedColor : undefined;
     } else {
-      // “Leet difficulty” mode:
       if (q.leetDifficulty) {
         switch (q.leetDifficulty) {
           case 'Easy':   return easyColor;
@@ -218,10 +216,9 @@ export default function QuestionsTable({
     return undefined;
   };
 
-  // c) “Your Rating” text color: selected value (closed <select>)
+  // c) “Your Rating” text color for closed <select>
   const getYourRatingColor = q => {
     if (q.userDifficulty) {
-      // If userDifficulty is explicitly set, color by that
       switch (q.userDifficulty) {
         case 'Easy':   return easyColor;
         case 'Medium': return mediumColor;
@@ -229,18 +226,14 @@ export default function QuestionsTable({
         default:       return undefined;
       }
     }
-    // If no userDifficulty AND we’re in “Your difficulty” mode AND solved:
-    // fallback to solvedColor
     if (colorMode === 'user' && q.solved) {
       return solvedColor;
     }
-    // Otherwise, default color
     return undefined;
   };
 
-  // d) Option‐item color: depends on mode, but both use the same base palette
+  // d) Option‐item color (dropdown options)
   const getOptionColor = difficultyValue => {
-    // difficultyValue is one of 'Easy', 'Medium', 'Hard'
     if (!difficultyValue) return undefined;
     switch (difficultyValue) {
       case 'Easy':   return easyColor;
@@ -250,19 +243,22 @@ export default function QuestionsTable({
     }
   };
 
+  // ─── 3) Render ──────────────────────────────────────────────────────────
   return (
     <div className="space-y-2">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse font-mono text-code-sm">
+      <div className="overflow-x-auto rounded-xl border border-gray-800">
+        {/* Slight border + rounded corners around the table */}
+        <table className="w-full border-collapse font-mono text-code-base md:text-code-lg">
+          {/* Bumped table text from code-sm → base/lg */}
+
           <thead>
-            <tr className="border-b border-gray-800 bg-gray-900 text-gray-400">
-              {/* “Select All” checkbox in header */}
-              <th className="px-4 py-3 text-left">
+            <tr className="border-b border-gray-800 bg-gray-900 text-code-base font-semibold text-gray-300 uppercase tracking-wider">
+              {/* Brighter, larger header row */}
+              <th className="px-4 py-3 text-left whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={
-                    questions.length > 0 &&
-                    selected.length === questions.length
+                    questions.length > 0 && selected.length === questions.length
                   }
                   onChange={() =>
                     selected.length === questions.length
@@ -277,35 +273,36 @@ export default function QuestionsTable({
                 <th
                   key={field}
                   onClick={() => onSort(field)}
-                  className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-300"
+                  className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-100 whitespace-nowrap"
                 >
                   {label}
                   <span className="text-gray-500">{arrow(field)}</span>
                 </th>
               ))}
-              <th className="px-4 py-3 text-left">Link</th>
-              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left whitespace-nowrap">Link</th>
+              <th className="px-4 py-3 text-left whitespace-nowrap">Status</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-800">
+          <tbody className="divide-y divide-gray-800 text-gray-200">
             {loading ? (
               <tr>
                 <td
                   colSpan={Object.keys(SORT_FIELDS).length + 3}
-                  className="px-4 py-4 text-center text-gray-400"
+                  className="px-4 py-4 text-center italic text-gray-400"
                 >
-                  Loading...
+                  Loading…
                 </td>
               </tr>
             ) : questions.length ? (
               questions.map(q => (
                 <tr
                   key={q.id}
-                  className={`border-gray-800 hover:bg-gray-900/50 transition-colors duration-150 ${!q.solved ? 'font-bold' : 'font-normal'}`}
-                  style={{ opacity: q.solved ? 0.75 : 1 }}
+                  className={`hover:bg-gray-900/50 transition-colors duration-150 ${
+                    !q.solved ? 'font-bold' : 'font-normal opacity-75'
+                  }`}
                 >
-                  {/* Row‐level checkbox */}
+                  {/* Row checkbox */}
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
@@ -321,23 +318,20 @@ export default function QuestionsTable({
                     />
                   </td>
 
-                  {/* Title (colored via getTitleColor) */}
-                  <td
-                    className="px-4 py-3"
-                    style={{ color: getTitleColor(q) }}
-                  >
+                  {/* Title */}
+                  <td className="px-4 py-3" style={{ color: getTitleColor(q) }}>
                     {q.title}
                   </td>
 
-                  {/* Frequency (default color) */}
+                  {/* Frequency */}
                   <td className="px-4 py-3">{q.frequency}</td>
 
-                  {/* Acceptance Rate (default color) */}
+                  {/* Acceptance Rate */}
                   <td className="px-4 py-3">
                     {(q.acceptanceRate * 100).toFixed(1)}%
                   </td>
 
-                  {/* Difficulty (always Leet‐based via getDifficultyColor) */}
+                  {/* Leet Difficulty */}
                   <td className="px-4 py-3">
                     <span style={{ color: getDifficultyColor(q) }}>
                       {q.leetDifficulty}
@@ -351,32 +345,13 @@ export default function QuestionsTable({
                       onChange={e =>
                         updateField(q.id, 'userDifficulty', e.target.value)
                       }
-                      // Closed‐select text color = getYourRatingColor(q)
                       style={{ color: getYourRatingColor(q) || 'inherit' }}
-                      className="bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
                     >
-                      {/* “–” placeholder → use default text color */}
                       <option value="">–</option>
-
-                      {/* Each option’s text color = palette color (same logic for both modes) */}
-                      <option
-                        value="Easy"
-                        style={{ color: getOptionColor('Easy') }}
-                      >
-                        Easy
-                      </option>
-                      <option
-                        value="Medium"
-                        style={{ color: getOptionColor('Medium') }}
-                      >
-                        Medium
-                      </option>
-                      <option
-                        value="Hard"
-                        style={{ color: getOptionColor('Hard') }}
-                      >
-                        Hard
-                      </option>
+                      <option value="Easy"   style={{ color: easyColor   }}>Easy</option>
+                      <option value="Medium" style={{ color: mediumColor }}>Medium</option>
+                      <option value="Hard"   style={{ color: hardColor   }}>Hard</option>
                     </select>
                   </td>
 
@@ -409,7 +384,7 @@ export default function QuestionsTable({
               <tr>
                 <td
                   colSpan={Object.keys(SORT_FIELDS).length + 3}
-                  className="px-4 py-4 text-center text-gray-400"
+                  className="px-4 py-4 text-center italic text-gray-400"
                 >
                   No questions found.
                 </td>
@@ -421,24 +396,24 @@ export default function QuestionsTable({
 
       {/* Batch action bar */}
       {selected.length > 0 && (
-        <div className="sticky bottom-0 bg-surface border-t border-gray-800 px-4 py-3 flex items-center gap-4 z-10">
+        <div className="sticky bottom-0 bg-surface/95 backdrop-blur border-t border-gray-800 px-4 py-3 flex items-center gap-4 z-10">
           <strong className="text-gray-300">{selected.length} selected</strong>
           <button
             onClick={() => batchUpdate({ solved: true })}
-            className="font-mono text-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-2 py-1 rounded border border-gray-700 transition-colors duration-150"
+            className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded border border-gray-700 transition-colors"
           >
             Mark Solved
           </button>
           <button
             onClick={() => batchUpdate({ solved: false })}
-            className="font-mono text-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-2 py-1 rounded border border-gray-700 transition-colors duration-150"
+            className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded border border-gray-700 transition-colors"
           >
             Mark Unsolved
           </button>
           <select
             value={batchDifficulty}
             onChange={e => setBatchDifficulty(e.target.value)}
-            className="font-mono text-sm bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
+            className="font-mono text-code-base bg-gray-800 border border-gray-700 rounded px-3 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
           >
             <option value="">Set difficulty…</option>
             <option value="Easy">Easy</option>
@@ -448,7 +423,7 @@ export default function QuestionsTable({
           <button
             disabled={!batchDifficulty}
             onClick={() => batchUpdate({ userDifficulty: batchDifficulty })}
-            className="font-mono text-sm bg-primary hover:bg-[#2a7aeb] text-white px-2 py-1 rounded transition-colors duration-150 disabled:opacity-50"
+            className="font-mono text-code-base bg-primary hover:bg-[#2a7aeb] text-white px-3 py-1 rounded transition-colors disabled:opacity-50"
           >
             Apply
           </button>
@@ -460,7 +435,7 @@ export default function QuestionsTable({
         <button
           onClick={() => setPage(p => Math.max(p - 1, 1))}
           disabled={page === 1}
-          className="font-mono text-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded border border-gray-700 transition-colors duration-150 disabled:opacity-50"
+          className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-4 py-1 rounded border border-gray-700 transition-colors disabled:opacity-50"
         >
           ← Prev
         </button>
@@ -470,7 +445,7 @@ export default function QuestionsTable({
         <button
           onClick={() => setPage(p => Math.min(p + 1, totalPages))}
           disabled={page === totalPages}
-          className="font-mono text-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded border border-gray-700 transition-colors duration-150 disabled:opacity-50"
+          className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-4 py-1 rounded border border-gray-700 transition-colors disabled:opacity-50"
         >
           Next →
         </button>
