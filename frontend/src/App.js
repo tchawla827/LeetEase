@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState , useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
@@ -33,7 +33,8 @@ function AppContent() {
 
       {/* ─── Below Navbar: sidebar + main share remaining space ───────────── */}
       <div className="flex flex-1 overflow-hidden pt-16">
-        {sidebarOpen && <Sidebar />}
+        {/* Always render Sidebar; it will slide in/out on both mobile and desktop */}
+        <Sidebar sidebarOpen={sidebarOpen} />
 
         <main className="flex-1 overflow-auto p-4">
           <Routes>
@@ -95,7 +96,7 @@ function SyncToast() {
   }, [syncing])
 
   // Whenever syncResult changes (i.e. the sync finished),
-  // show the toast (if it isn’t already) and schedule a 10 s hide.
+  // show the toast and schedule a 10s hide.
   useEffect(() => {
     let timerId
     if (syncResult !== null) {
@@ -138,7 +139,6 @@ function SyncToast() {
     </div>
   )
 }
-
 
 
 function Welcome() {

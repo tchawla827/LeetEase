@@ -14,7 +14,7 @@ const BUCKET_LABELS = {
   'All':              'All',
 }
 
-export default function Sidebar() {
+export default function Sidebar({ sidebarOpen }) {
   const { user } = useAuth()
   const [filter, setFilter] = useState('')
   const [companies, setCompanies] = useState([])
@@ -35,7 +35,6 @@ export default function Sidebar() {
       setCompanies([])
       return
     }
-
     api
       .get('/api/companies')
       .then(res => setCompanies(res.data))
@@ -101,76 +100,90 @@ export default function Sidebar() {
       : companies.filter(c => c.toLowerCase().startsWith(prefix))
 
   return (
-    <aside className="hidden md:block w-64 h-full bg-surface border-r border-gray-800 shadow-elevation overflow-y-auto px-card py-2">
-      <h2 className="font-mono text-code-base text-gray-100 mb-2">Companies</h2>
+    <>
+      {user && (
+        <aside
+          className={`
+            transform transition-transform duration-200 ease-in-out
+            w-64 bg-surface border-r border-gray-800 shadow-elevation overflow-y-auto px-card py-2
 
-      <input
-        type="text"
-        placeholder="Search companies…"
-        value={filter}
-        onChange={e => setFilter(e.target.value)}
-        className="font-mono text-code-sm w-full px-3 py-1.5 mb-2 rounded-code border border-gray-700 bg-gray-900 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
-      />
+            /* Slide on mobile */
+            fixed top-0 left-0 bottom-0
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
 
-      <ul className="space-y-1">
-        {filteredCompanies.map(company => {
-          const isActive = company === activeCompany
-          const isExpanded = Boolean(expandedCompanies[company])
-          const buckets = bucketsByCompany[company] || [] // undefined while loading
+            /* On desktop: show/hide via block/hidden */
+            ${sidebarOpen ? 'md:relative md:block' : 'md:hidden'}
+          `}
+        >
+          <h2 className="font-mono text-code-base text-gray-100 mb-2">Companies</h2>
 
-          return (
-            <li key={company} className="flex flex-col">
-              <div className="flex items-center justify-between">
-                <Link
-                  to={`/company/${encodeURIComponent(company)}`}
-                  className={`font-mono text-code-base ${
-                    isActive
-                      ? 'text-primary font-medium'
-                      : 'text-gray-300'
-                  } hover:text-primary transition-colors duration-150`}
-                >
-                  {company}
-                </Link>
-                <button
-                  onClick={() => toggleCompany(company)}
-                  className="text-gray-400 hover:text-primary p-1 transition-colors duration-150"
-                  aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                >
-                  {isExpanded ? '−' : '+'}
-                </button>
-              </div>
+          <input
+            type="text"
+            placeholder="Search companies…"
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="font-mono text-code-sm w-full px-3 py-1.5 mb-2 rounded-code border border-gray-700 bg-gray-900 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+          />
 
-              {isExpanded && (
-                <ul className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-2">
-                  {/* While waiting for the API, show a “Loading…” placeholder */}
-                  {bucketsByCompany[company] === undefined ? (
-                    <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
-                      Loading…
-                    </li>
-                  ) : buckets.length > 0 ? (
-                    buckets.map(rawBucketName => (
-                      <li key={rawBucketName}>
-                        <button
-                          onClick={() =>
-                            handleBucketClick(company, rawBucketName)
-                          }
-                          className="font-mono text-code-sm text-gray-400 hover:text-primary hover:bg-gray-800 w-full text-left px-2 py-1 rounded-code transition-colors duration-150"
-                        >
-                          {BUCKET_LABELS[rawBucketName] || rawBucketName}
-                        </button>
-                      </li>
-                    ))
-                  ) : (
-                    <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
-                      (No buckets)
-                    </li>
+          <ul className="space-y-1">
+            {filteredCompanies.map(company => {
+              const isActive = company === activeCompany
+              const isExpanded = Boolean(expandedCompanies[company])
+              const buckets = bucketsByCompany[company] || []
+
+              return (
+                <li key={company} className="flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <Link
+                      to={`/company/${encodeURIComponent(company)}`}
+                      className={`font-mono text-code-base ${
+                        isActive ? 'text-primary font-medium' : 'text-gray-300'
+                      } hover:text-primary transition-colors duration-150`}
+                    >
+                      {company}
+                    </Link>
+                    <button
+                      onClick={() => toggleCompany(company)}
+                      className="text-gray-400 hover:text-primary p-1 transition-colors duration-150"
+                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      {isExpanded ? '−' : '+'}
+                    </button>
+                  </div>
+
+                  {isExpanded && (
+                    <ul className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-2">
+                      {/* While waiting for the API, show a “Loading…” placeholder */}
+                      {bucketsByCompany[company] === undefined ? (
+                        <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
+                          Loading…
+                        </li>
+                      ) : buckets.length > 0 ? (
+                        buckets.map(rawBucketName => (
+                          <li key={rawBucketName}>
+                            <button
+                              onClick={() =>
+                                handleBucketClick(company, rawBucketName)
+                              }
+                              className="font-mono text-code-sm text-gray-400 hover:text-primary hover:bg-gray-800 w-full text-left px-2 py-1 rounded-code transition-colors duration-150"
+                            >
+                              {BUCKET_LABELS[rawBucketName] || rawBucketName}
+                            </button>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
+                          (No buckets)
+                        </li>
+                      )}
+                    </ul>
                   )}
-                </ul>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </aside>
+                </li>
+              )
+            })}
+          </ul>
+        </aside>
+      )}
+    </>
   )
 }
