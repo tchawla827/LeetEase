@@ -131,9 +131,22 @@ export default function CompanyPage() {
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="px-4 py-6 md:px-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-mono text-gray-100 mb-4">{companyName}</h1>
+      {/* ── Company title ─────────────────────────────────────────────── */}
+      <h1
+        className="
+          text-3xl md:text-4xl
+          font-extrabold
+          tracking-wide
+          text-primary
+          flex items-center gap-2 mb-4
+        "
+      >
+        <span className="bg-gray-800 rounded-code px-3 py-1">
+          {companyName}
+        </span>
+      </h1>
 
-      {/* ── REMOVED: Unconditional CompanyProgress ───────────────────────────── */}
+      {/* ── REMOVED: Unconditional CompanyProgress ───────────────────────── */}
       {/* <CompanyProgress data={progressData} loading={loadingProgress} /> */}
 
       <div className="flex items-center mb-4">
@@ -197,12 +210,12 @@ export default function CompanyPage() {
               <div className="text-sm text-gray-500 italic">Loading analytics...</div>
             ) : (
               <div className="space-y-8">
-                {/* ── 1) CompanyProgress is now only shown here ───────────────────── */}
+                {/* ── 1) CompanyProgress is now only shown here ─────────────── */}
                 <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
                   <CompanyProgress data={progressData} loading={loadingProgress} />
                 </div>
 
-                {/* ── 2) Then show TopicsDashboard below it ───────────────────────── */}
+                {/* ── 2) Then show TopicsDashboard below it ────────────────── */}
                 <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
                   <TopicsDashboard
                     data={topics}
