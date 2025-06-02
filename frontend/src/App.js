@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState } from 'react'
+import React, { useState , useEffect} from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
@@ -82,50 +82,64 @@ function AppContent() {
   )
 }
 
+
 function SyncToast() {
   const { syncing, syncResult } = useAuth()
+  const [visible, setVisible] = useState(false)
+
+  // Whenever a new sync starts, force the toast to show immediately.
+  useEffect(() => {
+    if (syncing) {
+      setVisible(true)
+    }
+  }, [syncing])
+
+  // Whenever syncResult changes (i.e. the sync finished),
+  // show the toast (if it isn’t already) and schedule a 10 s hide.
+  useEffect(() => {
+    let timerId
+    if (syncResult !== null) {
+      setVisible(true)
+      timerId = setTimeout(() => {
+        setVisible(false)
+      }, 10000)
+    }
+    return () => {
+      clearTimeout(timerId)
+    }
+  }, [syncResult])
+
+  if (!visible) return null
+
   const text = syncing
     ? 'Syncing solved questions…'
     : `Synced ${syncResult} questions`
 
   return (
-    <>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
-      <div
-        style={{
-          position:     'fixed',
-          bottom:       '1rem',
-          right:        '1rem',
-          background:   '#fff',
-          border:       '1px solid #ccc',
-          borderRadius: '4px',
-          padding:      '0.5rem 1rem',
-          boxShadow:    '0 2px 6px rgba(0,0,0,0.1)',
-          display:      'flex',
-          alignItems:   'center',
-          zIndex:       9999
-        }}
+    <div
+      className="fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-code p-2 pl-3 shadow-elevation-md flex items-center z-50 text-gray-100"
+    >
+      {syncing && (
+        <div
+          className="mr-2 border-2 border-gray-600 border-t-primary rounded-full w-4 h-4 animate-spin"
+          style={{ animation: 'spin 1s linear infinite' }}
+        />
+      )}
+      <span className="pr-3">{text}</span>
+
+      {/* Close button */}
+      <button
+        onClick={() => setVisible(false)}
+        className="ml-auto text-gray-400 hover:text-gray-200"
+        aria-label="Close"
       >
-        {syncing && (
-          <div
-            style={{
-              marginRight: '0.5rem',
-              border:      '2px solid #ddd',
-              borderTop:   '2px solid #333',
-              borderRadius:'50%',
-              width:       '1rem',
-              height:      '1rem',
-              animation:   'spin 1s linear infinite'
-            }}
-          />
-        )}
-        <span>{text}</span>
-      </div>
-    </>
+        ×
+      </button>
+    </div>
   )
 }
+
+
 
 function Welcome() {
   return (
