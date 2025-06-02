@@ -20,33 +20,31 @@ export default function CompanyPage() {
   const { companyName } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // pull URL params once
-  const bucketFromUrl    = searchParams.get('bucket')
-  const tagFromUrl       = searchParams.get('tag')
-  const unsolvedFromUrl  = searchParams.get('unsolved') === 'true'
-  const qFromUrl         = searchParams.get('q') || ''
+  // ── Read URL params ────────────────────────────────────────────────────
+  const bucketFromUrl   = searchParams.get('bucket')
+  const tagFromUrl      = searchParams.get('tag')
+  const unsolvedFromUrl = searchParams.get('unsolved') === 'true'
+  const qFromUrl        = searchParams.get('q') || ''
 
-  // --- filter & drill-down state (bootstrapped from URL) ---
+  // ── Filter & drill-down state (bootstrapped from URL) ──────────────────
   const [selectedBucket, setSelectedBucket] = useState(() => bucketFromUrl || null)
-  const [selectedTag, setSelectedTag]       = useState(() => tagFromUrl || null)
-  const [showUnsolved, setShowUnsolved]     = useState(() => unsolvedFromUrl)
-  const [searchTerm, setSearchTerm]         = useState(() => qFromUrl)
+  const [selectedTag,    setSelectedTag]    = useState(() => tagFromUrl   || null)
+  const [showUnsolved,   setShowUnsolved]   = useState(() => unsolvedFromUrl)
+  const [searchTerm,     setSearchTerm]     = useState(() => qFromUrl)
 
-  // --- buckets + loading flag ---
-  const [buckets, setBuckets]         = useState([])
-  const [bucketsLoading, setBucketsLoading] = useState(true)
+  // ── Buckets & progress state ───────────────────────────────────────────
+  const [buckets,          setBuckets]        = useState([])
+  const [bucketsLoading,   setBucketsLoading] = useState(true)
+  const [progressData,     setProgressData]   = useState([])
+  const [loadingProgress,  setLoadingProgress]= useState(true)
 
-  // --- company-progress state + loading flag ---
-  const [progressData, setProgressData]   = useState([])
-  const [loadingProgress, setLoadingProgress] = useState(true)
-
-  // --- other UI state ---
-  const [refreshKey, setRefreshKey]       = useState(0)
+  // ── Misc UI state ──────────────────────────────────────────────────────
+  const [refreshKey,    setRefreshKey]    = useState(0)
   const [showAnalytics, setShowAnalytics] = useState(false)
-  const [topics, setTopics]               = useState([])
+  const [topics,        setTopics]        = useState([])
   const [loadingTopics, setLoadingTopics] = useState(false)
 
-  // keep URL in sync
+  // ── Keep URL in sync with local state ──────────────────────────────────
   useEffect(() => {
     const params = {}
     if (selectedBucket) params.bucket   = selectedBucket
@@ -56,14 +54,14 @@ export default function CompanyPage() {
     setSearchParams(params, { replace: true })
   }, [selectedBucket, selectedTag, showUnsolved, searchTerm, setSearchParams])
 
-  // global refresh listener
+  // ── Global refresh listener (LeetCode sync event) ──────────────────────
   useEffect(() => {
     const onSync = () => setRefreshKey(k => k + 1)
     window.addEventListener('leetSync', onSync)
     return () => window.removeEventListener('leetSync', onSync)
   }, [])
 
-  // fetch buckets when company (or bucketFromUrl) changes
+  // ── Fetch bucket list when company changes (fixed dependency) ──────────
   useEffect(() => {
     setBucketsLoading(true)
     setBuckets([])
@@ -79,7 +77,7 @@ export default function CompanyPage() {
           .sort((a, b) => BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b))
         setBuckets(filtered)
 
-        // pick initial bucket: URL → localStorage → first
+        // Pick initial bucket: URL → localStorage → first available
         if (bucketFromUrl && filtered.includes(bucketFromUrl)) {
           setSelectedBucket(bucketFromUrl)
         } else {
@@ -96,16 +94,14 @@ export default function CompanyPage() {
       })
       .catch(console.error)
       .finally(() => setBucketsLoading(false))
-  }, [companyName, bucketFromUrl])
+  }, [companyName])               // ← bucketFromUrl removed
 
-  // ── Fetch company-progress when companyName changes ────────────────────
+  // ── Fetch company progress when company changes ────────────────────────
   useEffect(() => {
     if (!companyName) return
     setLoadingProgress(true)
     fetchCompanyProgress(companyName)
-      .then(res => {
-        setProgressData(res.data || [])
-      })
+      .then(res => setProgressData(res.data || []))
       .catch(err => {
         console.error('Failed to load company progress', err)
         setProgressData([])
@@ -113,7 +109,7 @@ export default function CompanyPage() {
       .finally(() => setLoadingProgress(false))
   }, [companyName])
 
-  // fetch analytics when toggled on
+  // ── Fetch topic analytics when toggled on ──────────────────────────────
   useEffect(() => {
     if (!showAnalytics || !selectedBucket) return
     setLoadingTopics(true)
@@ -132,11 +128,11 @@ export default function CompanyPage() {
       .finally(() => setLoadingTopics(false))
   }, [companyName, showAnalytics, selectedBucket, showUnsolved])
 
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="px-4 py-6 md:px-6 max-w-6xl mx-auto h-full overflow-auto">
       <h1 className="text-2xl font-mono text-gray-100 mb-4">{companyName}</h1>
 
-      {/* ── Render company-progress widget ─────────────────────────────────── */}
       <CompanyProgress data={progressData} loading={loadingProgress} />
 
       <div className="flex items-center mb-4">
@@ -151,7 +147,6 @@ export default function CompanyPage() {
         </label>
       </div>
 
-      {/* only render tabs when we've got our bucket list */}
       {bucketsLoading ? (
         <div className="text-sm text-gray-500 italic">Loading buckets...</div>
       ) : buckets.length > 0 ? (
@@ -169,7 +164,6 @@ export default function CompanyPage() {
         <p className="text-gray-400">No buckets found for this company.</p>
       )}
 
-      {/* once we have a selectedBucket, show search / table / analytics */}
       {selectedBucket && (
         <>
           <div className="flex flex-wrap items-center gap-3 mb-4">
