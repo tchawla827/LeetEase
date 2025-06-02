@@ -1,26 +1,37 @@
 // src/components/Sidebar.js
 
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useAuth } from '../context/AuthContext'
+
+// Map raw bucket keys (from the API) to human‐friendly labels
+const BUCKET_LABELS = {
+  '30Days':           '30 Days',
+  '3Months':          '3 Months',
+  '6Months':          '6 Months',
+  'MoreThan6Months':  'More Than 6 Months',
+  'All':              'All',
+}
 
 export default function Sidebar() {
   const { user } = useAuth()
   const [filter, setFilter] = useState('')
   const [companies, setCompanies] = useState([])
   const [expandedCompanies, setExpandedCompanies] = useState({})
-  const location = useLocation()
+  const [bucketsByCompany, setBucketsByCompany] = useState({})
 
-  // extract active company slug from URL
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Extract active company slug from URL (e.g. “Adobe” in /company/Adobe?bucket=…)
   const activeCompany = decodeURIComponent(
     (location.pathname.split('/company/')[1] || '').split('/')[0]
   )
 
-  // re‐fetch whenever `user` changes
+  // 1) Load the list of all companies on mount (and whenever user changes)
   useEffect(() => {
     if (!user) {
-      // clear list on logout
       setCompanies([])
       return
     }
@@ -31,32 +42,63 @@ export default function Sidebar() {
       .catch(err => console.error('Failed to load companies', err))
   }, [user])
 
-  // filter by prefix
+  // 2) Toggle “expanded” state for a company; if expanding, fetch buckets
+  const toggleCompany = company => {
+    setExpandedCompanies(prev => {
+      const nowExpanded = !prev[company]
+
+      // If we’re expanding and haven’t fetched buckets yet, fetch them now:
+      if (nowExpanded && !bucketsByCompany[company]) {
+        fetchBucketsForCompany(company)
+      }
+
+      return {
+        ...prev,
+        [company]: nowExpanded,
+      }
+    })
+  }
+
+  // Fetch “/api/companies/:company/buckets” and store result in state
+  const fetchBucketsForCompany = company => {
+    api
+      .get(`/api/companies/${encodeURIComponent(company)}/buckets`)
+      .then(res => {
+        // Backend returns raw keys, e.g. ["30Days","6Months","All"]
+        // Sort them in a consistent order:
+        const BUCKET_ORDER = ['30Days', '3Months', '6Months', 'MoreThan6Months', 'All']
+        const raw = res.data
+          .filter(b => BUCKET_ORDER.includes(b))
+          .sort((a, b) => BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b))
+
+        setBucketsByCompany(prev => ({
+          ...prev,
+          [company]: raw,
+        }))
+      })
+      .catch(err => {
+        console.error(`Failed to load buckets for ${company}`, err)
+        // If the request fails, store an empty array so we don’t keep retrying
+        setBucketsByCompany(prev => ({
+          ...prev,
+          [company]: [],
+        }))
+      })
+  }
+
+  // 3) When user clicks a bucket, navigate to /company/:company?bucket=<rawBucketName>
+  const handleBucketClick = (company, rawBucketName) => {
+    navigate(
+      `/company/${encodeURIComponent(company)}?bucket=${encodeURIComponent(rawBucketName)}`
+    )
+  }
+
+  // 4) Filter companies by prefix for the “Search companies…” input
   const prefix = filter.trim().toLowerCase()
   const filteredCompanies =
     prefix === ''
       ? companies
       : companies.filter(c => c.toLowerCase().startsWith(prefix))
-
-  const toggleCompany = company => {
-    setExpandedCompanies(prev => ({
-      ...prev,
-      [company]: !prev[company],
-    }))
-  }
-
-  const handleBucketClick = (company, bucket) => {
-    console.log(`Selected ${bucket} for ${company}`)
-    // … your bucket‐click logic here …
-  }
-
-  const timeBuckets = [
-    '30 Days',
-    '3 Months',
-    '6 Months',
-    'More Than 6 Months',
-    'All',
-  ]
 
   return (
     <aside className="hidden md:block w-64 h-full bg-surface border-r border-gray-800 shadow-elevation overflow-y-auto px-card py-2">
@@ -73,7 +115,8 @@ export default function Sidebar() {
       <ul className="space-y-1">
         {filteredCompanies.map(company => {
           const isActive = company === activeCompany
-          const isExpanded = expandedCompanies[company]
+          const isExpanded = Boolean(expandedCompanies[company])
+          const buckets = bucketsByCompany[company] || [] // undefined while loading
 
           return (
             <li key={company} className="flex flex-col">
@@ -91,9 +134,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleCompany(company)}
                   className="text-gray-400 hover:text-primary p-1 transition-colors duration-150"
-                  aria-label={
-                    isExpanded ? 'Collapse' : 'Expand'
-                  }
+                  aria-label={isExpanded ? 'Collapse' : 'Expand'}
                 >
                   {isExpanded ? '−' : '+'}
                 </button>
@@ -101,18 +142,29 @@ export default function Sidebar() {
 
               {isExpanded && (
                 <ul className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-2">
-                  {timeBuckets.map(bucket => (
-                    <li key={bucket}>
-                      <button
-                        onClick={() =>
-                          handleBucketClick(company, bucket)
-                        }
-                        className="font-mono text-code-sm text-gray-400 hover:text-primary hover:bg-gray-800 w-full text-left px-2 py-1 rounded-code transition-colors duration-150"
-                      >
-                        {bucket}
-                      </button>
+                  {/* While waiting for the API, show a “Loading…” placeholder */}
+                  {bucketsByCompany[company] === undefined ? (
+                    <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
+                      Loading…
                     </li>
-                  ))}
+                  ) : buckets.length > 0 ? (
+                    buckets.map(rawBucketName => (
+                      <li key={rawBucketName}>
+                        <button
+                          onClick={() =>
+                            handleBucketClick(company, rawBucketName)
+                          }
+                          className="font-mono text-code-sm text-gray-400 hover:text-primary hover:bg-gray-800 w-full text-left px-2 py-1 rounded-code transition-colors duration-150"
+                        >
+                          {BUCKET_LABELS[rawBucketName] || rawBucketName}
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
+                      (No buckets)
+                    </li>
+                  )}
                 </ul>
               )}
             </li>
