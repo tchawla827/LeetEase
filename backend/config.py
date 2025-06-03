@@ -1,4 +1,5 @@
 # backend/config.py
+
 from dotenv import load_dotenv
 import os
 from pymongo import MongoClient
@@ -54,3 +55,17 @@ MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "noreply@example.com")
+
+# ————————————————
+# File Uploads (Profile Photos)
+# ————————————————
+# Base directory of the project
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+# Directory where profile photos will be stored
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads", "profile_photos")
+# Maximum file size (in bytes). E.g., 2 MB max.
+MAX_CONTENT_LENGTH = 2 * 1024 * 1024
+
+# Allowed file extensions for profile photos
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}

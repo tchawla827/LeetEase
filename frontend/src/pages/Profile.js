@@ -1,43 +1,13 @@
 // src/pages/Profile.js
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useAuth } from '../context/AuthContext'
-import api from '../api'
+import { Link } from 'react-router-dom'
 
 export default function Profile() {
   const { user } = useAuth()
 
-  const [loading, setLoading] = useState(true)
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [email, setEmail] = useState('')
-  const [college, setCollege] = useState('')
-  const [role, setRole] = useState('')
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get('/auth/me')
-        const data = res.data
-
-        setFirstName(data.firstName || '')
-        setLastName(data.lastName || '')
-        setEmail(data.email || '')
-        setCollege(data.college || '')
-        setRole(data.role || '')
-      } catch (err) {
-        console.error(err)
-        setError(err.response?.data?.description || 'Failed to load profile')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProfile()
-  }, [])
-
-  if (loading) {
+  if (!user) {
     return (
       <div className="font-mono text-code-base text-gray-300 p-card">
         Loading profile…
@@ -45,21 +15,46 @@ export default function Profile() {
     )
   }
 
+  const {
+    firstName = '',
+    lastName = '',
+    email = '',
+    college = '',
+    role = '',
+    profilePhoto
+  } = user
+
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`
+
   return (
     <div className="font-mono text-code-base text-gray-300 max-w-3xl mx-auto p-card space-y-6">
       {/* Header Section */}
-      <div className="space-y-2">
-        <h1 className="text-code-lg text-primary">Your Profile</h1>
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-code">
-          <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-300">
-            {firstName.charAt(0)}
-            {lastName.charAt(0)}
-          </div>
+          {profilePhoto ? (
+            <img
+              src={profilePhoto}
+              alt="Profile"
+              className="h-12 w-12 rounded-full object-cover border border-gray-700"
+            />
+          ) : (
+            <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 text-xl">
+              {initials}
+            </div>
+          )}
           <div>
-            <p className="text-code-base">{firstName} {lastName}</p>
+            <p className="text-code-lg text-primary">
+              {firstName} {lastName}
+            </p>
             <p className="text-code-sm text-gray-400">{email}</p>
           </div>
         </div>
+        <Link
+          to="/account-settings"
+          className="bg-primary hover:bg-primary/90 text-white font-mono text-code-sm py-1 px-3 rounded-code transition-colors"
+        >
+          Edit Profile
+        </Link>
       </div>
 
       {/* User Info Card */}
@@ -77,6 +72,10 @@ export default function Profile() {
               <p className="text-code-sm text-gray-400">Last Name</p>
               <p className="text-code-base">{lastName}</p>
             </div>
+            <div>
+              <p className="text-code-sm text-gray-400">College/University</p>
+              <p className="text-code-base">{college || '—'}</p>
+            </div>
           </div>
           <div className="space-y-2">
             <div>
@@ -84,19 +83,18 @@ export default function Profile() {
               <p className="text-code-base">{email}</p>
             </div>
             <div>
+              <p className="text-code-sm text-gray-400">Role</p>
+              <p className="text-code-base">{role || 'user'}</p>
+            </div>
+            <div>
               <p className="text-code-sm text-gray-400">Account Created</p>
-              <p className="text-code-base">{new Date().toLocaleDateString()}</p>
+              <p className="text-code-base">
+                {new Date().toLocaleDateString()}
+              </p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Display error if profile loading fails */}
-      {error && (
-        <div className="bg-red-900/50 border border-red-800 rounded-code p-card text-code-base text-red-400">
-          {error}
-        </div>
-      )}
     </div>
   )
 }

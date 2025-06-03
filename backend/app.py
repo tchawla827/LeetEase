@@ -9,7 +9,7 @@ from datetime import timedelta
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, abort, session
+from flask import Flask, jsonify, request, abort, session, send_from_directory, current_app
 from bson import ObjectId
 
 import config
@@ -28,6 +28,9 @@ from flask_mail import Message
 load_dotenv()
 app = Flask(__name__)
 app.config.from_object(config)
+
+# Ensure upload folder exists
+os.makedirs(app.config.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads', 'profile_photos')), exist_ok=True)
 
 # ─── Initialize extensions ────────────────────────────────────────────────
 sess.init_app(app)
@@ -50,6 +53,19 @@ def to_json(doc):
 
 def generate_otp() -> str:
     return f"{random.randint(100_000, 999_999)}"
+
+def allowed_file(filename):
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in getattr(config, 'ALLOWED_EXTENSIONS', {'png','jpg','jpeg','gif'})
+
+# ─── Route to serve profile photos ────────────────────────────────────────
+@app.route('/uploads/profile_photos/<filename>')
+def serve_profile_photo(filename):
+    """Serve a saved profile photo from the upload folder."""
+    upload_folder = current_app.config.get('UPLOAD_FOLDER')
+    return send_from_directory(upload_folder, filename)
 
 # ─── LeetCode API endpoints & fetch helpers ───────────────────────────────
 PROB_API        = "https://leetcode.com/api/problems/algorithms/"
@@ -128,11 +144,11 @@ def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
 @app.route('/auth/register', methods=['POST'])
 def register():
     data = request.get_json() or {}
-    email            = (data.get('email') or '').strip().lower()
-    password         = data.get('password')
-    first_name       = (data.get('firstName') or '').strip()
-    last_name        = (data.get('lastName') or '').strip()
-    college          = (data.get('college') or '').strip()
+    email             = (data.get('email') or '').strip().lower()
+    password          = data.get('password')
+    first_name        = (data.get('firstName') or '').strip()
+    last_name         = (data.get('lastName') or '').strip()
+    college           = (data.get('college') or '').strip()
     leetcode_username = (data.get('leetcodeUsername') or '').strip()
 
     # Only firstName, email, and password are strictly required
@@ -150,12 +166,12 @@ def register():
 
     otp = generate_otp()
     session['reg_data'] = {
-        'email': email,
-        'password': password,
-        'firstName': first_name,
-        'lastName': last_name or None,
-        'college': college or None,
-        'leetcodeUsername': leetcode_username or None
+        'email':             email,
+        'password':          password,
+        'firstName':         first_name,
+        'lastName':          last_name or None,
+        'college':           college or None,
+        'leetcodeUsername':  leetcode_username or None
     }
     session['otp'] = otp
 
@@ -176,17 +192,15 @@ def verify():
 
     pw_hash = bcrypt.generate_password_hash(reg['password']).decode('utf-8')
     USERS.insert_one({
-        'email': reg['email'],
-        'password': pw_hash,
-        'role': 'user',
-        'firstName': reg['firstName'],
-        # lastName may be None if user left it blank
-        'lastName': reg.get('lastName'),
-        'college': reg.get('college'),
-        # store leetcode_username if provided during registration
+        'email':             reg['email'],
+        'password':          pw_hash,
+        'role':              'user',
+        'firstName':         reg['firstName'],
+        'lastName':          reg.get('lastName'),
+        'college':           reg.get('college'),
         'leetcode_username': reg.get('leetcodeUsername'),
-        # initially no session cookie
-        'leetcode_session': None,
+        'leetcode_session':  None,
+        'profilePhoto':      None,
         'settings': {
             'colorMode': 'leet',
             'palette': {
@@ -205,9 +219,9 @@ def login():
     if not (data.get('email') and data.get('password')):
         abort(400, description='Email and password required')
 
-    email = (data.get('email') or '').strip().lower()
+    email    = (data.get('email') or '').strip().lower()
     password = data.get('password')
-    user = USERS.find_one({'email': email})
+    user     = USERS.find_one({'email': email})
     if not user or not bcrypt.check_password_hash(user['password'], password):
         abort(401, description='Bad email or password')
 
@@ -338,6 +352,137 @@ def update_profile_settings():
     USERS.update_one({'_id': ObjectId(uid)}, {'$set': update})
     result = USERS.find_one({'_id': ObjectId(uid)}, {'settings': 1, '_id': 0})
     return jsonify(result.get('settings', {})), 200
+
+# =============================================================================
+# NEW: Account Settings & Profile Photo Endpoints
+# =============================================================================
+@app.route('/profile/account', methods=['GET'])
+@jwt_required()
+def get_account_profile():
+    """Fetch the current user's account details (excluding password)."""
+    uid = get_jwt_identity()
+    user = USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
+    if not user:
+        abort(404, description='User not found')
+    user['id'] = str(user.pop('_id'))
+    return jsonify(user), 200
+
+@app.route('/profile/account', methods=['PATCH'])
+@jwt_required()
+def update_account_profile():
+    """
+    Update fields like firstName, lastName, college, email, and optionally newPassword.
+    If email is changed, ensure uniqueness. If newPassword provided, hash it.
+    """
+    uid = get_jwt_identity()
+    data = request.get_json() or {}
+    update = {}
+
+    # Validate and set firstName
+    if 'firstName' in data:
+        new_first = (data.get('firstName') or '').strip()
+        if not new_first:
+            abort(400, description='First name cannot be empty')
+        update['firstName'] = new_first
+
+    # lastName (optional)
+    if 'lastName' in data:
+        update['lastName'] = (data.get('lastName') or '').strip() or None
+
+    # college (optional)
+    if 'college' in data:
+        update['college'] = (data.get('college') or '').strip() or None
+
+    # email (required & unique if changed)
+    if 'email' in data:
+        new_email = (data.get('email') or '').strip().lower()
+        if not new_email:
+            abort(400, description='Email cannot be empty')
+        # Basic email format validation
+        import re
+        email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
+        if not re.match(email_regex, new_email):
+            abort(400, description='Invalid email format')
+        # Check if email already exists on a different user
+        existing = USERS.find_one({'email': new_email})
+        if existing and str(existing['_id']) != uid:
+            abort(400, description='Email is already in use')
+        update['email'] = new_email
+
+    # newPassword (optional)
+    if 'newPassword' in data:
+        new_pw = data.get('newPassword')
+        if not new_pw or len(new_pw) < 8:
+            abort(400, description='New password must be at least 8 characters')
+        pw_hash = bcrypt.generate_password_hash(new_pw).decode('utf-8')
+        update['password'] = pw_hash
+
+    if not update:
+        abort(400, description='No valid fields to update')
+
+    USERS.update_one({'_id': ObjectId(uid)}, {'$set': update})
+    # Return updated user (excluding password)
+    updated_user = USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
+    updated_user['id'] = str(updated_user.pop('_id'))
+    return jsonify(updated_user), 200
+
+@app.route('/profile/account/photo', methods=['POST'])
+@jwt_required()
+def upload_profile_photo():
+    """
+    Upload (or replace) a profile photo. Expects multipart-form data with 'photo' field.
+    Saves the file as <userId>.<ext> in UPLOAD_FOLDER and updates the 'profilePhoto' URL in the user doc.
+    """
+    uid = get_jwt_identity()
+    if 'photo' not in request.files:
+        abort(400, description='No file part in the request')
+    file = request.files['photo']
+    if file.filename == '':
+        abort(400, description='No selected file')
+    if not allowed_file(file.filename):
+        abort(400, description='File type not allowed')
+
+    # Save the file under a deterministic name: <userId>.<ext>
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uid}.{ext}"
+    upload_folder = app.config.get('UPLOAD_FOLDER')
+    filepath = os.path.join(upload_folder, filename)
+    try:
+        file.save(filepath)
+    except Exception as e:
+        app.logger.error("Failed to save profile photo: %s", e)
+        abort(500, description='Failed to save photo')
+
+    # Construct a URL for serving the photo
+    photo_url = f"/uploads/profile_photos/{filename}"
+    USERS.update_one({'_id': ObjectId(uid)}, {'$set': {'profilePhoto': photo_url}})
+    return jsonify({'profilePhotoUrl': photo_url}), 200
+
+@app.route('/profile/account/photo', methods=['DELETE'])
+@jwt_required()
+def delete_profile_photo():
+    """
+    Remove the existing profile photo (if any). Deletes the file from disk and unsets 'profilePhoto'.
+    """
+    uid = get_jwt_identity()
+    user = USERS.find_one({'_id': ObjectId(uid)}, {'profilePhoto': 1})
+    if not user:
+        abort(404, description='User not found')
+
+    photo_url = user.get('profilePhoto')
+    if photo_url:
+        # Extract filename from URL
+        filename = photo_url.split('/')[-1]
+        upload_folder = app.config.get('UPLOAD_FOLDER')
+        filepath = os.path.join(upload_folder, filename)
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        except Exception as e:
+            app.logger.warning("Could not delete photo file %s: %s", filepath, e)
+    # Unset in database regardless
+    USERS.update_one({'_id': ObjectId(uid)}, {'$unset': {'profilePhoto': ""}})
+    return jsonify({'msg': 'Profile photo removed'}), 200
 
 # =============================================================================
 # Health-check
@@ -707,7 +852,7 @@ def company_progress(company):
             'solved': {
                 '$sum': {
                     '$cond': [
-                        { 
+                        {
                           '$and': [
                             { '$ne': [ '$meta', [] ] },
                             { '$eq': [ { '$arrayElemAt': [ '$meta.solved', 0 ] }, True ] }

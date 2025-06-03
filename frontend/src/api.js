@@ -39,9 +39,33 @@ export function verifyOtp(payload) {
   return api.post('/auth/verify', payload)
 }
 
+// ─── Account Settings & Profile Photo Endpoints ───────────────────────────
+
+// Fetch the current user's full profile (firstName, lastName, college, email, profilePhoto, etc.)
+export function getAccountProfile() {
+  return api.get('/profile/account')
+}
+
+// Update account fields (firstName, lastName, college, email, optionally newPassword)
+export function updateAccountProfile(payload) {
+  return api.patch('/profile/account', payload)
+}
+
+// Upload (or replace) profile photo (multipart/form-data)
+export function uploadProfilePhoto(formData) {
+  return api.post('/profile/account/photo', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+// Delete existing profile photo
+export function deleteProfilePhoto() {
+  return api.delete('/profile/account/photo')
+}
+
 // ─── Settings‐related endpoints ───────────────────────────────────────────
 
-// Fetch the current user's settings
+// Fetch the current user's settings (color, palette, leetUsername, etc.)
 export function getUserSettings() {
   return api.get('/profile/settings')
 }
@@ -51,7 +75,7 @@ export function updateUserSettings(settings) {
   return api.patch('/profile/settings', settings)
 }
 
-// Trigger a LeetCode sync for the current user (used by AuthContext.syncBackground)
+// Trigger a LeetCode sync for the current user
 export function syncLeetCode() {
   return api.post('/profile/leetcode/sync')
 }

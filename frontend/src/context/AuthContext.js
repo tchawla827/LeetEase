@@ -2,7 +2,14 @@
 
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api, { registerUser, verifyOtp } from '../api'
+import api, {
+  registerUser,
+  verifyOtp,
+  getAccountProfile,
+  updateAccountProfile,
+  uploadProfilePhoto,
+  deleteProfilePhoto
+} from '../api'
 
 const AuthContext = createContext()
 
@@ -64,6 +71,18 @@ export function AuthProvider({ children }) {
       })
   }, [])
 
+  // ─── Expose a way to refresh the user object after profile edits ─────────
+  const fetchAndSetUser = async () => {
+    try {
+      const res = await api.get('/auth/me')
+      setUser(res.data)
+      localStorage.setItem('user', JSON.stringify(res.data))
+    } catch {
+      setUser(null)
+      localStorage.removeItem('user')
+    }
+  }
+
   // ─── Registration: Step 1 (request OTP) ─────────────────────────────────
   // payload: { firstName, lastName?, college?, leetcodeUsername?, email, password }
   const register = async (payload) => {
@@ -105,10 +124,47 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // ─── Fetch account profile ───────────────────────────────────────────────
+  const fetchAccountProfile = async () => {
+    return getAccountProfile()
+  }
+
+  // ─── Update account fields ───────────────────────────────────────────────
+  const editAccountProfile = async (payload) => {
+    const res = await updateAccountProfile(payload)
+    // After server returns updated user, update context immediately
+    setUser(res.data)
+    localStorage.setItem('user', JSON.stringify(res.data))
+    return res.data
+  }
+
+  // ─── Upload or replace profile photo ────────────────────────────────────
+  const changeProfilePhoto = async (formData) => {
+    const res = await uploadProfilePhoto(formData)
+    // Update context user.profilePhoto
+    setUser((prev) => {
+      const updated = { ...prev, profilePhoto: res.data.profilePhotoUrl }
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
+    return res.data.profilePhotoUrl
+  }
+
+  // ─── Remove existing profile photo ───────────────────────────────────────
+  const removeProfilePhoto = async () => {
+    await deleteProfilePhoto()
+    setUser((prev) => {
+      const updated = { ...prev, profilePhoto: null }
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
+  }
+
   return (
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         login,
         logout,
         register,
@@ -117,6 +173,11 @@ export function AuthProvider({ children }) {
         syncResult,
         syncBackground,
         saveSettings,
+        fetchAndSetUser,
+        fetchAccountProfile,
+        editAccountProfile,
+        changeProfilePhoto,
+        removeProfilePhoto,
       }}
     >
       {children}
