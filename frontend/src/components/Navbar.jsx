@@ -166,9 +166,9 @@ export default function Navbar({
                 className="hidden md:flex h-8 w-8 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none"
                 aria-label="Open user menu"
               >
-                {user.photoURL ? (
+                {user.profilePhoto ? (
                   <img
-                    src={user.photoURL}
+                    src={user.profilePhoto}
                     alt="avatar"
                     className="h-8 w-8 rounded-full object-cover"
                   />
@@ -185,9 +185,9 @@ export default function Navbar({
                 className="flex md:hidden h-8 w-8 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none ml-2"
                 aria-label="Open mobile menu"
               >
-                {user.photoURL ? (
+                {user.profilePhoto ? (
                   <img
-                    src={user.photoURL}
+                    src={user.profilePhoto}
                     alt="avatar"
                     className="h-8 w-8 rounded-full object-cover"
                   />
