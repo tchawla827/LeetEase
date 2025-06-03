@@ -2,22 +2,22 @@
 
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../api'
+import api, { registerUser, verifyOtp } from '../api'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  const [user, setUser]             = useState(null)
-  const [syncing, setSyncing]       = useState(false)
+  const [user, setUser] = useState(null)
+  const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState(null)
-  const navigate                    = useNavigate()
+  const navigate = useNavigate()
 
   // ─── Background‐sync helper ─────────────────────────────────────────────
   const syncBackground = async () => {
     setSyncResult(null)
     setSyncing(true)
     try {
-      const res   = await api.post('/profile/leetcode/sync')
+      const res = await api.post('/profile/leetcode/sync')
       const count = res.data.synced
       setSyncResult(count)
       return count
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     const res = await api.patch('/profile/settings', settings)
     const newSettings = res.data
 
-    setUser(prev => {
+    setUser((prev) => {
       const updated = { ...prev, settings: newSettings }
       localStorage.setItem('user', JSON.stringify(updated))
       return updated
@@ -47,8 +47,9 @@ export function AuthProvider({ children }) {
       setUser(JSON.parse(stored))
     }
 
-    api.get('/auth/me')
-      .then(res => {
+    api
+      .get('/auth/me')
+      .then((res) => {
         setUser(res.data)
         localStorage.setItem('user', JSON.stringify(res.data))
 
@@ -62,6 +63,18 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('user')
       })
   }, [])
+
+  // ─── Registration: Step 1 (request OTP) ─────────────────────────────────
+  // payload: { firstName, lastName?, college?, leetcodeUsername?, email, password }
+  const register = async (payload) => {
+    return registerUser(payload)
+  }
+
+  // ─── Registration: Step 2 (verify OTP) ──────────────────────────────────
+  // payload: { otp }
+  const verifyRegistrationOtp = async (payload) => {
+    return verifyOtp(payload)
+  }
 
   // ─── login + then sync if needed ────────────────────────────────────────
   const login = async (email, password) => {
@@ -93,15 +106,19 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      syncing,
-      syncResult,
-      syncBackground,
-      saveSettings      // expose saveSettings for color, palette, LeetCode fields, etc.
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        register,
+        verifyRegistrationOtp,
+        syncing,
+        syncResult,
+        syncBackground,
+        saveSettings,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

@@ -128,14 +128,23 @@ def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
 @app.route('/auth/register', methods=['POST'])
 def register():
     data = request.get_json() or {}
-    email     = data.get('email')
-    password  = data.get('password')
-    firstName = data.get('firstName')
-    lastName  = data.get('lastName')
-    college   = data.get('college')
+    email            = (data.get('email') or '').strip().lower()
+    password         = data.get('password')
+    first_name       = (data.get('firstName') or '').strip()
+    last_name        = (data.get('lastName') or '').strip()
+    college          = (data.get('college') or '').strip()
+    leetcode_username = (data.get('leetcodeUsername') or '').strip()
 
-    if not (email and password and firstName and lastName):
-        abort(400, description='Email, password, first name and last name are required')
+    # Only firstName, email, and password are strictly required
+    if not (email and password and first_name):
+        abort(400, description='First name, email, and password are required')
+
+    # Basic email format validation
+    import re
+    email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
+    if not re.match(email_regex, email):
+        abort(400, description='Invalid email format')
+
     if USERS.find_one({'email': email}):
         abort(400, description='Email already registered')
 
@@ -143,9 +152,10 @@ def register():
     session['reg_data'] = {
         'email': email,
         'password': password,
-        'firstName': firstName,
-        'lastName': lastName,
-        'college': college
+        'firstName': first_name,
+        'lastName': last_name or None,
+        'college': college or None,
+        'leetcodeUsername': leetcode_username or None
     }
     session['otp'] = otp
 
@@ -170,8 +180,13 @@ def verify():
         'password': pw_hash,
         'role': 'user',
         'firstName': reg['firstName'],
-        'lastName': reg['lastName'],
+        # lastName may be None if user left it blank
+        'lastName': reg.get('lastName'),
         'college': reg.get('college'),
+        # store leetcode_username if provided during registration
+        'leetcode_username': reg.get('leetcodeUsername'),
+        # initially no session cookie
+        'leetcode_session': None,
         'settings': {
             'colorMode': 'leet',
             'palette': {
@@ -190,8 +205,10 @@ def login():
     if not (data.get('email') and data.get('password')):
         abort(400, description='Email and password required')
 
-    user = USERS.find_one({'email': data['email']})
-    if not user or not bcrypt.check_password_hash(user['password'], data['password']):
+    email = (data.get('email') or '').strip().lower()
+    password = data.get('password')
+    user = USERS.find_one({'email': email})
+    if not user or not bcrypt.check_password_hash(user['password'], password):
         abort(401, description='Bad email or password')
 
     token = create_access_token(identity=str(user['_id']))
@@ -231,7 +248,7 @@ def me():
 @app.route('/auth/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.get_json() or {}
-    user = USERS.find_one({'email': data.get('email')})
+    user = USERS.find_one({'email': (data.get('email') or '').strip().lower()})
     if not user:
         abort(400, description='Email not found')
 
@@ -253,7 +270,11 @@ def reset_password():
     except:
         abort(400, description='Invalid or expired token')
 
-    pw_hash = bcrypt.generate_password_hash(data.get('newPassword')).decode('utf-8')
+    new_password = data.get('newPassword')
+    if not new_password:
+        abort(400, description='New password is required')
+
+    pw_hash = bcrypt.generate_password_hash(new_password).decode('utf-8')
     USERS.update_one({'_id': ObjectId(uid)}, {'$set': {'password': pw_hash}})
     return jsonify({'msg': 'Password has been reset'}), 200
 
@@ -294,7 +315,7 @@ def manual_leetcode_sync():
     )
     return jsonify({'synced': synced}), 200
 
-# ─── NEW: Update per‐user color settings ───────────────────────────────────
+# ─── Update per‐user color settings ────────────────────────────────────────
 @app.route('/profile/settings', methods=['PATCH'])
 @jwt_required()
 def update_profile_settings():
@@ -597,8 +618,8 @@ def update_question_meta(question_id):
 
     meta = USER_META.find_one({'user_id': uid, 'question_id': question_id})
     resp = {
-        'question_id': question_id,
-        'solved':       meta.get('solved', False),
+        'question_id':    question_id,
+        'solved':         meta.get('solved', False),
         'userDifficulty': meta.get('userDifficulty')
     }
     return jsonify(resp), 200
@@ -629,13 +650,12 @@ def batch_update_questions_meta():
         )
         meta = USER_META.find_one({'user_id': uid, 'question_id': qid})
         results.append({
-            'question_id':   qid,
-            'solved':        meta.get('solved', False),
+            'question_id':    qid,
+            'solved':         meta.get('solved', False),
             'userDifficulty': meta.get('userDifficulty')
         })
 
     return jsonify(results), 200
-
 
 # ─── Company-wide progress (per bucket) ────────────────────────────────────
 @app.route('/api/companies/<company>/progress', methods=['GET'])
@@ -646,11 +666,11 @@ def company_progress(company):
     and how many of those the current user has marked as solved.
     Response format:
       [
-        { "bucket": "30Days",      "total":  12, "solved": 7 },
-        { "bucket": "3Months",     "total":  45, "solved": 12 },
-        { "bucket": "6Months",     "total":  30, "solved": 4 },
-        { "bucket": "MoreThan6Months", "total": 20, "solved": 1 },
-        { "bucket": "All",         "total":  107, "solved": 24 }
+        { "bucket": "30Days",         "total": 12,  "solved": 7 },
+        { "bucket": "3Months",        "total": 45,  "solved": 12 },
+        { "bucket": "6Months",        "total": 30,  "solved": 4 },
+        { "bucket": "MoreThan6Months","total": 20,  "solved": 1 },
+        { "bucket": "All",            "total": 107, "solved": 24 }
       ]
     """
     uid = get_jwt_identity()
@@ -661,7 +681,6 @@ def company_progress(company):
         abort(404, description=f"No company '{company}'")
 
     # 2) Aggregate: for each bucket, count total vs. solved
-    #    We match company_id → lookup user_meta → group by bucket.
     pipeline = [
         { '$match': { 'company_id': co['_id'] } },
         { '$lookup': {
@@ -700,7 +719,6 @@ def company_progress(company):
                 }
             }
         }},
-        # Ensure consistent order by bucket if you like; otherwise front-end can sort by our BUCKET_ORDER.
         { '$project': {
             'bucket': '$_id',
             'total': 1,
@@ -710,11 +728,8 @@ def company_progress(company):
     ]
 
     results = list(CQ.aggregate(pipeline))
-    # results is a list of dicts: { bucket: <name>, total: <int>, solved: <int> }
 
-    # It’s possible that some buckets have zero questions, so for completeness
-    # we’ll fill in any missing buckets with total=0, solved=0.
-
+    # Fill in missing buckets with total=0, solved=0
     BUCKET_ORDER = ["30Days", "3Months", "6Months", "MoreThan6Months", "All"]
     bucket_map = { r['bucket']: r for r in results }
     final_list = []
@@ -724,7 +739,6 @@ def company_progress(company):
         else:
             final_list.append({ 'bucket': b, 'total': 0, 'solved': 0 })
     return jsonify(final_list), 200
-
 
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
@@ -739,5 +753,6 @@ def _startup_sync():
             app.logger.warning("Startup sync failed for %s: %s", u['_id'], e)
 
 if __name__ == '__main__':
+    # If you want to perform a one-time sync on startup, uncomment below:
     # _startup_sync()
     app.run(debug=True)

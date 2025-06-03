@@ -12,7 +12,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(
-  config => {
+  (config) => {
     const needsCsrf = /^(post|put|patch|delete)$/i.test(config.method)
     if (needsCsrf) {
       const csrf = Cookies.get('csrf_access_token')
@@ -22,8 +22,22 @@ api.interceptors.request.use(
     }
     return config
   },
-  error => Promise.reject(error)
+  (error) => Promise.reject(error)
 )
+
+// ─── Authentication / Registration Endpoints ────────────────────────────
+
+// Step 1: Request OTP (register user)
+// Expects payload: { firstName, lastName?, college?, leetcodeUsername?, email, password }
+export function registerUser(payload) {
+  return api.post('/auth/register', payload)
+}
+
+// Step 2: Verify OTP
+// Expects payload: { otp }
+export function verifyOtp(payload) {
+  return api.post('/auth/verify', payload)
+}
 
 // ─── Settings‐related endpoints ───────────────────────────────────────────
 

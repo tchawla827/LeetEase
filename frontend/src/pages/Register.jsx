@@ -17,7 +17,8 @@ export default function Register() {
     college: '',
     leetcodeUsername: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   })
 
   // OTP
@@ -37,9 +38,23 @@ export default function Register() {
     setLoading(true)
     setError('')
 
-    const { firstName, lastName, email, password } = formData
-    if (!firstName || !lastName || !email || !password) {
-      setError('First name, last name, email, and password are required.')
+    const { firstName, email, password, confirmPassword } = formData
+    if (!firstName.trim() || !email.trim() || !password || !confirmPassword) {
+      setError('First name, email, password, and confirm password are all required.')
+      setLoading(false)
+      return
+    }
+
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.')
+      setLoading(false)
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
       setLoading(false)
       return
     }
@@ -47,11 +62,11 @@ export default function Register() {
     try {
       // Send all form fields; backend /auth/register will pick out the ones it needs
       await api.post('/auth/register', {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        college: formData.college || undefined,
-        leetcodeUsername: formData.leetcodeUsername || undefined,
-        email: formData.email,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim() || undefined,
+        college: formData.college.trim() || undefined,
+        leetcodeUsername: formData.leetcodeUsername.trim() || undefined,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password
       })
       // On success, backend has stored reg_data in session and emailed OTP
@@ -74,14 +89,14 @@ export default function Register() {
     setLoading(true)
     setError('')
 
-    if (!otp) {
+    if (!otp.trim()) {
       setError('Please enter the 6-digit OTP.')
       setLoading(false)
       return
     }
 
     try {
-      await api.post('/auth/verify', { otp })
+      await api.post('/auth/verify', { otp: otp.trim() })
       // On success, registration is complete; redirect to login
       navigate('/login')
     } catch (err) {
@@ -148,7 +163,7 @@ export default function Register() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-code-sm text-gray-300 font-mono mb-1">
-                  First Name
+                  First Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -169,7 +184,6 @@ export default function Register() {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
-                  required
                   className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                   placeholder="Doe"
                 />
@@ -206,7 +220,7 @@ export default function Register() {
 
             <div>
               <label className="block text-code-sm text-gray-300 font-mono mb-1">
-                Email
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -221,7 +235,7 @@ export default function Register() {
 
             <div>
               <label className="block text-code-sm text-gray-300 font-mono mb-1">
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
@@ -232,6 +246,22 @@ export default function Register() {
                 minLength="8"
                 className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                 placeholder="••••••••"
+              />
+            </div>
+
+            <div>
+              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                minLength="8"
+                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                placeholder="Re-enter your password"
               />
             </div>
 
@@ -255,7 +285,7 @@ export default function Register() {
               </p>
 
               <label className="block text-code-sm text-gray-300 font-mono mb-1">
-                Verification Code
+                Verification Code <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
