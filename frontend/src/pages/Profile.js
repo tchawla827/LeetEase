@@ -1,9 +1,11 @@
+// src/pages/Profile.js
+
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../api'
 
 export default function Profile() {
-  const { user, saveSettings, syncBackground } = useAuth()
+  const { user, saveSettings } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [firstName, setFirstName] = useState('')
@@ -11,8 +13,6 @@ export default function Profile() {
   const [email, setEmail] = useState('')
   const [college, setCollege] = useState('')
   const [role, setRole] = useState('')
-  const [leetcodeUsername, setLeetcodeUsername] = useState('')
-  const [leetcodeSession, setLeetcodeSession] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -27,13 +27,12 @@ export default function Profile() {
       try {
         const res = await api.get('/auth/me')
         const data = res.data
+
         setFirstName(data.firstName || '')
         setLastName(data.lastName || '')
         setEmail(data.email || '')
         setCollege(data.college || '')
         setRole(data.role || '')
-        setLeetcodeUsername(data.leetcode_username || '')
-        setLeetcodeSession(data.leetcode_session || '')
 
         const s = data.settings || {}
         setColorMode(s.colorMode || 'leet')
@@ -48,46 +47,39 @@ export default function Profile() {
         setLoading(false)
       }
     }
+
     fetchProfile()
   }, [])
 
-  const saveHandle = async () => {
+  // Handler for saving color settings
+  const handleSaveColors = async () => {
     setMessage('')
     setError('')
-    if (!leetcodeUsername.trim() || !leetcodeSession.trim()) {
-      setError('Both username and session cookie are required')
-      return
-    }
+
     try {
-      await api.post('/profile/leetcode', {
-        username: leetcodeUsername.trim(),
-        sessionCookie: leetcodeSession.trim(),
+      await saveSettings({
+        colorMode,
+        palette: {
+          easy: easyColor,
+          medium: mediumColor,
+          hard: hardColor,
+          solved: solvedColor
+        }
       })
-      setMessage('LeetCode profile saved')
+      setMessage('Color settings saved!')
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.description || 'Save failed')
+      setError('Failed to save color settings')
     }
   }
 
-  const syncHandle = async () => {
-    setMessage('')
-    setError('')
-    try {
-      const count = await syncBackground()
-      setMessage(`Synced ${count} questions`)
-      window.dispatchEvent(new Event('leetSync'))
-    } catch (err) {
-      console.error(err)
-      setError(err.response?.data?.description || 'Sync failed')
-    }
+  if (loading) {
+    return (
+      <div className="font-mono text-code-base text-gray-300 p-card">
+        Loading profile…
+      </div>
+    )
   }
-
-  if (loading) return (
-    <div className="font-mono text-code-base text-gray-300 p-card">
-      Loading profile…
-    </div>
-  )
 
   return (
     <div className="font-mono text-code-base text-gray-300 max-w-3xl mx-auto p-card space-y-6">
@@ -96,7 +88,8 @@ export default function Profile() {
         <h1 className="text-code-lg text-primary">Your Profile</h1>
         <div className="flex items-center gap-code">
           <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-300">
-            {firstName.charAt(0)}{lastName.charAt(0)}
+            {firstName.charAt(0)}
+            {lastName.charAt(0)}
           </div>
           <div>
             <p className="text-code-base">{firstName} {lastName}</p>
@@ -107,7 +100,9 @@ export default function Profile() {
 
       {/* User Info Card */}
       <div className="bg-surface border border-gray-800 rounded-card shadow-elevation p-card">
-        <h2 className="text-code-lg text-primary pb-2 border-b border-gray-800 mb-4">User Information</h2>
+        <h2 className="text-code-lg text-primary pb-2 border-b border-gray-800 mb-4">
+          User Information
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-code">
           <div className="space-y-2">
             <div>
@@ -132,56 +127,17 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* LeetCode Integration */}
-      <div className="bg-surface border border-gray-800 rounded-card shadow-elevation p-card space-y-4">
-        <h2 className="text-code-lg text-primary pb-2 border-b border-gray-800">LeetCode Integration</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-code-sm text-gray-400 mb-1">LeetCode Username</label>
-            <input
-              type="text"
-              value={leetcodeUsername}
-              onChange={e => setLeetcodeUsername(e.target.value)}
-              placeholder="e.g. your_handle"
-              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="block text-code-sm text-gray-400 mb-1">LEETCODE_SESSION Cookie</label>
-            <input
-              type="text"
-              value={leetcodeSession}
-              onChange={e => setLeetcodeSession(e.target.value)}
-              placeholder="Paste your LEETCODE_SESSION"
-              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div className="flex gap-code">
-            <button
-              onClick={saveHandle}
-              className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-code text-code-base transition-colors"
-            >
-              Save LeetCode Profile
-            </button>
-            <button
-              onClick={syncHandle}
-              className="border border-primary text-primary hover:bg-primary/10 px-4 py-2 rounded-code text-code-base transition-colors"
-            >
-              Sync Solved Questions
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Color Settings */}
       <div className="bg-surface border border-gray-800 rounded-card shadow-elevation p-card space-y-4">
-        <h2 className="text-code-lg text-primary pb-2 border-b border-gray-800">Color Settings</h2>
+        <h2 className="text-code-lg text-primary pb-2 border-b border-gray-800">
+          Color Settings
+        </h2>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <label className="text-code-base">Color Mode</label>
             <select
               value={colorMode}
-              onChange={e => setColorMode(e.target.value)}
+              onChange={(e) => setColorMode(e.target.value)}
               className="bg-gray-800 border border-gray-700 rounded-code px-3 py-1 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="leet">Based on Leet difficulty</option>
@@ -195,7 +151,7 @@ export default function Profile() {
               <input
                 type="color"
                 value={easyColor}
-                onChange={e => setEasyColor(e.target.value)}
+                onChange={(e) => setEasyColor(e.target.value)}
                 className="h-8 w-8 rounded-code cursor-pointer"
               />
               <span className="text-code-sm">{easyColor}</span>
@@ -205,7 +161,7 @@ export default function Profile() {
               <input
                 type="color"
                 value={mediumColor}
-                onChange={e => setMediumColor(e.target.value)}
+                onChange={(e) => setMediumColor(e.target.value)}
                 className="h-8 w-8 rounded-code cursor-pointer"
               />
               <span className="text-code-sm">{mediumColor}</span>
@@ -215,7 +171,7 @@ export default function Profile() {
               <input
                 type="color"
                 value={hardColor}
-                onChange={e => setHardColor(e.target.value)}
+                onChange={(e) => setHardColor(e.target.value)}
                 className="h-8 w-8 rounded-code cursor-pointer"
               />
               <span className="text-code-sm">{hardColor}</span>
@@ -225,7 +181,7 @@ export default function Profile() {
               <input
                 type="color"
                 value={solvedColor}
-                onChange={e => setSolvedColor(e.target.value)}
+                onChange={(e) => setSolvedColor(e.target.value)}
                 className="h-8 w-8 rounded-code cursor-pointer"
               />
               <span className="text-code-sm">{solvedColor}</span>
@@ -233,25 +189,7 @@ export default function Profile() {
           </div>
 
           <button
-            onClick={async () => {
-              setMessage('')
-              setError('')
-              try {
-                await saveSettings({
-                  colorMode,
-                  palette: {
-                    easy: easyColor,
-                    medium: mediumColor,
-                    hard: hardColor,
-                    solved: solvedColor
-                  }
-                })
-                setMessage('Color settings saved!')
-              } catch (err) {
-                console.error(err)
-                setError('Failed to save color settings')
-              }
-            }}
+            onClick={handleSaveColors}
             className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-code text-code-base transition-colors w-full"
           >
             Save Color Settings
