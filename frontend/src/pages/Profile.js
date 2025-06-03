@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api'
 
 export default function Profile() {
-  const { user, saveSettings } = useAuth()
+  const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [firstName, setFirstName] = useState('')
@@ -13,14 +13,7 @@ export default function Profile() {
   const [email, setEmail] = useState('')
   const [college, setCollege] = useState('')
   const [role, setRole] = useState('')
-  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
-  const [colorMode, setColorMode] = useState('leet')
-  const [easyColor, setEasyColor] = useState('#8BC34A')
-  const [mediumColor, setMediumColor] = useState('#FFB74D')
-  const [hardColor, setHardColor] = useState('#E57373')
-  const [solvedColor, setSolvedColor] = useState('#9E9E9E')
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -33,13 +26,6 @@ export default function Profile() {
         setEmail(data.email || '')
         setCollege(data.college || '')
         setRole(data.role || '')
-
-        const s = data.settings || {}
-        setColorMode(s.colorMode || 'leet')
-        setEasyColor(s.palette?.easy || '#8BC34A')
-        setMediumColor(s.palette?.medium || '#FFB74D')
-        setHardColor(s.palette?.hard || '#E57373')
-        setSolvedColor(s.palette?.solved || '#9E9E9E')
       } catch (err) {
         console.error(err)
         setError(err.response?.data?.description || 'Failed to load profile')
@@ -50,28 +36,6 @@ export default function Profile() {
 
     fetchProfile()
   }, [])
-
-  // Handler for saving color settings
-  const handleSaveColors = async () => {
-    setMessage('')
-    setError('')
-
-    try {
-      await saveSettings({
-        colorMode,
-        palette: {
-          easy: easyColor,
-          medium: mediumColor,
-          hard: hardColor,
-          solved: solvedColor
-        }
-      })
-      setMessage('Color settings saved!')
-    } catch (err) {
-      console.error(err)
-      setError('Failed to save color settings')
-    }
-  }
 
   if (loading) {
     return (
@@ -127,82 +91,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Color Settings */}
-      <div className="bg-surface border border-gray-800 rounded-card shadow-elevation p-card space-y-4">
-        <h2 className="text-code-lg text-primary pb-2 border-b border-gray-800">
-          Color Settings
-        </h2>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <label className="text-code-base">Color Mode</label>
-            <select
-              value={colorMode}
-              onChange={(e) => setColorMode(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-code px-3 py-1 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="leet">Based on Leet difficulty</option>
-              <option value="user">Based on your difficulty</option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-code">
-            <div className="flex items-center gap-code">
-              <label className="text-code-base">Easy:</label>
-              <input
-                type="color"
-                value={easyColor}
-                onChange={(e) => setEasyColor(e.target.value)}
-                className="h-8 w-8 rounded-code cursor-pointer"
-              />
-              <span className="text-code-sm">{easyColor}</span>
-            </div>
-            <div className="flex items-center gap-code">
-              <label className="text-code-base">Medium:</label>
-              <input
-                type="color"
-                value={mediumColor}
-                onChange={(e) => setMediumColor(e.target.value)}
-                className="h-8 w-8 rounded-code cursor-pointer"
-              />
-              <span className="text-code-sm">{mediumColor}</span>
-            </div>
-            <div className="flex items-center gap-code">
-              <label className="text-code-base">Hard:</label>
-              <input
-                type="color"
-                value={hardColor}
-                onChange={(e) => setHardColor(e.target.value)}
-                className="h-8 w-8 rounded-code cursor-pointer"
-              />
-              <span className="text-code-sm">{hardColor}</span>
-            </div>
-            <div className="flex items-center gap-code">
-              <label className="text-code-base">Solved:</label>
-              <input
-                type="color"
-                value={solvedColor}
-                onChange={(e) => setSolvedColor(e.target.value)}
-                className="h-8 w-8 rounded-code cursor-pointer"
-              />
-              <span className="text-code-sm">{solvedColor}</span>
-            </div>
-          </div>
-
-          <button
-            onClick={handleSaveColors}
-            className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-code text-code-base transition-colors w-full"
-          >
-            Save Color Settings
-          </button>
-        </div>
-      </div>
-
-      {/* Messages */}
-      {message && (
-        <div className="bg-green-900/50 border border-green-800 rounded-code p-card text-code-base text-green-400">
-          {message}
-        </div>
-      )}
+      {/* Display error if profile loading fails */}
       {error && (
         <div className="bg-red-900/50 border border-red-800 rounded-code p-card text-code-base text-red-400">
           {error}
