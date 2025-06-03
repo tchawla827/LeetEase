@@ -8,13 +8,16 @@ import { useAuth } from '../context/AuthContext'
 // Adjust this import path if your logo is stored elsewhere
 import logo from '../assets/logo.png'
 
-export default function Navbar({ sidebarOpen, toggleSidebar }) {
+export default function Navbar({
+  sidebarOpen,
+  toggleSidebar,
+  closeSidebar, // callback from App to forcibly close the sidebar
+}) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   // ─── Mobile Menu (“Import / Profile / Settings / Logout”) ────────────
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const toggleMenu = () => setIsMenuOpen((prev) => !prev)
 
   // ─── Desktop Avatar Dropdown ─────────────────────────────────────────
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -28,39 +31,51 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
   // Reference to the dropdown portal container (so clicks “outside” can close it)
   const portalRef = useRef(null)
 
-  // When the user clicks the avatar, compute and store the dropdown's coordinates,
-  // then show the portal.
+  // Utility to detect “mobile” (i.e. narrower than Tailwind’s md: 768px)
+  const isMobile = () => window.innerWidth < 768
+
+  // Compute “open user menu” position and show portal (desktop only)
   const openUserMenu = () => {
     if (avatarButtonRef.current) {
       const rect = avatarButtonRef.current.getBoundingClientRect()
       setDropdownCoords({
         top: rect.bottom + window.scrollY,
-        // We want "right" to mean “distance from viewport’s right edge”:
-        right: window.innerWidth - rect.right
+        // “right” = distance from viewport’s right edge
+        right: window.innerWidth - rect.right,
       })
       setIsUserMenuOpen(true)
     }
   }
 
-  // Toggle between open/closed state
+  // Toggle desktop avatar dropdown (desktop only, because on mobile it's hidden)
   const toggleUserMenu = () => {
     if (isUserMenuOpen) {
       setIsUserMenuOpen(false)
     } else {
+      // On desktop, we do NOT close the sidebar—allow concurrent open.
       openUserMenu()
     }
   }
 
+  // Toggle mobile profile menu: if we’re about to open it AND we’re on mobile,
+  // then force the sidebar closed first.
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => {
+      if (!prev && isMobile()) {
+        closeSidebar()
+      }
+      return !prev
+    })
+  }
+
   // Whenever you click anywhere on the page, if that click is outside
-  // both the avatar button AND the portal, close the dropdown.
+  // both the avatar button AND the portal, close the desktop dropdown.
   useEffect(() => {
     function handleClickOutside(event) {
       const clickedInsideAvatar =
-        avatarButtonRef.current &&
-        avatarButtonRef.current.contains(event.target)
-
+        avatarButtonRef.current?.contains(event.target)
       const clickedInsidePortal =
-        portalRef.current && portalRef.current.contains(event.target)
+        portalRef.current?.contains(event.target)
 
       if (!clickedInsideAvatar && !clickedInsidePortal) {
         setIsUserMenuOpen(false)
@@ -73,7 +88,16 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
     }
   }, [])
 
-  // Compute the avatar initial (e.g. "T" from "Tavish" or first letter of email)
+  // Handle sidebar toggle button: if we’re on mobile, also close the mobile menu.
+  // On desktop, leave the desktop dropdown alone.
+  const handleSidebarToggle = () => {
+    if (isMobile()) {
+      setIsMenuOpen(false)
+    }
+    toggleSidebar()
+  }
+
+  // Compute avatar initial (“T” from “Tavish” or first letter of user.email)
   const avatarInitial = user
     ? user.firstName
       ? user.firstName.charAt(0).toUpperCase()
@@ -86,7 +110,7 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
         {/* ─── Left: Sidebar Toggle Button ───────────────────────────────────────── */}
         <div className="flex items-center">
           <button
-            onClick={toggleSidebar}
+            onClick={handleSidebarToggle}
             className="text-gray-400 hover:text-gray-100 focus:outline-none mr-4"
             aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
@@ -193,7 +217,7 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
         </div>
       </div>
 
-      {/* ─── Desktop Avatar Dropdown “Portal” (renders inside document.body) ─── */}
+      {/* ─── Desktop Avatar Dropdown “Portal” (renders inside document.body) ───────────── */}
       {isUserMenuOpen &&
         ReactDOM.createPortal(
           <div

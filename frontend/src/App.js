@@ -21,19 +21,27 @@ function AppContent() {
   const showToast = syncing || syncResult != null
 
   return (
-    // ─── Removed `overflow-hidden` here so dropdowns in Navbar aren’t clipped ───
+    // (Note: we have already removed overflow-hidden so dropdowns aren’t clipped)
     <div className="h-screen flex flex-col bg-surface">
       {showToast && <SyncToast />}
 
       {/* ─── Navbar (60px high) ──────────────────────────────────────────── */}
       <Navbar
         sidebarOpen={sidebarOpen}
-        toggleSidebar={() => setSidebarOpen(prev => !prev)}
+        toggleSidebar={() => {
+          // Whenever we toggle the sidebar, we leave the profile-dropdown state alone.
+          // Navbar will handle closing its own dropdown if needed via props.
+          setSidebarOpen(prev => !prev)
+        }}
+        closeSidebar={() => {
+          // This callback allows Navbar to forcibly close the sidebar
+          setSidebarOpen(false)
+        }}
       />
 
       {/* ─── Below Navbar: sidebar + main share remaining space ───────────── */}
       <div className="flex flex-1 overflow-hidden pt-16">
-        {/* Always render Sidebar; it will slide in/out on both mobile and desktop */}
+        {/* Sidebar will slide in/out on both mobile and desktop */}
         <Sidebar sidebarOpen={sidebarOpen} />
 
         <main className="flex-1 overflow-auto p-4">
@@ -88,15 +96,14 @@ function SyncToast() {
   const { syncing, syncResult } = useAuth()
   const [visible, setVisible] = useState(false)
 
-  // Whenever a new sync starts, force the toast to show immediately.
+  // Whenever a new sync starts, show the toast immediately.
   useEffect(() => {
     if (syncing) {
       setVisible(true)
     }
   }, [syncing])
 
-  // Whenever syncResult changes (i.e. the sync finished),
-  // show the toast and schedule a 10s hide.
+  // When syncResult changes (sync finished), show toast and hide after 10s.
   useEffect(() => {
     let timerId
     if (syncResult !== null) {
