@@ -21,8 +21,8 @@ function AppContent() {
   const showToast = syncing || syncResult != null
 
   return (
-    // ─── This container is now 100vh tall and flex, column direction ───
-    <div className="h-screen flex flex-col overflow-hidden bg-surface">
+    // ─── Removed `overflow-hidden` here so dropdowns in Navbar aren’t clipped ───
+    <div className="h-screen flex flex-col bg-surface">
       {showToast && <SyncToast />}
 
       {/* ─── Navbar (60px high) ──────────────────────────────────────────── */}

@@ -1,56 +1,89 @@
 // src/components/Navbar.jsx
 
 import React, { useState, useRef, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-// Make sure your logo file is in ../assets/logo.png (or adjust path accordingly)
+// Adjust this import path if your logo is stored elsewhere
 import logo from '../assets/logo.png'
 
 export default function Navbar({ sidebarOpen, toggleSidebar }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  // ─── State for Mobile Menu (“Import / Profile / Settings / Logout”) ─────────
+  // ─── Mobile Menu (“Import / Profile / Settings / Logout”) ────────────
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const toggleMenu = () => setIsMenuOpen(prev => !prev)
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev)
 
-  // ─── State for Desktop Avatar Dropdown ───────────────────────────────────────
+  // ─── Desktop Avatar Dropdown ─────────────────────────────────────────
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const toggleUserMenu = () => setIsUserMenuOpen(prev => !prev)
 
-  // ─── Click‐outside listener for Desktop Avatar Dropdown ──────────────────────
-  const userMenuRef = useRef(null)
+  // We'll store the computed screen‐coordinates for the dropdown box
+  const [dropdownCoords, setDropdownCoords] = useState({ top: 0, right: 0 })
+
+  // Reference to the avatar button (so we can compute where to place the dropdown)
+  const avatarButtonRef = useRef(null)
+
+  // Reference to the dropdown portal container (so clicks “outside” can close it)
+  const portalRef = useRef(null)
+
+  // When the user clicks the avatar, compute and store the dropdown's coordinates,
+  // then show the portal.
+  const openUserMenu = () => {
+    if (avatarButtonRef.current) {
+      const rect = avatarButtonRef.current.getBoundingClientRect()
+      setDropdownCoords({
+        top: rect.bottom + window.scrollY,
+        // We want "right" to mean “distance from viewport’s right edge”:
+        right: window.innerWidth - rect.right
+      })
+      setIsUserMenuOpen(true)
+    }
+  }
+
+  // Toggle between open/closed state
+  const toggleUserMenu = () => {
+    if (isUserMenuOpen) {
+      setIsUserMenuOpen(false)
+    } else {
+      openUserMenu()
+    }
+  }
+
+  // Whenever you click anywhere on the page, if that click is outside
+  // both the avatar button AND the portal, close the dropdown.
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target)
-      ) {
+      const clickedInsideAvatar =
+        avatarButtonRef.current &&
+        avatarButtonRef.current.contains(event.target)
+
+      const clickedInsidePortal =
+        portalRef.current && portalRef.current.contains(event.target)
+
+      if (!clickedInsideAvatar && !clickedInsidePortal) {
         setIsUserMenuOpen(false)
       }
     }
+
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [userMenuRef])
+  }, [])
 
-  // ─── Compute Avatar Initial (“T” if firstName is “Tavish”, or first letter of email) ─
+  // Compute the avatar initial (e.g. "T" from "Tavish" or first letter of email)
   const avatarInitial = user
-    ? (user.firstName
-        ? user.firstName.charAt(0).toUpperCase()
-        : user.email.charAt(0).toUpperCase())
+    ? user.firstName
+      ? user.firstName.charAt(0).toUpperCase()
+      : user.email.charAt(0).toUpperCase()
     : ''
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-800 shadow-elevation">
-      {/* 
-        Use a relative container so that the logo can be absolutely centered.
-        Everything else (sidebar toggle, avatar) remains in normal flex flow.
-      */}
       <div className="relative flex items-center h-16 px-card">
-        {/* ─── Left: Sidebar‐toggle (always visible) ─────────────────────────────────── */}
+        {/* ─── Left: Sidebar Toggle Button ───────────────────────────────────────── */}
         <div className="flex items-center">
           <button
             onClick={toggleSidebar}
@@ -58,7 +91,7 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
             aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {sidebarOpen ? (
-              // Chevron-Left Icon
+              // Chevron‐Left Icon
               <svg
                 className="h-6 w-6"
                 fill="none"
@@ -73,7 +106,7 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
                 />
               </svg>
             ) : (
-              // Chevron-Right Icon
+              // Chevron‐Right Icon
               <svg
                 className="h-6 w-6"
                 fill="none"
@@ -91,23 +124,20 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
           </button>
         </div>
 
-        {/* ─── Center: Logo (absolutely centered, non-interactive except for the actual <Link>) ─────────── */}
+        {/* ─── Center: Logo ───────────────────────────────────────────────────────────── */}
         <div className="absolute left-1/2 top-0 transform -translate-x-1/2 h-16 flex items-center pointer-events-none">
           <Link to="/" className="pointer-events-auto">
-            <img
-              src={logo}
-              alt="LeetEase Logo"
-              className="h-8 w-auto"
-            />
+            <img src={logo} alt="LeetEase Logo" className="h-8 w-auto" />
           </Link>
         </div>
 
-        {/* ─── Right: Avatar (Desktop & Mobile) ──────────────────────────────────── */}
-        <div className="ml-auto flex items-center gap-code" ref={userMenuRef}>
+        {/* ─── Right: Avatar (Desktop / Mobile) ──────────────────────────────────── */}
+        <div className="ml-auto flex items-center gap-code">
           {user ? (
-            <div className="relative flex items-center">
-              {/* --- Desktop Avatar (hidden on mobile) --- */}
+            <>
+              {/* --- Desktop Avatar Button (hidden on mobile) --- */}
               <button
+                ref={avatarButtonRef}
                 onClick={toggleUserMenu}
                 className="hidden md:flex h-8 w-8 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none"
                 aria-label="Open user menu"
@@ -125,7 +155,7 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
                 )}
               </button>
 
-              {/* --- Mobile Avatar (replaces hamburger) --- */}
+              {/* --- Mobile Avatar Button (replaces hamburger) --- */}
               <button
                 onClick={toggleMenu}
                 className="flex md:hidden h-8 w-8 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none ml-2"
@@ -143,43 +173,7 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
                   </span>
                 )}
               </button>
-
-              {/* ─── Desktop Dropdown (Profile / Import / Settings / Logout) ───────────── */}
-              {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-surface border border-gray-700 rounded-code shadow-lg z-50">
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-t-code transition-colors duration-150"
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    to="/import"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
-                  >
-                    Import Questions
-                  </Link>
-                  <Link
-                    to="/settings"
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
-                  >
-                    Settings
-                  </Link>
-                  <button
-                    onClick={() => {
-                      logout()
-                      setIsUserMenuOpen(false)
-                    }}
-                    className="w-full text-left font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-b-code transition-colors duration-150"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
+            </>
           ) : (
             <div className="hidden md:flex md:items-center md:gap-2">
               <Link
@@ -199,9 +193,56 @@ export default function Navbar({ sidebarOpen, toggleSidebar }) {
         </div>
       </div>
 
-      {/* ─── Mobile Menu Panel (Import / Profile / Settings / Logout) ───────────────── */}
+      {/* ─── Desktop Avatar Dropdown “Portal” (renders inside document.body) ─── */}
+      {isUserMenuOpen &&
+        ReactDOM.createPortal(
+          <div
+            ref={portalRef}
+            className="bg-surface border border-gray-700 rounded-code shadow-lg z-50"
+            style={{
+              position: 'absolute',
+              top: dropdownCoords.top + 'px',
+              right: dropdownCoords.right + 'px',
+              width: '12rem', // Tailwind “w-48” is 12rem
+            }}
+          >
+            <Link
+              to="/profile"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-t-code transition-colors duration-150"
+            >
+              Profile
+            </Link>
+            <Link
+              to="/import"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
+            >
+              Import Questions
+            </Link>
+            <Link
+              to="/settings"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
+            >
+              Settings
+            </Link>
+            <button
+              onClick={() => {
+                logout()
+                setIsUserMenuOpen(false)
+              }}
+              className="w-full text-left font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-b-code transition-colors duration-150"
+            >
+              Logout
+            </button>
+          </div>,
+          document.body
+        )}
+
+      {/* ─── Mobile Menu Panel ─────────────────────────────────────────────────────── */}
       {isMenuOpen && user && (
-        <div className="md:hidden bg-surface border-t border-gray-800">
+        <div className="md:hidden bg-surface border-t border-gray-800 z-50">
           <div className="px-card py-2 space-y-1">
             <Link
               to="/import"
