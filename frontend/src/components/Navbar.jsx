@@ -163,14 +163,14 @@ export default function Navbar({
               <button
                 ref={avatarButtonRef}
                 onClick={toggleUserMenu}
-                className="hidden md:flex h-8 w-8 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none"
+                className="hidden md:flex h-10 w-10 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none"
                 aria-label="Open user menu"
               >
                 {user.profilePhoto ? (
                   <img
                     src={user.profilePhoto}
                     alt="avatar"
-                    className="h-8 w-8 rounded-full object-cover"
+                    className="h-10 w-10 rounded-full object-cover"
                   />
                 ) : (
                   <span className="font-mono text-code-base">
@@ -182,14 +182,14 @@ export default function Navbar({
               {/* --- Mobile Avatar Button (replaces hamburger) --- */}
               <button
                 onClick={toggleMenu}
-                className="flex md:hidden h-8 w-8 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none ml-2"
+                className="flex md:hidden h-10 w-10 rounded-full bg-gray-600 items-center justify-center text-white focus:outline-none ml-2"
                 aria-label="Open mobile menu"
               >
                 {user.profilePhoto ? (
                   <img
                     src={user.profilePhoto}
                     alt="avatar"
-                    className="h-8 w-8 rounded-full object-cover"
+                    className="h-10 w-10 rounded-full object-cover"
                   />
                 ) : (
                   <span className="font-mono text-code-base">

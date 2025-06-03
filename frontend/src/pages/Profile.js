@@ -35,15 +35,15 @@ export default function Profile() {
             <img
               src={profilePhoto}
               alt="Profile"
-              className="h-12 w-12 rounded-full object-cover border border-gray-700"
+              className="h-32 w-32 rounded-full object-cover border border-gray-700"
             />
           ) : (
-            <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 text-xl">
+            <div className="h-32 w-32 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 text-5xl">
               {initials}
             </div>
           )}
           <div>
-            <p className="text-code-lg text-primary">
+            <p className="text-4xl text-primary">
               {firstName} {lastName}
             </p>
             <p className="text-code-sm text-gray-400">{email}</p>
@@ -51,7 +51,7 @@ export default function Profile() {
         </div>
         <Link
           to="/account-settings"
-          className="bg-primary hover:bg-primary/90 text-white font-mono text-code-sm py-1 px-3 rounded-code transition-colors"
+          className="bg-primary hover:bg-primary/90 text-white font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
         >
           Edit Profile
         </Link>
