@@ -1,91 +1,86 @@
 // src/api.js
-
-import axios from 'axios'
-import Cookies from 'js-cookie'
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '',
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+  // ⚠️ Don’t set a global Content-Type header here; each request will specify its own.
+});
 
+// ─── CSRF interceptor ───────────────────────────────────────────────────
 api.interceptors.request.use(
   (config) => {
-    const needsCsrf = /^(post|put|patch|delete)$/i.test(config.method)
+    const needsCsrf = /^(post|put|patch|delete)$/i.test(config.method);
     if (needsCsrf) {
-      const csrf = Cookies.get('csrf_access_token')
+      const csrf = Cookies.get('csrf_access_token');
       if (csrf) {
-        config.headers['X-CSRF-TOKEN'] = csrf
+        config.headers['X-CSRF-TOKEN'] = csrf;
       }
     }
-    return config
+    return config;
   },
   (error) => Promise.reject(error)
-)
+);
 
-// ─── Authentication / Registration Endpoints ────────────────────────────
-
-// Step 1: Request OTP (register user)
-// Expects payload: { firstName, lastName?, college?, leetcodeUsername?, email, password }
+// ───────────────────────────────
+// Auth / Registration
+// ───────────────────────────────
 export function registerUser(payload) {
-  return api.post('/auth/register', payload)
+  return api.post('/auth/register', payload);
 }
-
-// Step 2: Verify OTP
-// Expects payload: { otp }
 export function verifyOtp(payload) {
-  return api.post('/auth/verify', payload)
+  return api.post('/auth/verify', payload);
 }
 
-// ─── Account Settings & Profile Photo Endpoints ───────────────────────────
-
-// Fetch the current user's full profile (firstName, lastName, college, email, profilePhoto, etc.)
+// ───────────────────────────────
+// Profile – Account & Photo
+// ───────────────────────────────
 export function getAccountProfile() {
-  return api.get('/profile/account')
+  return api.get('/profile/account');
 }
-
-// Update account fields (firstName, lastName, college, email, optionally newPassword)
 export function updateAccountProfile(payload) {
-  return api.patch('/profile/account', payload)
+  return api.patch('/profile/account', payload);
 }
-
-// Upload (or replace) profile photo (multipart/form-data)
 export function uploadProfilePhoto(formData) {
   return api.post('/profile/account/photo', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 }
-
-// Delete existing profile photo
 export function deleteProfilePhoto() {
-  return api.delete('/profile/account/photo')
+  return api.delete('/profile/account/photo');
 }
 
-// ─── Settings‐related endpoints ───────────────────────────────────────────
-
-// Fetch the current user's settings (color, palette, leetUsername, etc.)
+// ───────────────────────────────
+// User Settings
+// ───────────────────────────────
 export function getUserSettings() {
-  return api.get('/profile/settings')
+  return api.get('/profile/settings');
 }
-
-// Update the current user's settings (color, palette, leetUsername, syncOnStartup, etc.)
 export function updateUserSettings(settings) {
-  return api.patch('/profile/settings', settings)
+  return api.patch('/profile/settings', settings);
 }
-
-// Trigger a LeetCode sync for the current user
 export function syncLeetCode() {
-  return api.post('/profile/leetcode/sync')
+  return api.post('/profile/leetcode/sync');
 }
 
-// ─── Existing code ───────────────────────────────────────────────────────
+// ───────────────────────────────
+// Admin – Import Questions
+// ───────────────────────────────
+export function uploadQuestions(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('/api/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
 
-// Fetch progress data for a given company
+// ───────────────────────────────
+// Company / Progress
+// ───────────────────────────────
 export function fetchCompanyProgress(companyName) {
-  const path = `/api/companies/${encodeURIComponent(companyName)}/progress`
-  return api.get(path)
+  const path = `/api/companies/${encodeURIComponent(companyName)}/progress`;
+  return api.get(path);
 }
 
-export default api
+export default api;

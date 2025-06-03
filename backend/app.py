@@ -5,12 +5,20 @@ import random
 import csv
 import threading
 import time
+from io import BytesIO
 from datetime import timedelta
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, abort, session, send_from_directory, current_app
+from flask import (
+    Flask, jsonify, request, abort,
+    session, send_from_directory, current_app
+)
 from bson import ObjectId
+
+# ─── New imports for CSV/Excel parsing ─────────────────────────────────
+import pandas as pd
+from pandas.errors import EmptyDataError
 
 import config
 from config import get_db
@@ -30,7 +38,11 @@ app = Flask(__name__)
 app.config.from_object(config)
 
 # Ensure upload folder exists
-os.makedirs(app.config.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads', 'profile_photos')), exist_ok=True)
+os.makedirs(
+    app.config.get('UPLOAD_FOLDER',
+                   os.path.join(os.getcwd(), 'uploads', 'profile_photos')),
+    exist_ok=True
+)
 
 # ─── Initialize extensions ────────────────────────────────────────────────
 sess.init_app(app)
@@ -196,7 +208,7 @@ def verify():
         'password':          pw_hash,
         'role':              'user',
         'firstName':         reg['firstName'],
-        'lastName':          reg.get('lastName'),
+        'lastName':         reg.get('lastName'),
         'college':           reg.get('college'),
         'leetcode_username': reg.get('leetcodeUsername'),
         'leetcode_session':  None,
@@ -493,60 +505,120 @@ def ping():
     return jsonify({'msg': 'pong'}), 200
 
 # =============================================================================
-# Admin CSV import
+# Admin CSV / Excel import
 # =============================================================================
 @app.route('/api/import', methods=['POST'])
 @jwt_required()
 def import_questions():
+    """
+    Admin-only endpoint.
+      • Accepts a single file (.csv | .xlsx | .xls)
+      • Expected columns (case-insensitive):
+          title, link/url, company, bucket, difficulty (optional),
+          frequency (optional), acceptanceRate (optional)
+      • If a company already exists we *append* new questions;
+        otherwise we create the company on the fly.
+    """
+    # 1) Authorize ─────────────────────────────────────────────────────────
     uid  = get_jwt_identity()
     user = USERS.find_one({'_id': ObjectId(uid)})
     if user.get('role') != 'admin':
         abort(403, description='Only admin can import questions')
 
     if 'file' not in request.files:
-        abort(400, description='CSV file required')
-    lines  = request.files['file'].stream.read().decode('utf-8').splitlines()
-    reader = csv.DictReader(lines)
-    created = 0
-    for row in reader:
-        q_res = QUEST.find_one_and_update(
-            {'link': row['link']},
+        abort(400, description='File field is required')
+
+    up_file = request.files['file']
+    if up_file.filename == '':
+        abort(400, description='No file selected')
+
+    ext = up_file.filename.rsplit('.', 1)[-1].lower()
+    try:
+        if ext == 'csv':
+            df = pd.read_csv(up_file.stream)
+        elif ext in ('xlsx', 'xls'):
+            # Must read the raw bytes first; BytesIO lets pandas parse it
+            df = pd.read_excel(BytesIO(up_file.read()), engine='openpyxl')
+        else:
+            abort(400, description='Unsupported file type; only CSV/Excel')
+    except (EmptyDataError, pd.errors.ParserError) as e:
+        abort(400, description=f'Could not parse file: {e}')
+
+    if df.empty:
+        abort(400, description='Uploaded file contained no rows')
+
+    # ── Normalize column names: strip & lower for lookup convenience ──────
+    df.columns = [c.strip().lower() for c in df.columns]
+
+    required_cols = {'title', 'link', 'company', 'bucket'}
+    if not required_cols.issubset(set(df.columns)):
+        missing = required_cols - set(df.columns)
+        abort(400, description=f'Missing required columns: {missing}')
+
+    imported, skipped = 0, 0
+
+    for _, row in df.iterrows():
+        title   = str(row.get('title') or '').strip()
+        link    = str(row.get('link') or row.get('url') or '').strip()
+        company = str(row.get('company') or '').strip()
+        bucket  = str(row.get('bucket') or '').strip()           # e.g. “30Days”, “3Months”, etc.
+
+        if not (title and link and company and bucket):
+            skipped += 1
+            continue  # malformed row
+
+        try:
+            freq = float(row.get('frequency') or 0)
+        except (ValueError, TypeError):
+            freq = 0.0
+
+        try:
+            acc = float(row.get('acceptancerate') or 0)
+        except (ValueError, TypeError):
+            acc = 0.0
+
+        ldiff = str(row.get('difficulty') or '').capitalize().strip()
+
+        # 2) Upsert canonical question ───────────────────────────────────
+        q_doc = QUEST.find_one_and_update(
+            {'link': link},
             {'$setOnInsert': {
-                'link':           row['link'],
-                'title':          row['title'],
-                'leetDifficulty': row.get('leetDifficulty')
+                'link': link,
+                'title': title,
+                'leetDifficulty': ldiff or None
             }},
             upsert=True,
             return_document=True
         )
-        qid = q_res['_id']
+        qid = q_doc['_id']
 
-        slug = row['link'].rstrip('/').split('/')[-1]
-        tags = fetch_leetcode_tags(slug)
-        QUEST.update_one({'_id': qid}, {'$set': {'tags': tags}})
-
-        co_res = COMPANIES.find_one_and_update(
-            {'name': row['company']},
-            {'$setOnInsert': {'name': row['company']}},
+        # 3) Fetch (or insert) company ────────────────────────────────────
+        c_doc = COMPANIES.find_one_and_update(
+            {'name': company},
+            {'$setOnInsert': {'name': company}},
             upsert=True,
             return_document=True
         )
-        cid = co_res['_id']
+        cid = c_doc['_id']
 
+        # 4) Upsert join row (company × bucket × question) ───────────────
         CQ.replace_one(
-            {'company_id': cid, 'question_id': qid, 'bucket': row['bucket']},
+            {'company_id': cid, 'question_id': qid, 'bucket': bucket},
             {
                 'company_id':    cid,
                 'question_id':   qid,
-                'bucket':        row['bucket'],
-                'frequency':     float(row.get('frequency', 0)),
-                'acceptanceRate': float(row.get('acceptanceRate', 0))
+                'bucket':        bucket,
+                'frequency':     freq,
+                'acceptanceRate': acc
             },
             upsert=True
         )
-        created += 1
+        imported += 1
 
-    return jsonify({'imported': created}), 201
+    return jsonify({
+        'imported': imported,
+        'skipped':  skipped
+    }), 201
 
 # ─── Admin-only: backfill tags for existing questions ─────────────────────
 @app.route('/api/admin/backfill-tags', methods=['POST'])
@@ -802,7 +874,7 @@ def batch_update_questions_meta():
 
     return jsonify(results), 200
 
-# ─── Company-wide progress (per bucket) ────────────────────────────────────
+# ─── Company-wide progress (per bucket) ───────────────────────────────────
 @app.route('/api/companies/<company>/progress', methods=['GET'])
 @jwt_required()
 def company_progress(company):

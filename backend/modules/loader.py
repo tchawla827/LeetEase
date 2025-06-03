@@ -1,82 +1,146 @@
-# backend/modules/loader.py
+# python -m backend.modules.loader_normalised "C:\Users\tavis\Downloads\companie"
+
+"""
+Load CSV files into the **normalized** MongoDB schema:
+
+    questions            (canonical LeetCode problem)
+    companies            (one per company)
+    company_questions    (join: company × bucket × problem stats)
+
+Run:
+
+    # activate venv first
+    python backend/modules/loader_normalized.py            # default path = backend/data
+    python backend/modules/loader_normalized.py /path/to/dataset
+"""
 
 import os
 from pathlib import Path
 import pandas as pd
-from config import get_db
+from bson import ObjectId
+from backend.config import get_db
 
-# Map exact CSV filenames to bucket keys
+# ── CSV bucket filenames → bucket key ───────────────────────────────────
 BUCKET_MAP = {
-    "1. Thirty Days.csv":           "30Days",
-    "2. Three Months.csv":          "3Months",
-    "3. Six Months.csv":            "6Months",
-    "4. More Than Six Months.csv":  "MoreThan6Months",
-    "5. All.csv":                   "All"
+    "1. Thirty Days.csv":          "30Days",
+    "2. Three Months.csv":         "3Months",
+    "3. Six Months.csv":           "6Months",
+    "4. More Than Six Months.csv": "MoreThan6Months",
+    "5. All.csv":                  "All"
 }
 
-def load_company_data(data_root: str = None):
+# ── Collections ────────────────────────────────────────────────────────
+db  = get_db()
+Q   = db.questions           # canonical
+CO  = db.companies
+CQ  = db.company_questions
+
+# ── Build indexes once ─────────────────────────────────────────────────
+Q.create_index('link', unique=True)
+CO.create_index('name', unique=True)
+CQ.create_index([('company_id',1), ('bucket',1)])
+CQ.create_index('question_id')
+
+# ── Helper caches to minimise round-trips ──────────────────────────────
+company_id_cache  = {}   # name  -> ObjectId
+question_id_cache = {}   # link  -> ObjectId
+
+def get_company_id(name: str) -> ObjectId:
+    if name in company_id_cache:
+        return company_id_cache[name]
+    doc = CO.find_one_and_update(
+        {'name': name},
+        {'$setOnInsert': {'name': name}},
+        upsert=True,
+        return_document=True
+    )
+    company_id_cache[name] = doc['_id']
+    return doc['_id']
+
+def get_question_id(link: str, title: str, leet_diff: str) -> ObjectId:
+    if link in question_id_cache:
+        return question_id_cache[link]
+    doc = Q.find_one_and_update(
+        {'link': link},
+        {'$setOnInsert': {
+            'link': link,
+            'title': title,
+            'leetDifficulty': leet_diff
+        }},
+        upsert=True,
+        return_document=True
+    )
+    question_id_cache[link] = doc['_id']
+    return doc['_id']
+
+# ── Loader main ────────────────────────────────────────────────────────
+def load_company_data(data_root: str | Path | None = None):
     """
-    Walk data_root/<Company>/*.csv and upsert each row into MongoDB.
-    Expects files named exactly as in BUCKET_MAP.
+    Walk data_root/<Company>/*.csv and populate the normalized collections.
     """
-    # Default data directory is backend/data
-    if data_root is None:
-        data_root = Path(__file__).parent.parent / "data"
-    else:
-        data_root = Path(data_root)
+    root = Path(data_root) if data_root else Path(__file__).parent.parent / "data"
+    if not root.exists():
+        raise FileNotFoundError(f"Data root '{root}' does not exist")
 
-    if not data_root.exists():
-        raise FileNotFoundError(f"Data root '{data_root}' does not exist")
-
-    db   = get_db()
-    coll = db.questions
-
-    for company_dir in sorted(os.listdir(data_root)):
-        company_path = data_root / company_dir
-        if not company_path.is_dir():
+    total_cq = 0
+    for company_dir in sorted(os.listdir(root)):
+        cpath = root / company_dir
+        if not cpath.is_dir():
             continue
 
         print(f"→ Loading company: {company_dir}")
+        cid = get_company_id(company_dir)
+        batch = []
 
         for fname, bucket in BUCKET_MAP.items():
-            csv_path = company_path / fname
-            if not csv_path.exists():
+            fpath = cpath / fname
+            if not fpath.exists():
                 continue
 
-            # Read CSV
-            df = pd.read_csv(csv_path)
-            df.columns = [col.strip() for col in df.columns]
+            df = pd.read_csv(fpath)
+            df.columns = [c.strip() for c in df.columns]
 
             for _, row in df.iterrows():
-                title = row.get("Title") or row.get("Question") or ""
-                link  = row.get("Link") or ""
-                freq  = row.get("Frequency") or 0
-                acc   = row.get("Acceptance Rate") or row.get("AcceptanceRate") or 0.0
-                topics = row.get("Topics") or ""
-                topic_list = [t.strip() for t in str(topics).split(",") if t.strip()]
+                title   = str(row.get("Title") or row.get("Question") or "").strip()
+                link    = str(row.get("Link")  or "").strip()
+                freq    = float(row.get("Frequency") or 0)
+                acc     = float(row.get("Acceptance Rate") or row.get("AcceptanceRate") or 0)
+                ldiff   = str(row.get("Difficulty") or "").capitalize().strip()
 
-                doc = {
-                    "company":        company_dir,
-                    "bucket":         bucket,
-                    "title":          str(title).strip(),
-                    "link":           str(link).strip(),
-                    "frequency":      int(freq),
-                    "acceptanceRate": float(acc),
-                    "topics":         topic_list,
-                    "leetDifficulty": str(row.get("Difficulty", "")).capitalize().strip(),
-                    "userDifficulty": None,
-                    "solved":         False,
-                }
+                if not link:
+                    continue  # skip malformed rows
 
-                coll.update_one(
-                    {"company": doc["company"], "bucket": doc["bucket"], "title": doc["title"]},
-                    {"$set": doc},
+                qid = get_question_id(link, title, ldiff)
+
+                batch.append({
+                    'company_id'    : cid,
+                    'question_id'   : qid,
+                    'bucket'        : bucket,
+                    'frequency'     : freq,
+                    'acceptanceRate': acc
+                })
+
+        if batch:
+            # Upsert each pair; replaceOne keeps stats idempotent
+            for doc in batch:
+                CQ.replace_one(
+                    {
+                        'company_id' : doc['company_id'],
+                        'question_id': doc['question_id'],
+                        'bucket'     : doc['bucket']
+                    },
+                    doc,
                     upsert=True
                 )
+        print(f"  ✔ added/updated {len(batch)} bucket rows")
+        total_cq += len(batch)
 
-        print(f"  ✔ Completed {company_dir}")
-
-    print("✅ All companies loaded.")
+    print("\n✅ Load complete")
+    print("  companies         :", CO.count_documents({}))
+    print("  questions         :", Q.count_documents({}))
+    print("  company_questions :", CQ.count_documents({}))
+    print(f"  rows processed    : {total_cq}")
 
 if __name__ == "__main__":
-    load_company_data()
+    import sys
+    load_company_data(sys.argv[1] if len(sys.argv) > 1 else None)
