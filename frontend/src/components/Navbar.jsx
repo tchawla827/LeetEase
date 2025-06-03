@@ -31,7 +31,7 @@ export default function Navbar({
   // Reference to the dropdown portal container (so clicks “outside” can close it)
   const portalRef = useRef(null)
 
-  // Utility to detect “mobile” (i.e. narrower than Tailwind’s md: 768px)
+  // Utility to detect “mobile” (i.e. narrower than Tailwind’s md breakpoint)
   const isMobile = () => window.innerWidth < 768
 
   // Compute “open user menu” position and show portal (desktop only)
@@ -217,7 +217,7 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* ─── Desktop Avatar Dropdown “Portal” (renders inside document.body) ───────────── */}
+      {/* ─── Desktop Avatar Dropdown “Portal” ────────────────────────────────────────── */}
       {isUserMenuOpen &&
         ReactDOM.createPortal(
           <div

@@ -14,6 +14,12 @@ import AdminImport  from './pages/AdminImport'
 import CompanyPage  from './pages/CompanyPage'
 import Profile      from './pages/Profile'
 
+// Settings-related imports
+import Settings             from './pages/Settings'
+import AccountSettings      from './pages/settings/AccountSettings'
+import ColorSettings        from './pages/settings/ColorSettings'
+import LeetCodeSettings     from './pages/settings/LeetCodeSettings'
+
 function AppContent() {
   // ─── Sidebar open/closed state ─────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -76,6 +82,22 @@ function AppContent() {
               }
             />
 
+            {/* ─── Settings Routes ──────────────────────────────────────────── */}
+            <Route
+              path="/settings/*"
+              element={
+                <PrivateRoute>
+                  <Settings />
+                </PrivateRoute>
+              }
+            >
+              {/* If user visits /settings, render AccountSettings by default */}
+              <Route index element={<AccountSettings />} />
+              <Route path="account"  element={<AccountSettings />} />
+              <Route path="color"    element={<ColorSettings />} />
+              <Route path="leetcode" element={<LeetCodeSettings />} />
+            </Route>
+
             <Route
               path="*"
               element={
@@ -90,7 +112,6 @@ function AppContent() {
     </div>
   )
 }
-
 
 function SyncToast() {
   const { syncing, syncResult } = useAuth()
@@ -146,7 +167,6 @@ function SyncToast() {
     </div>
   )
 }
-
 
 function Welcome() {
   return (

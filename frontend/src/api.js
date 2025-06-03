@@ -1,4 +1,5 @@
-// ─── Existing code ───
+// src/api.js
+
 import axios from 'axios'
 import Cookies from 'js-cookie'
 
@@ -24,7 +25,26 @@ api.interceptors.request.use(
   error => Promise.reject(error)
 )
 
-// ─── NEW: Fetch company progress ────────────────────────────────────────
+// ─── Settings‐related endpoints ───────────────────────────────────────────
+
+// Fetch the current user's settings
+export function getUserSettings() {
+  return api.get('/profile/settings')
+}
+
+// Update the current user's settings (color, palette, leetUsername, syncOnStartup, etc.)
+export function updateUserSettings(settings) {
+  return api.patch('/profile/settings', settings)
+}
+
+// Trigger a LeetCode sync for the current user (used by AuthContext.syncBackground)
+export function syncLeetCode() {
+  return api.post('/profile/leetcode/sync')
+}
+
+// ─── Existing code ───────────────────────────────────────────────────────
+
+// Fetch progress data for a given company
 export function fetchCompanyProgress(companyName) {
   const path = `/api/companies/${encodeURIComponent(companyName)}/progress`
   return api.get(path)

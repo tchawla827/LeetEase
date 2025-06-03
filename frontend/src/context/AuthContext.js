@@ -1,3 +1,5 @@
+// src/context/AuthContext.js
+
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api'
@@ -24,15 +26,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // ─── Save color & mode settings ─────────────────────────────────────────
+  // ─── Save any user “settings” (color/palette, LeetCode username, syncOnStartup, etc.) ────────────────
   const saveSettings = async (settings) => {
     const res = await api.patch('/profile/settings', settings)
     const newSettings = res.data
+
     setUser(prev => {
       const updated = { ...prev, settings: newSettings }
       localStorage.setItem('user', JSON.stringify(updated))
       return updated
     })
+
     return newSettings
   }
 
@@ -47,6 +51,8 @@ export function AuthProvider({ children }) {
       .then(res => {
         setUser(res.data)
         localStorage.setItem('user', JSON.stringify(res.data))
+
+        // If LeetCode username exists and we haven’t synced yet, do a background sync
         if (!stored && res.data.leetcode_username) {
           syncBackground().catch(() => {})
         }
@@ -61,8 +67,10 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     await api.post('/auth/login', { email, password })
     const res = await api.get('/auth/me')
+
     setUser(res.data)
     localStorage.setItem('user', JSON.stringify(res.data))
+
     if (res.data.leetcode_username) {
       syncBackground().catch(() => {})
     }
@@ -92,7 +100,7 @@ export function AuthProvider({ children }) {
       syncing,
       syncResult,
       syncBackground,
-      saveSettings         // expose saveSettings to children
+      saveSettings      // expose saveSettings for color, palette, LeetCode fields, etc.
     }}>
       {children}
     </AuthContext.Provider>
