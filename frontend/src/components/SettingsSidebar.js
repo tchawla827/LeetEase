@@ -11,11 +11,27 @@ const LINKS = [
 
 export default function SettingsSidebar() {
   return (
-    <div className="hidden md:flex md:flex-shrink-0">
-      <div className="flex flex-col w-64 bg-surface border-r border-gray-800 h-full">
+    <aside
+      className="
+        /* ───────────────────────────────────────────────────────── */
+        /* On mobile (< md): fixed sidebar under the Navbar  */
+        fixed top-16 left-0 bottom-0 z-50
+
+        /* Basic sidebar styling */
+        w-64 bg-surface border-r border-gray-800 shadow-elevation
+        overflow-y-auto
+
+        /* On desktop (>= md): revert to a normal in-flow element */
+        md:relative md:top-0 md:block
+        /* ───────────────────────────────────────────────────────── */
+      "
+    >
+      <div className="pt-2 px-card">
         {/* Sidebar header */}
         <div className="px-6 pt-6 pb-4">
-          <h2 className="text-lg font-semibold text-gray-100">Settings</h2>
+          <h2 className="text-lg font-semibold text-gray-100">
+            Settings
+          </h2>
         </div>
 
         {/* Links */}
@@ -40,6 +56,6 @@ export default function SettingsSidebar() {
           </ul>
         </nav>
       </div>
-    </div>
+    </aside>
   )
 }

@@ -1,54 +1,55 @@
 // src/App.js
 
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
-import Navbar       from './components/Navbar'
-import Sidebar      from './components/Sidebar'
-import PrivateRoute from './components/PrivateRoute'
+import Navbar            from './components/Navbar'
+import Sidebar           from './components/Sidebar'
+import SettingsSidebar   from './components/SettingsSidebar'
+import PrivateRoute      from './components/PrivateRoute'
 
-import Login        from './pages/Login'
-import Register     from './pages/Register'
-import AdminImport  from './pages/AdminImport'
-import CompanyPage  from './pages/CompanyPage'
-import Profile      from './pages/Profile'
+import Login             from './pages/Login'
+import Register          from './pages/Register'
+import AdminImport       from './pages/AdminImport'
+import CompanyPage       from './pages/CompanyPage'
+import Profile           from './pages/Profile'
 
 // Settings-related imports
-import Settings             from './pages/Settings'
-import AccountSettings      from './pages/settings/AccountSettings'
-import ColorSettings        from './pages/settings/ColorSettings'
-import LeetCodeSettings     from './pages/settings/LeetCodeSettings'
+import Settings          from './pages/Settings'
+import AccountSettings   from './pages/settings/AccountSettings'
+import ColorSettings     from './pages/settings/ColorSettings'
+import LeetCodeSettings  from './pages/settings/LeetCodeSettings'
 
 function AppContent() {
-  // ─── Sidebar open/closed state ─────────────────────────────────────────
+  // ─── Sidebar open/closed state for non-settings routes ────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const { syncing, syncResult } = useAuth()
   const showToast = syncing || syncResult != null
 
+  // Determine if we are on any "/settings" route
+  const location = useLocation()
+  const onSettingsRoute = location.pathname.startsWith('/settings')
+
   return (
-    // (Note: we have already removed overflow-hidden so dropdowns aren’t clipped)
     <div className="h-screen flex flex-col bg-surface">
       {showToast && <SyncToast />}
 
       {/* ─── Navbar (60px high) ──────────────────────────────────────────── */}
       <Navbar
         sidebarOpen={sidebarOpen}
-        toggleSidebar={() => {
-          // Whenever we toggle the sidebar, we leave the profile-dropdown state alone.
-          // Navbar will handle closing its own dropdown if needed via props.
-          setSidebarOpen(prev => !prev)
-        }}
-        closeSidebar={() => {
-          // This callback allows Navbar to forcibly close the sidebar
-          setSidebarOpen(false)
-        }}
+        toggleSidebar={() => setSidebarOpen(prev => !prev)}
+        closeSidebar={() => setSidebarOpen(false)}
       />
 
-      {/* ─── Below Navbar: sidebar + main share remaining space ───────────── */}
+      {/* ─── Below Navbar: either SettingsSidebar (always visible on settings) 
+               or Sidebar (toggleable on other routes) + main content ────── */}
       <div className="flex flex-1 overflow-hidden pt-16">
-        {/* Sidebar will slide in/out on both mobile and desktop */}
-        <Sidebar sidebarOpen={sidebarOpen} />
+        {onSettingsRoute ? (
+          <SettingsSidebar />
+        ) : (
+          sidebarOpen && <Sidebar sidebarOpen={sidebarOpen} />
+        )}
 
         <main className="flex-1 overflow-auto p-4">
           <Routes>
@@ -91,13 +92,14 @@ function AppContent() {
                 </PrivateRoute>
               }
             >
-              {/* If user visits /settings, render AccountSettings by default */}
+              {/* Default to AccountSettings if no sub-path is provided */}
               <Route index element={<AccountSettings />} />
               <Route path="account"  element={<AccountSettings />} />
               <Route path="color"    element={<ColorSettings />} />
               <Route path="leetcode" element={<LeetCodeSettings />} />
             </Route>
 
+            {/* Catch‐all: show Welcome under PrivateRoute */}
             <Route
               path="*"
               element={
@@ -117,25 +119,19 @@ function SyncToast() {
   const { syncing, syncResult } = useAuth()
   const [visible, setVisible] = useState(false)
 
-  // Whenever a new sync starts, show the toast immediately.
+  // Show toast immediately when a sync starts
   useEffect(() => {
-    if (syncing) {
-      setVisible(true)
-    }
+    if (syncing) setVisible(true)
   }, [syncing])
 
-  // When syncResult changes (sync finished), show toast and hide after 10s.
+  // When sync completes, keep toast visible for 10 seconds
   useEffect(() => {
     let timerId
     if (syncResult !== null) {
       setVisible(true)
-      timerId = setTimeout(() => {
-        setVisible(false)
-      }, 10000)
+      timerId = setTimeout(() => setVisible(false), 10000)
     }
-    return () => {
-      clearTimeout(timerId)
-    }
+    return () => clearTimeout(timerId)
   }, [syncResult])
 
   if (!visible) return null
@@ -155,8 +151,6 @@ function SyncToast() {
         />
       )}
       <span className="pr-3">{text}</span>
-
-      {/* Close button */}
       <button
         onClick={() => setVisible(false)}
         className="ml-auto text-gray-400 hover:text-gray-200"

@@ -14,7 +14,7 @@ const BUCKET_LABELS = {
   'All':              'All',
 }
 
-export default function Sidebar({ sidebarOpen }) {
+export default function Sidebar() {
   const { user } = useAuth()
   const [filter, setFilter] = useState('')
   const [companies, setCompanies] = useState([])
@@ -102,29 +102,24 @@ export default function Sidebar({ sidebarOpen }) {
     <>
       {user && (
         <aside
-          className={`
+          className="
             /* ───────────────────────────────────────────────────────── */
-            /* On mobile (< md): use a “fixed” sidebar starting under the Navbar */
+            /* On mobile (< md): fixed sidebar under Navbar */
             fixed top-16 left-0 bottom-0 z-50
 
-            /* Basic sidebar styling */
+            /* On desktop (>= md): static in-flow sidebar */
+            md:relative md:top-0 md:block
+
+            /* Basic styling */
             w-64 bg-surface border-r border-gray-800 shadow-elevation
-            overflow-y-auto transform transition-transform duration-200 ease-in-out
-
-            /* Slide in/out on small screens */
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-
-            /* On desktop (>= md): revert to a normal in-flow element */
-            md:relative md:top-0
-            ${sidebarOpen ? 'md:block md:translate-x-0' : 'md:hidden'}
+            overflow-y-auto
             /* ───────────────────────────────────────────────────────── */
-          `}
+          "
         >
           {/*
-            ── We wrap everything inside a little “pt-2 px-card” so that:
-               • On mobile, the “Companies” heading sits 0.5rem below the header (h-16).
-               • On desktop, the parent wrapper has already done pt-16, so this “pt-2”
-                 simply becomes extra inside-sidebar padding.
+            ── “pt-2 px-card” ensures:
+               • On mobile, the “Companies” heading sits just below the Navbar.
+               • On desktop, parent already has pt-16, so this is extra padding.
           */}
           <div className="pt-2 px-card">
             <h2 className="font-mono text-code-base text-gray-100 mb-2">
