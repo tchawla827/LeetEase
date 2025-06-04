@@ -61,7 +61,7 @@ export default function CompanyPage() {
     return () => window.removeEventListener('leetSync', onSync)
   }, [])
 
-  // ── Fetch bucket list when company OR bucketFromUrl changes ────────────
+  // ── Fetch bucket list when company changes ──────────────────────────────
   useEffect(() => {
     setBucketsLoading(true)
     setBuckets([])
@@ -94,7 +94,18 @@ export default function CompanyPage() {
       })
       .catch(console.error)
       .finally(() => setBucketsLoading(false))
-  }, [companyName, bucketFromUrl])  // ← added bucketFromUrl here
+  }, [companyName])
+
+  // ── Update selected bucket when URL param changes ─────────────────────
+  useEffect(() => {
+    if (
+      bucketFromUrl &&
+      buckets.includes(bucketFromUrl) &&
+      bucketFromUrl !== selectedBucket
+    ) {
+      setSelectedBucket(bucketFromUrl)
+    }
+  }, [bucketFromUrl, buckets, selectedBucket])
 
   // ── Fetch company progress when company changes ────────────────────────
   useEffect(() => {
