@@ -111,7 +111,8 @@ export default function Sidebar() {
             md:relative md:top-0 md:block
 
             /* Basic styling */
-            w-64 bg-surface border-r border-gray-800 shadow-elevation
+            w-64 bg-gradient-to-b from-surface via-gray-900 to-surface
+            border-r border-gray-800 shadow-elevation
             overflow-y-auto sidebar-scroll
             /* ───────────────────────────────────────────────────────── */
           "
@@ -135,7 +136,7 @@ export default function Sidebar() {
                 font-mono text-code-sm w-full px-3 py-1.5 mb-2
                 rounded-code border border-gray-700 bg-gray-900
                 text-gray-100 placeholder-gray-500
-                focus:outline-none focus:ring-1 focus:ring-primary/50
+                focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50
               "
             />
 
@@ -147,7 +148,17 @@ export default function Sidebar() {
 
                 return (
                   <li key={company} className="flex flex-col">
-                    <div className="flex items-center justify-between">
+                    <div
+                      className={`
+                        flex items-center justify-between rounded-md px-2 py-1
+                        transition-colors duration-150
+                        ${
+                          isActive
+                            ? 'bg-gray-800/50 border-l-4 border-primary'
+                            : 'hover:bg-gray-800/40'
+                        }
+                      `}
+                    >
                       <Link
                         to={`/company/${encodeURIComponent(company)}`}
                         className={`
@@ -164,7 +175,7 @@ export default function Sidebar() {
                       </Link>
                       <button
                         onClick={() => toggleCompany(company)}
-                        className="text-gray-400 hover:text-primary p-1 transition-colors duration-150"
+                        className="text-gray-400 hover:text-primary p-1 rounded transition-colors duration-150 hover:bg-gray-800/40"
                         aria-label={isExpanded ? 'Collapse' : 'Expand'}
                       >
                         {isExpanded ? '−' : '+'}
@@ -186,7 +197,7 @@ export default function Sidebar() {
                                 }
                                 className="
                                   font-mono text-code-sm text-gray-400
-                                  hover:text-primary hover:bg-gray-800
+                                  hover:text-primary hover:bg-gray-800/60
                                   w-full text-left px-2 py-1 rounded-code
                                   transition-colors duration-150
                                 "
