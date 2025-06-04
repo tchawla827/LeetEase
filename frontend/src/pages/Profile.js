@@ -50,7 +50,7 @@ export default function Profile() {
           </div>
         </div>
         <Link
-          to="/account-settings"
+          to="/settings/account"
           className="bg-primary hover:bg-primary/90 text-white font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
         >
           Edit Profile
