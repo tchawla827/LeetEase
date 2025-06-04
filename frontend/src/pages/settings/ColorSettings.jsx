@@ -26,6 +26,7 @@ export default function ColorSettings() {
   const handleSaveColors = async () => {
     setMessage('')
     setError('')
+    setLoading(true)
     try {
       await saveSettings({
         colorMode,
@@ -40,6 +41,8 @@ export default function ColorSettings() {
     } catch (err) {
       console.error(err)
       setError('Failed to save color settings')
+    } finally {
+      setLoading(false)
     }
   }
 
