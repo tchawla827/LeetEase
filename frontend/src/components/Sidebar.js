@@ -28,6 +28,8 @@ export default function Sidebar() {
   const activeCompany = decodeURIComponent(
     (location.pathname.split('/company/')[1] || '').split('/')[0]
   )
+  // Currently selected bucket from the query string
+  const activeBucket = new URLSearchParams(location.search).get('bucket')
 
   // ─── 1) Load the list of all companies on mount (and whenever user changes) ───
   useEffect(() => {
@@ -189,23 +191,28 @@ export default function Sidebar() {
                             Loading…
                           </li>
                         ) : buckets.length > 0 ? (
-                          buckets.map(rawBucketName => (
-                            <li key={rawBucketName}>
-                              <button
-                                onClick={() =>
-                                  handleBucketClick(company, rawBucketName)
-                                }
-                                className="
-                                  font-mono text-code-sm text-gray-400
-                                  hover:text-primary hover:bg-gray-800/60
-                                  w-full text-left px-2 py-1 rounded-code
-                                  transition-colors duration-150
-                                "
-                              >
-                                {BUCKET_LABELS[rawBucketName] || rawBucketName}
-                              </button>
-                            </li>
-                          ))
+                          buckets.map(rawBucketName => {
+                            const bucketActive =
+                              isActive && activeBucket === rawBucketName
+                            return (
+                              <li key={rawBucketName}>
+                                <button
+                                  onClick={() =>
+                                    handleBucketClick(company, rawBucketName)
+                                  }
+                                  className={`
+                                    font-mono text-code-sm rounded-code w-full text-left px-2 py-1
+                                    transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-primary/50
+                                    ${bucketActive
+                                      ? 'bg-primary text-white font-semibold ring-1 ring-primary/50'
+                                      : 'text-gray-400 hover:text-primary hover:bg-gray-800/60'}
+                                  `}
+                                >
+                                  {BUCKET_LABELS[rawBucketName] || rawBucketName}
+                                </button>
+                              </li>
+                            )
+                          })
                         ) : (
                           <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
                             (No buckets)
