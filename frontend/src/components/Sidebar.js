@@ -112,7 +112,7 @@ export default function Sidebar() {
 
             /* Basic styling */
             w-64 bg-surface border-r border-gray-800 shadow-elevation
-            overflow-y-auto
+            overflow-y-auto sidebar-scroll
             /* ───────────────────────────────────────────────────────── */
           "
         >
