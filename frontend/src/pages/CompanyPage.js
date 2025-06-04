@@ -104,8 +104,9 @@ export default function CompanyPage() {
       bucketFromUrl !== selectedBucket
     ) {
       setSelectedBucket(bucketFromUrl)
+    }
 
-  }, [bucketFromUrl, buckets, selectedBucket])
+  }, [bucketFromUrl, buckets])
 
 
   // ── Fetch company progress when company changes ────────────────────────
