@@ -36,7 +36,7 @@ export default function CompanyPage() {
   const [buckets,          setBuckets]        = useState([])
   const [bucketsLoading,   setBucketsLoading] = useState(true)
   const [progressData,     setProgressData]   = useState([])
-  const [loadingProgress,  setLoadingProgress]= useState(true)
+  const [loadingProgress,  setLoadingProgress] = useState(true)
 
   // ── Misc UI state ──────────────────────────────────────────────────────
   const [refreshKey,    setRefreshKey]    = useState(0)
@@ -51,6 +51,7 @@ export default function CompanyPage() {
     if (selectedTag)    params.tag      = selectedTag
     if (showUnsolved)   params.unsolved = 'true'
     if (searchTerm)     params.q        = searchTerm
+
     setSearchParams(params, { replace: true })
   }, [selectedBucket, selectedTag, showUnsolved, searchTerm, setSearchParams])
 
@@ -62,6 +63,7 @@ export default function CompanyPage() {
   }, [])
 
   // ── Fetch bucket list when company changes ──────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setBucketsLoading(true)
     setBuckets([])
@@ -75,6 +77,7 @@ export default function CompanyPage() {
         const filtered = raw
           .filter(name => BUCKET_ORDER.includes(name))
           .sort((a, b) => BUCKET_ORDER.indexOf(a) - BUCKET_ORDER.indexOf(b))
+
         setBuckets(filtered)
 
         // Pick initial bucket: URL → localStorage → first available
@@ -96,7 +99,9 @@ export default function CompanyPage() {
       .finally(() => setBucketsLoading(false))
   }, [companyName])
 
+
   // ── Update selected bucket when URL param changes ─────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (
       bucketFromUrl &&
@@ -105,7 +110,6 @@ export default function CompanyPage() {
     ) {
       setSelectedBucket(bucketFromUrl)
     }
-
   }, [bucketFromUrl, buckets])
 
 
