@@ -19,7 +19,7 @@ export default function SettingsSidebar() {
 
         /* Basic sidebar styling */
         w-64 bg-surface border-r border-gray-800 shadow-elevation
-        overflow-y-auto
+        overflow-y-auto sidebar-scroll
 
         /* On desktop (>= md): revert to a normal in-flow element */
         md:relative md:top-0 md:block

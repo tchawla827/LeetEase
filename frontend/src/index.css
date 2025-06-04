@@ -15,3 +15,31 @@ body,
 body {
   color: #e2e8f0; /* a light gray for text on dark background, adjust to taste */
 }
+
+/* Custom scrollbar styling for sidebar components */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sidebar-thumb) var(--sidebar-track);
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: var(--sidebar-track);
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--sidebar-thumb);
+  border-radius: 4px;
+}
+
+/* Set scrollbar colors based on system theme */
+:root {
+  --sidebar-track: #161b22;
+  --sidebar-thumb: #30363d;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --sidebar-track: #f3f4f6;
+    --sidebar-thumb: #d1d5db;
+  }
+}
