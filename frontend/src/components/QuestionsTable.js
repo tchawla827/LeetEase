@@ -131,7 +131,11 @@ export default function QuestionsTable({
   // ─── Update a single question’s field (userDifficulty or solved) ────────
   const updateField = (questionId, field, value) => {
     api
-      .patch(`/api/questions/${questionId}`, { [field]: value })
+      .patch(`/api/questions/${questionId}`, {
+        [field]: value,
+        company,
+        bucket,
+      })
       .then(res => {
         const updates = Array.isArray(res.data) ? res.data : [res.data];
         setQuestions(prev =>
@@ -155,6 +159,8 @@ export default function QuestionsTable({
     api
       .patch('/api/questions/batch-meta', {
         ids: selected,
+        company,
+        bucket,
         ...fields,
       })
       .then(res => {

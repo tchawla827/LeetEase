@@ -6,7 +6,7 @@ import csv
 import threading
 import time
 from io import BytesIO
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import requests
 from dotenv import load_dotenv
@@ -782,10 +782,17 @@ def list_questions(company, bucket):
     out = []
     for doc in results:
         q = doc['q']
-        meta = USER_META.find_one({
+        meta_query = {
             'user_id': uid,
             'question_id': str(q['_id'])
-        })
+        }
+        if bucket != 'All':
+            meta_query.update({'company_id': co['_id'], 'bucket': bucket})
+        else:
+            meta_query.update({'company_id': co['_id']})
+        meta = USER_META.find_one(meta_query)
+        if not meta:
+            meta = USER_META.find_one({'user_id': uid, 'question_id': str(q['_id'])})
         solved = meta.get('solved', False) if meta else False
         if showUnsolved and solved:
             continue
@@ -819,6 +826,15 @@ def update_question_meta(question_id):
     data = request.get_json() or {}
     update_fields = {}
 
+    company_name = data.get('company')
+    bucket       = data.get('bucket')
+    company_id   = None
+    if company_name and bucket:
+        co = COMPANIES.find_one({'name': company_name})
+        if not co:
+            abort(404, description=f"No company '{company_name}'")
+        company_id = co['_id']
+
     if 'solved' in data:
         update_fields['solved'] = bool(data['solved'])
     if 'userDifficulty' in data:
@@ -827,13 +843,19 @@ def update_question_meta(question_id):
     if not update_fields:
         abort(400, description="No valid fields to update (solved, userDifficulty)")
 
+    update_fields['updatedAt'] = datetime.utcnow()
+
+    query = {'user_id': uid, 'question_id': question_id}
+    if company_id:
+        query.update({'company_id': company_id, 'bucket': bucket})
+
     USER_META.update_one(
-        {'user_id': uid, 'question_id': question_id},
-        {'$set': update_fields},
-        upsert=True
+        query,
+        {'$set': update_fields | ({'company_id': company_id, 'bucket': bucket} if company_id else {})},
+        upsert=True,
     )
 
-    meta = USER_META.find_one({'user_id': uid, 'question_id': question_id})
+    meta = USER_META.find_one(query)
     resp = {
         'question_id':    question_id,
         'solved':         meta.get('solved', False),
@@ -858,14 +880,29 @@ def batch_update_questions_meta():
     if not update_fields:
         abort(400, description="No valid fields to update (solved, userDifficulty)")
 
+    update_fields['updatedAt'] = datetime.utcnow()
+
+    company_name = data.get('company')
+    bucket       = data.get('bucket')
+    company_id   = None
+    if company_name and bucket:
+        co = COMPANIES.find_one({'name': company_name})
+        if not co:
+            abort(404, description=f"No company '{company_name}'")
+        company_id = co['_id']
+
     results = []
     for qid in ids:
+        query = {'user_id': uid, 'question_id': qid}
+        if company_id:
+            query.update({'company_id': company_id, 'bucket': bucket})
+
         USER_META.update_one(
-            {'user_id': uid, 'question_id': qid},
-            {'$set': update_fields},
-            upsert=True
+            query,
+            {'$set': update_fields | ({'company_id': company_id, 'bucket': bucket} if company_id else {})},
+            upsert=True,
         )
-        meta = USER_META.find_one({'user_id': uid, 'question_id': qid})
+        meta = USER_META.find_one(query)
         results.append({
             'question_id':    qid,
             'solved':         meta.get('solved', False),
@@ -956,6 +993,46 @@ def company_progress(company):
         else:
             final_list.append({ 'bucket': b, 'total': 0, 'solved': 0 })
     return jsonify(final_list), 200
+
+# ─── Recently worked buckets for Home page ───────────────────────────────
+@app.route('/api/recent-buckets', methods=['GET'])
+@jwt_required()
+def recent_buckets():
+    """Return most recently updated company buckets for the current user."""
+    uid   = get_jwt_identity()
+    limit = int(request.args.get('limit', 4))
+
+    pipeline = [
+        { '$match': {
+            'user_id': uid,
+            'company_id': { '$exists': True },
+            'bucket': { '$exists': True },
+            'updatedAt': { '$exists': True }
+        }},
+        { '$sort': { 'updatedAt': -1 } },
+        { '$lookup': {
+            'from': 'companies',
+            'localField': 'company_id',
+            'foreignField': '_id',
+            'as': 'co'
+        }},
+        { '$unwind': '$co' },
+        { '$group': {
+            '_id': { 'company': '$co.name', 'bucket': '$bucket' },
+            'updatedAt': { '$first': '$updatedAt' }
+        }},
+        { '$sort': { 'updatedAt': -1 } },
+        { '$limit': limit },
+        { '$project': {
+            '_id': 0,
+            'company': '$_id.company',
+            'bucket': '$_id.bucket',
+            'updatedAt': 1
+        }}
+    ]
+
+    results = list(USER_META.aggregate(pipeline))
+    return jsonify({'data': results}), 200
 
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
