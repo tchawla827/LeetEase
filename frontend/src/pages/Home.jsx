@@ -30,21 +30,25 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-surface rounded-card p-card">
           <h3 className="text-lg font-medium mb-2">Recent Buckets</h3>
-          {recent.length === 0 ? (
-            <p className="text-sm text-gray-400">No recent activity.</p>
-          ) : (
-            <div className="space-y-2">
-              {recent.map((r) => (
-                <Link
-                  key={`${r.company}-${r.bucket}`}
-                  to={`/company/${encodeURIComponent(r.company)}?bucket=${encodeURIComponent(r.bucket)}`}
-                  className="block w-full text-left bg-[#1545a6] hover:bg-primary focus:outline-none focus:ring-1 focus:ring-primary/50 text-white py-2 px-3 rounded-code text-sm transition-colors duration-150 hover:shadow-elevation"
-                >
-                  {r.company} – {r.bucket}
-                </Link>
-              ))}
-            </div>
-          )}
+
+            {recent.length === 0 ? (
+              <p className="text-sm text-gray-400">No recent activity.</p>
+            ) : (
+              <ul className="space-y-2 list-disc pl-5 marker:text-gray-400">
+                {recent.map((r) => (
+                  <li key={`${r.company}-${r.bucket}`}
+                      className="marker:text-gray-500">
+                    <Link
+                      to={`/company/${encodeURIComponent(r.company)}?bucket=${encodeURIComponent(r.bucket)}`}
+                      className="block w-full text-left bg-[#1545a6] hover:bg-primary focus:outline-none focus:ring-1 focus:ring-primary/50 text-white py-2 px-3 rounded-code text-sm transition-colors duration-150 hover:shadow-elevation"
+                    >
+                      {r.company} – {r.bucket}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+
         </div>
 
         <div className="bg-surface rounded-card p-card">
