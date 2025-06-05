@@ -44,3 +44,23 @@ body {
     --sidebar-thumb: #d1d5db;
   }
 }
+
+/* Landing page custom styles */
+.hero-gradient {
+  background: linear-gradient(135deg, rgba(31, 111, 235, 0.15) 0%, rgba(13, 17, 23, 1) 100%);
+}
+
+.dashboard-placeholder {
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  border: 1px solid #363b46;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.feature-bullet::before {
+  content: '\2022';
+  color: #1f6feb;
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
