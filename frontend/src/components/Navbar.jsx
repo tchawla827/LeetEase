@@ -21,6 +21,8 @@ export default function Navbar({
 
   // ─── Desktop Avatar Dropdown ─────────────────────────────────────────
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  // Separate state to keep the menu mounted during transition
+  const [isUserMenuVisible, setIsUserMenuVisible] = useState(false)
 
   // We'll store the computed screen‐coordinates for the dropdown box
   const [dropdownCoords, setDropdownCoords] = useState({ top: 0, right: 0 })
@@ -43,14 +45,23 @@ export default function Navbar({
         // “right” = distance from viewport’s right edge
         right: window.innerWidth - rect.right,
       })
-      setIsUserMenuOpen(true)
+      // Mount the menu before triggering the open state so CSS transitions run
+      setIsUserMenuVisible(true)
+      // Use rAF so the visibility change applies before the open class
+      requestAnimationFrame(() => setIsUserMenuOpen(true))
     }
+  }
+
+  const closeUserMenu = () => {
+    setIsUserMenuOpen(false)
+    setTimeout(() => setIsUserMenuVisible(false), 300)
   }
 
   // Toggle desktop avatar dropdown (desktop only, because on mobile it's hidden)
   const toggleUserMenu = () => {
     if (isUserMenuOpen) {
-      setIsUserMenuOpen(false)
+      // Start closing animation then unmount after it completes
+      closeUserMenu()
     } else {
       // On desktop, we do NOT close the sidebar—allow concurrent open.
       openUserMenu()
@@ -78,7 +89,7 @@ export default function Navbar({
         portalRef.current?.contains(event.target)
 
       if (!clickedInsideAvatar && !clickedInsidePortal) {
-        setIsUserMenuOpen(false)
+        closeUserMenu()
       }
     }
 
@@ -218,11 +229,13 @@ export default function Navbar({
       </div>
 
       {/* ─── Desktop Avatar Dropdown “Portal” ────────────────────────────────────────── */}
-      {isUserMenuOpen &&
+      {isUserMenuVisible &&
         ReactDOM.createPortal(
           <div
             ref={portalRef}
-            className="bg-surface border border-gray-700 rounded-code shadow-lg z-50"
+            className={`bg-surface border border-gray-700 rounded-code shadow-lg z-50 transform transition-all duration-300 ${
+              isUserMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+            }`}
             style={{
               position: 'absolute',
               top: dropdownCoords.top + 'px',
@@ -232,21 +245,21 @@ export default function Navbar({
           >
             <Link
               to="/profile"
-              onClick={() => setIsUserMenuOpen(false)}
+              onClick={closeUserMenu}
               className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-t-code transition-colors duration-150"
             >
               Profile
             </Link>
             <Link
               to="/import"
-              onClick={() => setIsUserMenuOpen(false)}
+              onClick={closeUserMenu}
               className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
             >
               Import Questions
             </Link>
             <Link
               to="/settings"
-              onClick={() => setIsUserMenuOpen(false)}
+              onClick={closeUserMenu}
               className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
             >
               Settings
@@ -254,7 +267,7 @@ export default function Navbar({
             <button
               onClick={() => {
                 logout()
-                setIsUserMenuOpen(false)
+                closeUserMenu()
               }}
               className="w-full text-left font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-b-code transition-colors duration-150"
             >
