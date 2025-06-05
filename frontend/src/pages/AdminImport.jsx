@@ -1,6 +1,7 @@
 // src/pages/AdminImport.jsx
 import React, { useState } from 'react';
 import { uploadQuestions, backfillTags } from '../api';
+import { extractErrorMessage } from '../utils/error';
 
 export default function AdminImport() {
   const [file, setFile]       = useState(null);
@@ -35,7 +36,7 @@ export default function AdminImport() {
     } catch (err) {
       /* istanbul ignore next */
       setMessage(
-        err.response?.data?.description ||
+        extractErrorMessage(err) ||
         'Import failed. Please check the file format and try again.'
       );
     } finally {
@@ -51,7 +52,7 @@ export default function AdminImport() {
       setMessage('Tag backfill completed successfully.');
     } catch (err) {
       setMessage(
-        err.response?.data?.description || 'Backfill failed. Please try again.'
+        extractErrorMessage(err) || 'Backfill failed. Please try again.'
       );
     } finally {
       setIsBackfilling(false);

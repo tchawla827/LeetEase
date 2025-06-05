@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../api'
+import { extractErrorMessage } from '../utils/error'
 import UniversityAutocomplete from '../components/UniversityAutocomplete.jsx'
 
 export default function Register() {
@@ -73,11 +74,9 @@ export default function Register() {
       // On success, backend has stored reg_data in session and emailed OTP
       setStep(2)
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        'Failed to request OTP'
-      setError(msg)
+      setError(
+        extractErrorMessage(err) || 'Failed to request OTP'
+      )
     } finally {
       setLoading(false)
     }
@@ -100,11 +99,9 @@ export default function Register() {
       // On success, registration is complete; redirect to login
       navigate('/login')
     } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        'Invalid or expired OTP'
-      setError(msg)
+      setError(
+        extractErrorMessage(err) || 'Invalid or expired OTP'
+      )
     } finally {
       setLoading(false)
     }

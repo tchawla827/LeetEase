@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { extractErrorMessage } from '../utils/error'
 
 export default function ForgotPassword() {
   const { requestReset } = useAuth()
@@ -17,7 +18,7 @@ export default function ForgotPassword() {
       await requestReset(email)
       setSent(true)
     } catch (err) {
-      setError(err.response?.data?.description || 'Failed to send reset email.')
+      setError(extractErrorMessage(err) || 'Failed to send reset email.')
     } finally {
       setLoading(false)
     }
