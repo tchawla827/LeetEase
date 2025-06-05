@@ -9,7 +9,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  background-color: #0f172a; /* or your exact “surface” hex code */
+  background-color: #0d1117; /* use Tailwind “background” token (#0d1117) */
 }
 
 /* If you want to override Tailwind’s default body text color, you can add: */
@@ -47,11 +47,19 @@ body {
 
 /* Landing page custom styles */
 .hero-gradient {
-  background: linear-gradient(135deg, rgba(31, 111, 235, 0.15) 0%, rgba(13, 17, 23, 1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(31, 111, 235, 0.15) 0%,
+    rgba(13, 17, 23, 1) 100%
+  );
 }
 
 .dashboard-placeholder {
-  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  background: linear-gradient(
+    135deg,
+    #0d1117 0%,
+    #161b22 100%
+  );
   border: 1px solid #363b46;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
@@ -66,13 +74,17 @@ body {
 }
 
 /* Scroll reveal animations */
-.reveal { opacity: 0; transform: translateY(1rem); transition: opacity 0.5s ease, transform 0.5s ease; }
-.reveal.in-view { opacity: 1; transform: translateY(0); }
+.reveal {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
 
-/* Background image applied to main content area */
+/* Background pattern for main content using Tailwind utility */
 .main-screen-bg {
-  background-image: url('./assets/bg_image.png');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
+  @apply bg-background bg-dev-grid bg-repeat bg-[length:100px_100px];
 }

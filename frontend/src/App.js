@@ -1,43 +1,41 @@
 // src/App.js
 
-import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import './App.css'; // Ensure this import remains
 
-import Navbar            from './components/Navbar'
-import Sidebar           from './components/Sidebar'
-import SettingsSidebar   from './components/SettingsSidebar'
-import PrivateRoute      from './components/PrivateRoute'
+import Navbar            from './components/Navbar';
+import Sidebar           from './components/Sidebar';
+import SettingsSidebar   from './components/SettingsSidebar';
+import PrivateRoute      from './components/PrivateRoute';
 
-import Login             from './pages/Login'
-import Register          from './pages/Register'
-import Landing          from './pages/Landing'
-
-import Home             from './pages/Home'
-
-
-import AdminImport       from './pages/AdminImport'
-import CompanyPage       from './pages/CompanyPage'
-import Profile           from './pages/Profile'
+import Login             from './pages/Login';
+import Register          from './pages/Register';
+import Landing           from './pages/Landing';
+import Home              from './pages/Home';
+import AdminImport       from './pages/AdminImport';
+import CompanyPage       from './pages/CompanyPage';
+import Profile           from './pages/Profile';
 
 // Settings-related imports
-import Settings          from './pages/Settings'
-import AccountSettings   from './pages/settings/AccountSettings'
-import ColorSettings     from './pages/settings/ColorSettings'
-import LeetCodeSettings  from './pages/settings/LeetCodeSettings'
+import Settings          from './pages/Settings';
+import AccountSettings   from './pages/settings/AccountSettings';
+import ColorSettings     from './pages/settings/ColorSettings';
+import LeetCodeSettings  from './pages/settings/LeetCodeSettings';
 
 function AppContent() {
   // ─── Sidebar open/closed state for non-settings routes ────────────────
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const { syncing, syncResult, user } = useAuth()
-  const showToast = syncing || syncResult != null
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { syncing, syncResult, user } = useAuth();
+  const showToast = syncing || syncResult != null;
 
   // Determine if we are on any "/settings" route
-  const location = useLocation()
-  const onSettingsRoute = location.pathname.startsWith('/settings')
+  const location = useLocation();
+  const onSettingsRoute = location.pathname.startsWith('/settings');
 
   return (
-    <div className="h-screen flex flex-col bg-surface">
+    <div className="h-screen flex flex-col">
       {showToast && <SyncToast />}
 
       {/* ─── Navbar (60px high) ──────────────────────────────────────────── */}
@@ -47,8 +45,7 @@ function AppContent() {
         closeSidebar={() => setSidebarOpen(false)}
       />
 
-      {/* ─── Below Navbar: either SettingsSidebar (always visible on settings) 
-               or Sidebar (toggleable on other routes) + main content ────── */}
+      {/* ─── Below Navbar: either SettingsSidebar or Sidebar + main content ─ */}
       <div className="flex flex-1 overflow-hidden pt-16">
         {onSettingsRoute ? (
           <SettingsSidebar />
@@ -56,11 +53,9 @@ function AppContent() {
           <Sidebar sidebarOpen={sidebarOpen} />
         )}
 
-        {/* <main className="flex-1 overflow-auto p-4"> */}
-        {/* Main content area gets the background image */}
+        {/* Main content area gets the SVG pattern and dark background */}
         <main className="flex-1 overflow-auto p-4 main-screen-bg">
           <Routes>
-
             <Route path="/" element={user ? <Home /> : <Landing />} />
             <Route
               path="/home"
@@ -130,31 +125,31 @@ function AppContent() {
         </main>
       </div>
     </div>
-  )
+  );
 }
 
 function SyncToast() {
-  const { syncing, syncResult } = useAuth()
-  const [visible, setVisible] = useState(false)
+  const { syncing, syncResult } = useAuth();
+  const [visible, setVisible] = useState(false);
 
   // Show toast immediately when a sync starts
   useEffect(() => {
-    if (syncing) setVisible(true)
-  }, [syncing])
+    if (syncing) setVisible(true);
+  }, [syncing]);
 
   // When sync completes, keep toast visible for 10 seconds
   useEffect(() => {
-    let timerId
+    let timerId;
     if (syncResult !== null) {
-      setVisible(true)
-      timerId = setTimeout(() => setVisible(false), 10000)
+      setVisible(true);
+      timerId = setTimeout(() => setVisible(false), 10000);
     }
-    return () => clearTimeout(timerId)
-  }, [syncResult])
+    return () => clearTimeout(timerId);
+  }, [syncResult]);
 
   const text = syncing
     ? 'Syncing solved questions…'
-    : `Synced ${syncResult} questions`
+    : `Synced ${syncResult} questions`;
 
   return (
     <div
@@ -177,7 +172,7 @@ function SyncToast() {
         ×
       </button>
     </div>
-  )
+  );
 }
 
 function Welcome() {
@@ -186,7 +181,7 @@ function Welcome() {
       <h2 className="text-xl text-gray-100">Welcome to LeetEase</h2>
       <p className="text-gray-300">Select a company from the sidebar to get started.</p>
     </div>
-  )
+  );
 }
 
 export default function App() {
@@ -196,5 +191,5 @@ export default function App() {
         <AppContent />
       </AuthProvider>
     </Router>
-  )
+  );
 }

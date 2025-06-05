@@ -88,10 +88,15 @@ module.exports = {
           900: '#161b22',
         },
       },
+
+      // ──────────── 5) BACKGROUND PATTERNS ────────────
+      backgroundImage: {
+        'dev-grid': "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.15'%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%231f6feb'/%3E%3Ccircle cx='50' cy='50' r='1.5' fill='%231f6feb'/%3E%3Ccircle cx='90' cy='90' r='1.5' fill='%231f6feb'/%3E%3Ccircle cx='10' cy='90' r='1.5' fill='%231f6feb'/%3E%3Ccircle cx='90' cy='10' r='1.5' fill='%231f6feb'/%3E%3Cpath d='M10 10L50 50L90 10M10 90L50 50L90 90' stroke='%231f6feb' stroke-width='0.25'/%3E%3C/g%3E%3C/svg%3E\")",
+      },
     }, // end extend
   },
 
-  // ──────────── 5) PLUGINS ────────────
+  // ──────────── 6) PLUGINS ────────────
   plugins: [
     // If you want to use any official Tailwind plugins (e.g. forms, typography), add them here:
     // require('@tailwindcss/forms'),
