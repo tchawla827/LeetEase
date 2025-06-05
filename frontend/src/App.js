@@ -56,7 +56,9 @@ function AppContent() {
           <Sidebar sidebarOpen={sidebarOpen} />
         )}
 
-        <main className="flex-1 overflow-auto p-4">
+        {/* <main className="flex-1 overflow-auto p-4"> */}
+        {/* Main content area gets the background image */}
+        <main className="flex-1 overflow-auto p-4 main-screen-bg">
           <Routes>
 
             <Route path="/" element={user ? <Home /> : <Landing />} />
