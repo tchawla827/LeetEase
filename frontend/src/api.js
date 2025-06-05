@@ -33,6 +33,14 @@ export function verifyOtp(payload) {
   return api.post('/auth/verify', payload);
 }
 
+export function requestPasswordReset(email) {
+  return api.post('/auth/forgot-password', { email });
+}
+
+export function resetPassword(token, newPassword) {
+  return api.post('/auth/reset-password', { token, newPassword });
+}
+
 // ───────────────────────────────
 // Profile – Account & Photo
 // ───────────────────────────────
