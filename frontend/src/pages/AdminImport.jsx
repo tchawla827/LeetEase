@@ -1,11 +1,12 @@
 // src/pages/AdminImport.jsx
 import React, { useState } from 'react';
-import { uploadQuestions } from '../api';   // ⬅️ new helper wraps the /api/import call
+import { uploadQuestions, backfillTags } from '../api';
 
 export default function AdminImport() {
   const [file, setFile]       = useState(null);
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
 
   // ─── Handlers ─────────────────────────────────────────────────────────
   const onFileChange = (e) => {
@@ -40,6 +41,22 @@ export default function AdminImport() {
       );
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleBackfill = async () => {
+    setIsBackfilling(true);
+    setMessage('');
+    try {
+      await backfillTags();
+      setMessage('Tag backfill completed successfully.');
+    } catch (err) {
+      console.error(err);
+      setMessage(
+        err.response?.data?.description || 'Backfill failed. Please try again.'
+      );
+    } finally {
+      setIsBackfilling(false);
     }
   };
 
@@ -79,6 +96,18 @@ export default function AdminImport() {
           {isUploading ? 'Uploading…' : 'Upload'}
         </button>
       </form>
+
+      <button
+        type="button"
+        onClick={handleBackfill}
+        disabled={isBackfilling}
+        className={`mt-4 px-4 py-2 rounded-code text-code-sm font-mono
+                    ${isBackfilling ? 'bg-gray-700 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark'}
+                    text-white transition-colors duration-150
+                    focus:outline-none focus:ring-2 focus:ring-primary/50`}
+      >
+        {isBackfilling ? 'Backfilling…' : 'Backfill Tags'}
+      </button>
 
       {message && (
         <div
