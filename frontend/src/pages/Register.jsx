@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../api'
+import UniversityAutocomplete from '../components/UniversityAutocomplete.jsx'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -196,13 +197,11 @@ export default function Register() {
               <label className="block text-code-sm text-gray-300 font-mono mb-1">
                 College/University
               </label>
-              <input
-                type="text"
-                name="college"
+              <UniversityAutocomplete
                 value={formData.college}
-                onChange={handleChange}
-                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                placeholder="MIT (optional)"
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, college: val }))
+                }
               />
             </div>
 
