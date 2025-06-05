@@ -51,7 +51,7 @@ function AppContent() {
       {/* ─── Below Navbar: either SettingsSidebar or Sidebar + main content ─ */}
       <div className="flex flex-1 overflow-hidden pt-16">
         {onSettingsRoute ? (
-          <SettingsSidebar />
+          <SettingsSidebar sidebarOpen={sidebarOpen} />
         ) : (
           <Sidebar sidebarOpen={sidebarOpen} />
         )}

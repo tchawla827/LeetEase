@@ -9,22 +9,25 @@ const LINKS = [
   { to: 'leetcode',  label: 'LeetCode' },
 ]
 
-export default function SettingsSidebar() {
+export default function SettingsSidebar({ sidebarOpen }) {
   return (
     <aside
-      className="
+      className={`
         /* ───────────────────────────────────────────────────────── */
         /* On mobile (< md): fixed sidebar under the Navbar  */
         fixed top-16 left-0 bottom-0 z-50
 
         /* Basic sidebar styling */
-        w-64 bg-surface border-r border-gray-800 shadow-elevation
+        bg-surface border-r border-gray-800 shadow-elevation
         overflow-y-auto sidebar-scroll
+
+        transform transition-all duration-300 opacity-0
+        ${sidebarOpen ? 'opacity-100 w-64 translate-x-0' : 'opacity-0 w-0 -translate-x-full'}
 
         /* On desktop (>= md): revert to a normal in-flow element */
         md:relative md:top-0 md:block
         /* ───────────────────────────────────────────────────────── */
-      "
+      `}
     >
       <div className="pt-2 px-card">
         {/* Sidebar header */}

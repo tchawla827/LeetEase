@@ -112,7 +112,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+    <div className="min-h-full flex items-center justify-center p-4">
       <div className="relative w-full max-w-md bg-surface border border-gray-800 rounded-card shadow-elevation px-card py-6">
         {/* Loading Overlay */}
         {loading && (

@@ -27,7 +27,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+    <div className="min-h-full flex items-center justify-center p-4">
       <div className="relative max-w-sm w-full bg-surface border border-gray-700 rounded-card shadow-elevation px-card py-6 space-y-4">
         {/* Loading Overlay */}
         {loading && (

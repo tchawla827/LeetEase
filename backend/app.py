@@ -282,6 +282,7 @@ def forgot_password():
         identity=str(user['_id']),
         expires_delta=timedelta(minutes=15)
     )
+
     msg = Message('Password Reset', recipients=[user['email']])
     if config.FRONTEND_URL:
         link = f"{config.FRONTEND_URL.rstrip('/')}/reset-password?token={reset_token}"
@@ -295,6 +296,7 @@ def forgot_password():
             f"Your reset token: {reset_token}\n"
             "Use it to reset your password. Token expires in 15 minutes."
         )
+
     msg.body = body
     mail.send(msg)
     return jsonify({'msg': 'Password reset email sent'}), 200
