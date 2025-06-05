@@ -27,11 +27,11 @@ export default function Landing() {
           <div>
             <h2 className="text-3xl font-bold mb-6">Your Complete Interview Preparation Companion</h2>
             <ul className="space-y-4">
-              <li className="feature-bullet pl-4">Track interview questions by company and bucket</li>
-              <li className="feature-bullet pl-4">Mark questions solved or rate their difficulty</li>
-              <li className="feature-bullet pl-4">View analytics and progress charts</li>
-              <li className="feature-bullet pl-4">Sync solved problems from LeetCode automatically</li>
-              <li className="feature-bullet pl-4">AI-powered question recommendations</li>
+              <li className="feature-bullet pl-4">Curated interview questions from hundreds of tech companies</li>
+              <li className="feature-bullet pl-4">Mark problems solved, rate difficulty and add notes</li>
+              <li className="feature-bullet pl-4">Visualize your progress with dashboards and topic charts</li>
+              <li className="feature-bullet pl-4">Sync solved questions from your LeetCode account automatically</li>
+              <li className="feature-bullet pl-4">Personalize your profile photo and color palette</li>
             </ul>
           </div>
           <div className="dashboard-placeholder rounded-xl p-2">
