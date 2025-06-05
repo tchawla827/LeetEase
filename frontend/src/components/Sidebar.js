@@ -133,8 +133,8 @@ export default function Sidebar({ sidebarOpen }) {
             border-r border-gray-800 shadow-elevation
             overflow-y-auto sidebar-scroll
 
-            transform transition-all duration-300
-            ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
+            transform transition-all duration-300 opacity-0
+            ${sidebarOpen ? 'opacity-100 w-64 translate-x-0' : 'opacity-0 w-0 -translate-x-full'}
             /* ───────────────────────────────────────────────────────── */
           `}
         >

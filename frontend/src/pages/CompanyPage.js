@@ -222,30 +222,35 @@ export default function CompanyPage() {
             </button>
           </div>
 
-          {showAnalytics ? (
-            loadingTopics ? (
-              <div className="text-sm text-gray-500 italic">Loading analytics...</div>
-            ) : (
-              <div className="space-y-8">
-                {/* ── 1) CompanyProgress is now only shown here ─────────────── */}
-                <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
-                  <CompanyProgress data={progressData} loading={loadingProgress} />
-                </div>
+          <div className="relative">
+            <div
+              className={`transition-opacity duration-300 ${showAnalytics ? 'opacity-100' : 'opacity-0 pointer-events-none absolute inset-0'}`}
+            >
+              {loadingTopics ? (
+                <div className="text-sm text-gray-500 italic">Loading analytics...</div>
+              ) : (
+                <div className="space-y-8">
+                  {/* ── 1) CompanyProgress is now only shown here ─────────────── */}
+                  <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+                    <CompanyProgress data={progressData} loading={loadingProgress} />
+                  </div>
 
-                {/* ── 2) Then show TopicsDashboard below it ────────────────── */}
-                <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
-                  <TopicsDashboard
-                    data={topics}
-                    onTagClick={tag => {
-                      setSelectedTag(tag)
-                      setShowAnalytics(false)
-                    }}
-                  />
+                  {/* ── 2) Then show TopicsDashboard below it ────────────────── */}
+                  <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+                    <TopicsDashboard
+                      data={topics}
+                      onTagClick={tag => {
+                        setSelectedTag(tag)
+                        setShowAnalytics(false)
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )
-          ) : (
-            <>
+              )}
+            </div>
+            <div
+              className={`transition-opacity duration-300 ${showAnalytics ? 'opacity-0 pointer-events-none absolute inset-0' : 'opacity-100'}`}
+            >
               {selectedTag && (
                 <div className="text-sm text-gray-400 mb-2">
                   <strong>Filtered by topic:</strong> {selectedTag}{' '}
@@ -268,8 +273,8 @@ export default function CompanyPage() {
                   refreshKey={refreshKey}
                 />
               </div>
-            </>
-          )}
+            </div>
+          </div>
         </>
       )}
     </div>
