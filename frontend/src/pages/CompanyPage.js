@@ -95,7 +95,7 @@ export default function CompanyPage() {
           }
         }
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setBucketsLoading(false))
   }, [companyName])
 
@@ -119,8 +119,7 @@ export default function CompanyPage() {
     setLoadingProgress(true)
     fetchCompanyProgress(companyName)
       .then(res => setProgressData(res.data || []))
-      .catch(err => {
-        console.error('Failed to load company progress', err)
+      .catch(() => {
         setProgressData([])
       })
       .finally(() => setLoadingProgress(false))
@@ -141,7 +140,7 @@ export default function CompanyPage() {
         return res.json()
       })
       .then(json => setTopics(json.data))
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoadingTopics(false))
   }, [companyName, showAnalytics, selectedBucket, showUnsolved])
 

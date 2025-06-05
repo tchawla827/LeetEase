@@ -19,7 +19,6 @@ export default function Login() {
       await login(email, password)
       navigate('/home')
     } catch (err) {
-      console.error(err)
       setError(err.response?.data?.description || 'Login failed')
     } finally {
       setLoading(false)

@@ -1,6 +1,7 @@
 // src/api.js
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { emitGlobalError } from './context/ErrorToastContext';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '',
@@ -21,6 +22,24 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// ─── Error toast interceptor ─────────────────────────────────────────────
+api.interceptors.response.use(
+  (response) => {
+    const msg = response.data?.description || response.data?.error;
+    if (msg) emitGlobalError(msg);
+    return response;
+  },
+  (error) => {
+    const msg =
+      error.response?.data?.description ||
+      error.response?.data?.error ||
+      error.message ||
+      'Network Error';
+    emitGlobalError(msg);
+    return Promise.reject(error);
+  }
 );
 
 // ───────────────────────────────

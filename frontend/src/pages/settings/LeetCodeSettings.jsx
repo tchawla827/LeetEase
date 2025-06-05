@@ -35,7 +35,6 @@ export default function LeetCodeSettings() {
       })
       setMessage('LeetCode profile saved')
     } catch (err) {
-      console.error(err)
       setError(err.response?.data?.description || 'Save failed')
     }
   }
@@ -48,7 +47,6 @@ export default function LeetCodeSettings() {
       setMessage(`Synced ${count} questions`)
       window.dispatchEvent(new Event('leetSync'))
     } catch (err) {
-      console.error(err)
       setError(err.response?.data?.description || 'Sync failed')
     }
   }

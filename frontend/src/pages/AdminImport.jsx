@@ -34,7 +34,6 @@ export default function AdminImport() {
       setFile(null);  // reset picker
     } catch (err) {
       /* istanbul ignore next */
-      console.error(err);
       setMessage(
         err.response?.data?.description ||
         'Import failed. Please check the file format and try again.'
@@ -51,7 +50,6 @@ export default function AdminImport() {
       await backfillTags();
       setMessage('Tag backfill completed successfully.');
     } catch (err) {
-      console.error(err);
       setMessage(
         err.response?.data?.description || 'Backfill failed. Please try again.'
       );

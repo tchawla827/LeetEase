@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ErrorToastProvider } from './context/ErrorToastContext';
 import './App.css'; // Ensure this import remains
 
 import Navbar            from './components/Navbar';
@@ -194,7 +195,9 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <ErrorToastProvider>
+          <AppContent />
+        </ErrorToastProvider>
       </AuthProvider>
     </Router>
   );
