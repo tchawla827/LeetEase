@@ -215,7 +215,7 @@ export default function Sidebar({ sidebarOpen }) {
                                     font-mono text-code-sm rounded-code w-full text-left px-2 py-1
                                     transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-primary/50
                                     ${bucketActive
-                                      ? 'bg-primary text-white font-semibold ring-1 ring-primary/50'
+                                      ? 'bg-primary/20 text-primary font-semibold ring-1 ring-primary/50'
                                       : 'text-gray-400 hover:text-primary hover:bg-gray-800/60'}
                                   `}
                                 >
