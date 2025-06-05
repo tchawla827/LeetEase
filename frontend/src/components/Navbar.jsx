@@ -150,7 +150,7 @@ export default function Navbar({
 
         {/* ─── Center: Logo ───────────────────────────────────────────────────────────── */}
         <div className="absolute left-1/2 top-0 transform -translate-x-1/2 h-16 flex items-center pointer-events-none">
-          <Link to="/" className="pointer-events-auto">
+          <Link to={user ? '/home' : '/'} className="pointer-events-auto">
             <img src={logo} alt="LeetEase Logo" className="h-8 w-auto" />
           </Link>
         </div>
