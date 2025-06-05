@@ -1069,4 +1069,6 @@ def _startup_sync():
 if __name__ == '__main__':
     # If you want to perform a one-time sync on startup, uncomment below:
     # _startup_sync()
-    app.run(debug=True)
+    debug_env = os.getenv('FLASK_DEBUG', '').lower()
+    debug = debug_env in ('1', 'true', 'yes')
+    app.run(debug=debug)
