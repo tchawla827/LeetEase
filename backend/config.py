@@ -56,6 +56,9 @@ MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "noreply@example.com")
 
+# Base URL of the frontend (used for password reset links)
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
 # ————————————————
 # File Uploads (Profile Photos)
 # ————————————————

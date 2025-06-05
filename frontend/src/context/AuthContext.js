@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import api, {
   registerUser,
   verifyOtp,
+  requestPasswordReset,
+  resetPassword,
   getAccountProfile,
   updateAccountProfile,
   uploadProfilePhoto,
@@ -160,6 +162,16 @@ export function AuthProvider({ children }) {
     })
   }
 
+  // ─── Forgot password request ───────────────────────────────────────────
+  const requestReset = async (email) => {
+    await requestPasswordReset(email)
+  }
+
+  // ─── Finalize password reset ───────────────────────────────────────────
+  const finalizeReset = async (token, newPassword) => {
+    await resetPassword(token, newPassword)
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -178,6 +190,8 @@ export function AuthProvider({ children }) {
         editAccountProfile,
         changeProfilePhoto,
         removeProfilePhoto,
+        requestReset,
+        finalizeReset,
       }}
     >
       {children}
