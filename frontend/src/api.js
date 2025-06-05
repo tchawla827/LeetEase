@@ -75,6 +75,10 @@ export function uploadQuestions(file) {
   });
 }
 
+export function backfillTags() {
+  return api.post('/api/admin/backfill-tags');
+}
+
 // ───────────────────────────────
 // Company / Progress
 // ───────────────────────────────
