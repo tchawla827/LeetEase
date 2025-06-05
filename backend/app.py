@@ -6,7 +6,7 @@ import csv
 import threading
 import time
 from io import BytesIO
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import requests
 from dotenv import load_dotenv
@@ -827,6 +827,8 @@ def update_question_meta(question_id):
     if not update_fields:
         abort(400, description="No valid fields to update (solved, userDifficulty)")
 
+    update_fields['updatedAt'] = datetime.utcnow()
+
     USER_META.update_one(
         {'user_id': uid, 'question_id': question_id},
         {'$set': update_fields},
@@ -857,6 +859,8 @@ def batch_update_questions_meta():
         update_fields['userDifficulty'] = data.get('userDifficulty') or None
     if not update_fields:
         abort(400, description="No valid fields to update (solved, userDifficulty)")
+
+    update_fields['updatedAt'] = datetime.utcnow()
 
     results = []
     for qid in ids:
@@ -956,6 +960,48 @@ def company_progress(company):
         else:
             final_list.append({ 'bucket': b, 'total': 0, 'solved': 0 })
     return jsonify(final_list), 200
+
+# ─── Recently worked buckets for Home page ───────────────────────────────
+@app.route('/api/recent-buckets', methods=['GET'])
+@jwt_required()
+def recent_buckets():
+    """Return most recently updated company buckets for the current user."""
+    uid   = get_jwt_identity()
+    limit = int(request.args.get('limit', 4))
+
+    pipeline = [
+        { '$match': { 'user_id': uid, 'updatedAt': { '$exists': True } } },
+        { '$sort': { 'updatedAt': -1 } },
+        { '$lookup': {
+            'from': 'company_questions',
+            'let': { 'qid': { '$toObjectId': '$question_id' } },
+            'pipeline': [ { '$match': { '$expr': { '$eq': [ '$question_id', '$$qid' ] } } }, { '$limit': 1 } ],
+            'as': 'cq'
+        }},
+        { '$unwind': '$cq' },
+        { '$lookup': {
+            'from': 'companies',
+            'localField': 'cq.company_id',
+            'foreignField': '_id',
+            'as': 'co'
+        }},
+        { '$unwind': '$co' },
+        { '$group': {
+            '_id': { 'company': '$co.name', 'bucket': '$cq.bucket' },
+            'updatedAt': { '$first': '$updatedAt' }
+        }},
+        { '$sort': { 'updatedAt': -1 } },
+        { '$limit': limit },
+        { '$project': {
+            '_id': 0,
+            'company': '$_id.company',
+            'bucket': '$_id.bucket',
+            'updatedAt': 1
+        }}
+    ]
+
+    results = list(USER_META.aggregate(pipeline))
+    return jsonify({'data': results}), 200
 
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
