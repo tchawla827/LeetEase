@@ -253,9 +253,11 @@ export default function QuestionsTable({
   // ─── 3) Render ──────────────────────────────────────────────────────────
   return (
     <div className="space-y-2">
-      <div className="overflow-x-auto rounded-xl border border-gray-800">
+      {/* <div className="overflow-x-auto rounded-xl border border-gray-800"> */}
+      <div className="overflow-x-auto rounded-xl border border-gray-800 bg-surface/0">
         {/* Slight border + rounded corners around the table */}
         <table className="w-full border-collapse font-mono text-code-base md:text-code-lg">
+          
           {/* Bumped table text from code-sm → base/lg */}
 
           <thead>

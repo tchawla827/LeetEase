@@ -262,7 +262,8 @@ export default function CompanyPage() {
                   </button>
                 </div>
               )}
-              <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+              {/* <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4"> */}
+              <div className="rounded-xl bg-surface/0 border border-gray-800 shadow-elevation p-4">
                 <QuestionsTable
                   key={refreshKey}
                   company={companyName}
