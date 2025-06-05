@@ -845,6 +845,7 @@ def update_question_meta(question_id):
 
     update_fields['updatedAt'] = datetime.utcnow()
 
+
     query = {'user_id': uid, 'question_id': question_id}
     if company_id:
         query.update({'company_id': company_id, 'bucket': bucket})
@@ -890,6 +891,7 @@ def batch_update_questions_meta():
         if not co:
             abort(404, description=f"No company '{company_name}'")
         company_id = co['_id']
+
 
     results = []
     for qid in ids:
@@ -1003,6 +1005,7 @@ def recent_buckets():
     limit = int(request.args.get('limit', 4))
 
     pipeline = [
+
         { '$match': {
             'user_id': uid,
             'company_id': { '$exists': True },
@@ -1013,12 +1016,15 @@ def recent_buckets():
         { '$lookup': {
             'from': 'companies',
             'localField': 'company_id',
+
             'foreignField': '_id',
             'as': 'co'
         }},
         { '$unwind': '$co' },
         { '$group': {
+
             '_id': { 'company': '$co.name', 'bucket': '$bucket' },
+
             'updatedAt': { '$first': '$updatedAt' }
         }},
         { '$sort': { 'updatedAt': -1 } },

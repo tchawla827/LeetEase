@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext'\
 import { fetchRecentBuckets } from '../api'
+
 
 export default function Home() {
   const { user } = useAuth()
@@ -13,6 +14,7 @@ export default function Home() {
       .then(res => setRecent(res.data.data || []))
       .catch(() => setRecent([]))
   }, [])
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
