@@ -212,6 +212,12 @@ export default function Navbar({
           ) : (
             <div className="hidden md:flex md:items-center md:gap-2">
               <Link
+                to="/contact"
+                className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1.5 rounded-code border border-gray-700 transition-colors duration-150"
+              >
+                Contact
+              </Link>
+              <Link
                 to="/login"
                 className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1.5 rounded-code border border-gray-700 transition-colors duration-150"
               >
@@ -264,6 +270,13 @@ export default function Navbar({
             >
               Settings
             </Link>
+            <Link
+              to="/contact"
+              onClick={closeUserMenu}
+              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
+            >
+              Contact
+            </Link>
             <button
               onClick={() => {
                 logout()
@@ -301,6 +314,13 @@ export default function Navbar({
               onClick={toggleMenu}
             >
               Settings
+            </Link>
+            <Link
+              to="/contact"
+              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
+              onClick={toggleMenu}
+            >
+              Contact
             </Link>
             <div className="pt-2 border-t border-gray-800">
               <button
