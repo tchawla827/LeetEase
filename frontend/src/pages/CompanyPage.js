@@ -158,7 +158,8 @@ export default function CompanyPage() {
           flex items-center gap-2 mb-4
         "
       >
-        <span className="bg-gray-800 rounded-code px-3 py-1">
+        {/* <span className="bg-gray-800 rounded-code px-3 py-1"> */}
+        <span className="bg-gray-800/20 rounded-code px-3 py-1">
           {companyName}
         </span>
       </h1>
