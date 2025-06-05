@@ -16,6 +16,7 @@ from flask import (
     session, send_from_directory, current_app
 )
 from bson import ObjectId
+from werkzeug.exceptions import HTTPException
 
 # ─── New imports for CSV/Excel parsing ─────────────────────────────────
 import pandas as pd
@@ -58,6 +59,20 @@ COMPANIES = db.companies
 CQ        = db.company_questions
 USER_META = db.user_meta
 USERS     = db.users
+
+# ─── Error Handlers ───────────────────────────────────────────────────────
+@app.errorhandler(HTTPException)
+def handle_http_exception(e):
+    """Return JSON for HTTP errors."""
+    response = jsonify({'error': e.name, 'description': e.description})
+    return response, e.code
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Log stack trace and return generic 500 response."""
+    app.logger.exception("Unhandled exception")
+    return jsonify({'error': 'Internal Server Error'}), 500
 
 # ─── Helpers ──────────────────────────────────────────────────────────────
 def to_json(doc):
