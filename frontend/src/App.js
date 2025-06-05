@@ -11,6 +11,7 @@ import PrivateRoute      from './components/PrivateRoute'
 
 import Login             from './pages/Login'
 import Register          from './pages/Register'
+import Landing          from './pages/Landing'
 import AdminImport       from './pages/AdminImport'
 import CompanyPage       from './pages/CompanyPage'
 import Profile           from './pages/Profile'
@@ -53,6 +54,7 @@ function AppContent() {
 
         <main className="flex-1 overflow-auto p-4">
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/login"    element={<Login />} />
             <Route path="/register" element={<Register />} />
 
