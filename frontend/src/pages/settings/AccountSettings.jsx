@@ -19,9 +19,7 @@ export default function AccountSettings() {
     firstName: '',
     lastName: '',
     college: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    email: ''
   })
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(null)
   const [newPhotoFile, setNewPhotoFile] = useState(null)
@@ -36,9 +34,7 @@ export default function AccountSettings() {
           firstName: data.firstName || '',
           lastName: data.lastName || '',
           college: data.college || '',
-          email: data.email || '',
-          password: '',
-          confirmPassword: ''
+          email: data.email || ''
         })
         setProfilePhotoUrl(data.profilePhoto || null)
       } catch (err) {
@@ -73,16 +69,6 @@ export default function AccountSettings() {
       setError('Invalid email format.')
       return
     }
-    if (formData.password) {
-      if (formData.password.length < 8) {
-        setError('New password must be at least 8 characters.')
-        return
-      }
-      if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match.')
-        return
-      }
-    }
 
     const payload = {
       firstName: formData.firstName.trim(),
@@ -90,18 +76,10 @@ export default function AccountSettings() {
       college:   formData.college.trim() || null,
       email:     formData.email.trim().toLowerCase()
     }
-    if (formData.password) {
-      payload.newPassword = formData.password
-    }
 
     try {
       setLoading(true)
       await editAccountProfile(payload)
-      setFormData(prev => ({
-        ...prev,
-        password: '',
-        confirmPassword: ''
-      }))
       setError('')
     } catch (err) {
       console.error(err)
@@ -226,35 +204,12 @@ export default function AccountSettings() {
           />
         </div>
 
-        <div>
-          <label className="block text-code-sm text-gray-300 font-mono mb-1">
-            New Password
-          </label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Leave blank to keep existing"
-            className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
-          />
-        </div>
 
-        {formData.password && (
-          <div>
-            <label className="block text-code-sm text-gray-300 font-mono mb-1">
-              Confirm Password <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
-            />
-          </div>
-        )}
+        <p className="text-center text-code-sm text-gray-400 font-mono">
+          <Link to="/forgot-password" className="text-primary hover:underline">
+            Reset password via email
+          </Link>
+        </p>
 
         <button
           type="submit"
