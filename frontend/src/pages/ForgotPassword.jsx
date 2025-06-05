@@ -17,7 +17,6 @@ export default function ForgotPassword() {
       await requestReset(email)
       setSent(true)
     } catch (err) {
-      console.error(err)
       setError(err.response?.data?.description || 'Failed to send reset email.')
     } finally {
       setLoading(false)

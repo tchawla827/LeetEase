@@ -72,7 +72,6 @@ export default function Register() {
       // On success, backend has stored reg_data in session and emailed OTP
       setStep(2)
     } catch (err) {
-      console.error('Request OTP error:', err)
       const msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
@@ -100,7 +99,6 @@ export default function Register() {
       // On success, registration is complete; redirect to login
       navigate('/login')
     } catch (err) {
-      console.error('Verify OTP error:', err)
       const msg =
         err.response?.data?.message ||
         err.response?.data?.error ||

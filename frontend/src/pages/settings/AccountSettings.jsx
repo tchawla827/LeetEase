@@ -38,7 +38,6 @@ export default function AccountSettings() {
         })
         setProfilePhotoUrl(data.profilePhoto || null)
       } catch (err) {
-        console.error(err)
         setError(err.response?.data?.description || 'Failed to load account data.')
       } finally {
         setLoading(false)
@@ -82,7 +81,6 @@ export default function AccountSettings() {
       await editAccountProfile(payload)
       setError('')
     } catch (err) {
-      console.error(err)
       setError(err.response?.data?.description || 'Failed to update profile.')
     } finally {
       setLoading(false)
@@ -106,12 +104,11 @@ export default function AccountSettings() {
       const url = await changeProfilePhoto(form)
       setProfilePhotoUrl(url)
       setNewPhotoFile(null)
-    } catch (err) {
-      console.error(err)
+  } catch (err) {
       setError('Failed to upload photo.')
-    } finally {
+  } finally {
       setLoading(false)
-    }
+  }
   }
 
   const handleRemovePhoto = async () => {
@@ -120,12 +117,11 @@ export default function AccountSettings() {
     try {
       await removeProfilePhoto()
       setProfilePhotoUrl(null)
-    } catch (err) {
-      console.error(err)
+  } catch (err) {
       setError('Failed to remove photo.')
-    } finally {
+  } finally {
       setLoading(false)
-    }
+  }
   }
 
   if (loading) {

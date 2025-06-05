@@ -39,7 +39,6 @@ export default function ColorSettings() {
       })
       setMessage('Color settings saved!')
     } catch (err) {
-      console.error(err)
       setError('Failed to save color settings')
     } finally {
       setLoading(false)

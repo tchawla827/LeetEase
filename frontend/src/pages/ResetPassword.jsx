@@ -42,7 +42,6 @@ export default function ResetPassword() {
       setSuccess(true)
       setTimeout(() => navigate('/login'), 2000)
     } catch (err) {
-      console.error(err)
       setError(err.response?.data?.description || 'Failed to reset password.')
     } finally {
       setLoading(false)
