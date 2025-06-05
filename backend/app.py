@@ -112,11 +112,20 @@ GRAPHQL_HEADERS = {
 
 def _fetch_solved_slugs_via_list(session_cookie: str) -> set[str]:
     cookies = {"LEETCODE_SESSION": session_cookie}
-    resp = requests.get(PROB_API, headers=BROWSER_HEADERS, cookies=cookies, timeout=10)
+    try:
+        resp = requests.get(
+            PROB_API, headers=BROWSER_HEADERS, cookies=cookies, timeout=10
+        )
+    except requests.RequestException as e:
+        app.logger.error("Problems API request failed: %s", e)
+        abort(502, description="Unable to contact LeetCode")
+
     try:
         resp.raise_for_status()
     except requests.HTTPError as e:
-        app.logger.error("Problems API error %s: %s", resp.status_code, resp.text[:200])
+        app.logger.error(
+            "Problems API error %s: %s", resp.status_code, resp.text[:200]
+        )
         abort(502, description="Failed to fetch LeetCode problem list: " + str(e))
 
     data = resp.json().get("stat_status_pairs", [])
@@ -137,7 +146,14 @@ def fetch_leetcode_tags(slug: str) -> list[str]:
     }
     """
     payload = {"query": query, "variables": {"titleSlug": slug}}
-    resp = requests.post(GRAPHQL_API, headers=GRAPHQL_HEADERS, json=payload, timeout=10)
+    try:
+        resp = requests.post(
+            GRAPHQL_API, headers=GRAPHQL_HEADERS, json=payload, timeout=10
+        )
+    except requests.RequestException as e:
+        app.logger.error("Tag request failed for %s: %s", slug, e)
+        abort(502, description="Unable to contact LeetCode")
+
     try:
         resp.raise_for_status()
     except requests.HTTPError as e:
