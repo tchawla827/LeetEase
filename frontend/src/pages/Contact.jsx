@@ -10,7 +10,7 @@ const MailIcon = props => (
 
 export default function Contact() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-gray-200 font-mono px-card py-section">
+    <div className="min-h-full flex flex-col text-gray-200 font-mono px-card py-section">
       <div className="max-w-2xl mx-auto flex-1 space-y-6">
         <h1 className="text-3xl font-bold">Contact</h1>
         <p className="text-gray-400">Have more company wise questions? Feel free to reach out.</p>
