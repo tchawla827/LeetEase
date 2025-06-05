@@ -75,6 +75,7 @@ def allowed_file(filename):
 
 # ─── Route to serve profile photos ────────────────────────────────────────
 @app.route('/uploads/profile_photos/<filename>')
+@jwt_required()
 def serve_profile_photo(filename):
     """Serve a saved profile photo from the upload folder."""
     upload_folder = current_app.config.get('UPLOAD_FOLDER')
