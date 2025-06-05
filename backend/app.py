@@ -9,6 +9,7 @@ from io import BytesIO
 from datetime import timedelta, datetime
 
 import requests
+import re
 from dotenv import load_dotenv
 from flask import (
     Flask, jsonify, request, abort,
@@ -741,6 +742,10 @@ def list_questions(company, bucket):
     limit        = int(request.args.get('limit', 50))
     skip         = (page - 1) * limit
     search       = request.args.get('search')
+    if search:
+        if len(search) > 100:
+            abort(400, description='Search query too long')
+        search = re.escape(search)
     sortField    = request.args.get('sortField')
     sortOrder    = request.args.get('sortOrder', 'asc')
     tag_filter   = request.args.get('tag')
