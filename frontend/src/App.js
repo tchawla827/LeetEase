@@ -12,7 +12,10 @@ import PrivateRoute      from './components/PrivateRoute'
 import Login             from './pages/Login'
 import Register          from './pages/Register'
 import Landing          from './pages/Landing'
+
 import Home             from './pages/Home'
+
+
 import AdminImport       from './pages/AdminImport'
 import CompanyPage       from './pages/CompanyPage'
 import Profile           from './pages/Profile'
@@ -55,6 +58,7 @@ function AppContent() {
 
         <main className="flex-1 overflow-auto p-4">
           <Routes>
+
             <Route path="/" element={user ? <Home /> : <Landing />} />
             <Route
               path="/home"
@@ -64,6 +68,7 @@ function AppContent() {
                 </PrivateRoute>
               }
             />
+
             <Route path="/login"    element={<Login />} />
             <Route path="/register" element={<Register />} />
 
