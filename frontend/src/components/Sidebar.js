@@ -1,7 +1,7 @@
 // src/components/Sidebar.js
 
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useAuth } from '../context/AuthContext'
 
@@ -57,6 +57,16 @@ export default function Sidebar({ sidebarOpen }) {
     })
   }
 
+  // Ensure a company is expanded (fetching buckets if needed)
+  const openCompany = company => {
+    setExpandedCompanies(prev => {
+      if (!prev[company] && bucketsByCompany[company] === undefined) {
+        fetchBucketsForCompany(company)
+      }
+      return { ...prev, [company]: true }
+    })
+  }
+
   // ─── 3) Fetch “/api/companies/:company/buckets” and store result ─────────────
   const fetchBucketsForCompany = company => {
     api
@@ -91,6 +101,12 @@ export default function Sidebar({ sidebarOpen }) {
         rawBucketName
       )}`
     )
+  }
+
+  // Navigate to a company and expand its bucket list
+  const handleCompanyClick = company => {
+    openCompany(company)
+    navigate(`/company/${encodeURIComponent(company)}`)
   }
 
   // ─── 5) Filter companies by prefix for the “Search companies…” input ─────────
@@ -128,7 +144,7 @@ export default function Sidebar({ sidebarOpen }) {
                • On desktop, parent already has pt-16, so this is extra padding.
           */}
           <div className="pt-2 px-card">
-            <h2 className="font-mono text-code-base text-gray-100 mb-2">
+            <h2 className="font-mono text-lg md:text-xl text-gray-100 font-semibold mb-3">
               Companies
             </h2>
 
@@ -145,7 +161,7 @@ export default function Sidebar({ sidebarOpen }) {
               "
             />
 
-            <ul className="space-y-1">
+            <ul className="divide-y divide-gray-800">
               {filteredCompanies.map(company => {
                 const isActive = company === activeCompany
                 const isExpanded = Boolean(expandedCompanies[company])
@@ -153,39 +169,31 @@ export default function Sidebar({ sidebarOpen }) {
 
                 return (
                   <li key={company} className="flex flex-col">
-                    <div
+                    <button
+                      onClick={() => handleCompanyClick(company)}
                       className={`
-                        flex items-center justify-between rounded-md px-2 py-1
+                        group flex items-center justify-between w-full rounded-md px-2 py-2 text-left
                         transition-colors duration-150
                         ${
                           isActive
-                            ? 'bg-gray-800/50 border-l-4 border-primary'
-                            : 'hover:bg-gray-800/40'
+                            ? 'bg-gray-700 border-l-4 border-primary text-primary font-medium'
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                         }
                       `}
                     >
-                      <Link
-                        to={`/company/${encodeURIComponent(company)}`}
-                        className={`
-                          font-mono text-code-base
-                          ${
-                            isActive
-                              ? 'text-primary font-medium'
-                              : 'text-gray-300'
-                          }
-                          hover:text-primary transition-colors duration-150
-                        `}
-                      >
-                        {company}
-                      </Link>
-                      <button
-                        onClick={() => toggleCompany(company)}
-                        className="text-gray-400 hover:text-primary p-1 rounded transition-colors duration-150 hover:bg-gray-800/40"
+                      <span className="flex-1 font-mono text-code-base">{company}</span>
+                      <span
+                        role="button"
+                        onClick={e => {
+                          e.stopPropagation()
+                          toggleCompany(company)
+                        }}
+                        className="text-gray-400 group-hover:text-primary p-1 rounded transition-colors duration-150 hover:bg-gray-800/40"
                         aria-label={isExpanded ? 'Collapse' : 'Expand'}
                       >
                         {isExpanded ? '−' : '+'}
-                      </button>
-                    </div>
+                      </span>
+                    </button>
 
                     {isExpanded && (
                       <ul className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-2">
