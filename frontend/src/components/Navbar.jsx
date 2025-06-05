@@ -119,8 +119,9 @@ export default function Navbar({
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-800 shadow-elevation">
       <div className="relative flex items-center h-16 px-card">
         {/* ─── Left: Sidebar Toggle Button ───────────────────────────────────────── */}
-        <div className="flex items-center">
-          <button
+        {user && (
+          <div className="flex items-center">
+            <button
             onClick={handleSidebarToggle}
             className="text-gray-400 hover:text-gray-100 focus:outline-none mr-4"
             aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
@@ -158,6 +159,7 @@ export default function Navbar({
             )}
           </button>
         </div>
+        )}
 
         {/* ─── Center: Logo ───────────────────────────────────────────────────────────── */}
         <div className="absolute left-1/2 top-0 transform -translate-x-1/2 h-16 flex items-center pointer-events-none">
