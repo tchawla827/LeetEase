@@ -17,6 +17,7 @@ import Home              from './pages/Home';
 import AdminImport       from './pages/AdminImport';
 import CompanyPage       from './pages/CompanyPage';
 import Profile           from './pages/Profile';
+import Contact           from './pages/Contact';
 
 // Settings-related imports
 import Settings          from './pages/Settings';
@@ -66,8 +67,9 @@ function AppContent() {
               }
             />
 
-            <Route path="/login"    element={<Login />} />
-            <Route path="/register" element={<Register />} />
+              <Route path="/login"    element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/contact"  element={<Contact />} />
 
             <Route
               path="/import"
