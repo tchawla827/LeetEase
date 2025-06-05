@@ -679,9 +679,7 @@ def get_company_topics(company):
     unsolved = request.args.get('unsolved', 'false').lower() == 'true'
     uid      = get_jwt_identity()
 
-    match = {'company_id': co['_id']}
-    if bucket != 'All':
-        match['bucket'] = bucket
+    match = {'company_id': co['_id'], 'bucket': bucket}
 
     pipeline = [
         {'$match': match},
@@ -746,9 +744,7 @@ def list_questions(company, bucket):
     tag_filter   = request.args.get('tag')
     showUnsolved = request.args.get('showUnsolved', 'false').lower() == 'true'
 
-    match = {'company_id': co['_id']}
-    if bucket != 'All':
-        match['bucket'] = bucket
+    match = {'company_id': co['_id'], 'bucket': bucket}
 
     pipeline = [
         {'$match': match},
@@ -798,12 +794,10 @@ def list_questions(company, bucket):
         q = doc['q']
         meta_query = {
             'user_id': uid,
-            'question_id': str(q['_id'])
+            'question_id': str(q['_id']),
+            'company_id': co['_id'],
+            'bucket': bucket
         }
-        if bucket != 'All':
-            meta_query.update({'company_id': co['_id'], 'bucket': bucket})
-        else:
-            meta_query.update({'company_id': co['_id']})
         meta = USER_META.find_one(meta_query)
         if not meta:
             meta = USER_META.find_one({'user_id': uid, 'question_id': str(q['_id'])})
