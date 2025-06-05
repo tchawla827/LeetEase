@@ -70,7 +70,11 @@ export default function Landing() {
             <img src={logo} alt="LeetEase logo" className="h-6 w-6" />
             <span>Leet<span className="text-primary">Ease</span></span>
           </div>
-          <div>&copy; 2023 LeetEase. Open source on <a href="https://github.com/leetease" className="text-primary hover:underline">GitHub</a>.</div>
+          <div>
+            &copy; 2023 LeetEase. Open source on
+            <a href="https://github.com/leetease" className="text-primary hover:underline ml-1">GitHub</a>.
+            <Link to="/contact" className="text-primary hover:underline ml-2">Contact</Link>
+          </div>
         </div>
       </footer>
     </div>
