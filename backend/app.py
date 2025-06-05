@@ -682,11 +682,21 @@ def get_company_topics(company):
     uid      = get_jwt_identity()
 
     match = {'company_id': co['_id']}
+    # When "All" bucket is requested, restrict to the actual "All" bucket
+    # document instead of every bucket to avoid duplicates.
+    # The CSV/Excel dataset already contains a pre-made "All" bucket with
+    # unique questions, so querying all buckets would return duplicates.
     if bucket != 'All':
         match['bucket'] = bucket
+    else:
+        match['bucket'] = 'All'
 
     pipeline = [
         {'$match': match},
+        # Deduplicate questions in case multiple company_question documents
+        # exist for the same question ID and bucket.
+        {'$group': {'_id': '$question_id'}},
+        {'$set': {'question_id': '$_id'}},
         {'$lookup': {
             'from': 'questions',
             'localField': 'question_id',
@@ -753,11 +763,22 @@ def list_questions(company, bucket):
     showUnsolved = request.args.get('showUnsolved', 'false').lower() == 'true'
 
     match = {'company_id': co['_id']}
+    # Show the dedicated "All" bucket instead of combining all buckets to
+    # avoid duplicates when viewing "All" questions for a company.
     if bucket != 'All':
         match['bucket'] = bucket
+    else:
+        match['bucket'] = 'All'
 
     pipeline = [
         {'$match': match},
+        # Group by question to avoid duplicates if multiple rows exist
+        {'$group': {
+            '_id': '$question_id',
+            'frequency': {'$max': '$frequency'},
+            'acceptanceRate': {'$max': '$acceptanceRate'}
+        }},
+        {'$set': {'question_id': '$_id'}},
         {'$lookup': {
             'from': 'questions',
             'localField': 'question_id',
