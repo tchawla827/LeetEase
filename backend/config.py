@@ -37,7 +37,8 @@ JWT_ACCESS_TOKEN_EXPIRES = timedelta(
 )
 # Store tokens in headers and cookies
 JWT_TOKEN_LOCATION = ["headers", "cookies"]
-JWT_COOKIE_SECURE = False       # Set to True in production (HTTPS)
+# Cookie is sent only over HTTPS by default. Override with JWT_COOKIE_SECURE=False for local testing.
+JWT_COOKIE_SECURE = os.getenv("JWT_COOKIE_SECURE", "True").lower() in ("true", "1", "yes")
 JWT_COOKIE_CSRF_PROTECT = True
 
 # ————————————————
