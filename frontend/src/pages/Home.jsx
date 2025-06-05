@@ -30,6 +30,7 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-surface rounded-card p-card">
           <h3 className="text-lg font-medium mb-2">Recent Buckets</h3>
+
             {recent.length === 0 ? (
               <p className="text-sm text-gray-400">No recent activity.</p>
             ) : (
@@ -47,6 +48,7 @@ export default function Home() {
                 ))}
               </ul>
             )}
+
         </div>
 
         <div className="bg-surface rounded-card p-card">
