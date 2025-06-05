@@ -14,7 +14,7 @@ const BUCKET_LABELS = {
   'All':              'All',
 }
 
-export default function Sidebar() {
+export default function Sidebar({ sidebarOpen }) {
   const { user } = useAuth()
   const [filter, setFilter] = useState('')
   const [companies, setCompanies] = useState([])
@@ -104,7 +104,7 @@ export default function Sidebar() {
     <>
       {user && (
         <aside
-          className="
+          className={`
             /* ───────────────────────────────────────────────────────── */
             /* On mobile (< md): fixed sidebar under Navbar */
             fixed top-16 left-0 bottom-0 z-50
@@ -113,11 +113,14 @@ export default function Sidebar() {
             md:relative md:top-0 md:block
 
             /* Basic styling */
-            w-64 bg-gradient-to-b from-surface via-gray-900 to-surface
+            bg-gradient-to-b from-surface via-gray-900 to-surface
             border-r border-gray-800 shadow-elevation
             overflow-y-auto sidebar-scroll
+
+            transform transition-all duration-300
+            ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'}
             /* ───────────────────────────────────────────────────────── */
-          "
+          `}
         >
           {/*
             ── “pt-2 px-card” ensures:

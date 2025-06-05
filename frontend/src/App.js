@@ -53,7 +53,7 @@ function AppContent() {
         {onSettingsRoute ? (
           <SettingsSidebar />
         ) : (
-          sidebarOpen && <Sidebar sidebarOpen={sidebarOpen} />
+          <Sidebar sidebarOpen={sidebarOpen} />
         )}
 
         <main className="flex-1 overflow-auto p-4">
