@@ -16,6 +16,7 @@ from flask import (
     session, send_from_directory, current_app
 )
 from bson import ObjectId
+from bson.errors import InvalidId
 from werkzeug.exceptions import HTTPException
 
 # ─── New imports for CSV/Excel parsing ─────────────────────────────────
@@ -33,6 +34,7 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
     decode_token,
 )
+from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_mail import Message
 
 load_dotenv()
@@ -340,7 +342,7 @@ def reset_password():
     try:
         decoded = decode_token(data.get('token'))
         uid = decoded['sub']
-    except:
+    except JWTExtendedException:
         abort(400, description='Invalid or expired token')
 
     new_password = data.get('newPassword')
@@ -889,7 +891,7 @@ def update_question_meta(question_id):
 
     try:
         q_oid = ObjectId(question_id)
-    except:
+    except InvalidId:
         abort(400, description=f"Invalid question ID '{question_id}'")
 
     if not QUEST.find_one({'_id': q_oid}):
