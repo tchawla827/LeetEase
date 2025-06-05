@@ -282,10 +282,22 @@ def forgot_password():
         identity=str(user['_id']),
         expires_delta=timedelta(minutes=15)
     )
-    msg = Message('Password Reset Token', recipients=[user['email']])
-    msg.body = f"Your reset token: {reset_token}\nExpires in 15 minutes."
+    msg = Message('Password Reset', recipients=[user['email']])
+    if config.FRONTEND_URL:
+        link = f"{config.FRONTEND_URL.rstrip('/')}/reset-password?token={reset_token}"
+        body = (
+            "Click the link below to reset your password:\n"
+            f"{link}\n"
+            "This link expires in 15 minutes."
+        )
+    else:
+        body = (
+            f"Your reset token: {reset_token}\n"
+            "Use it to reset your password. Token expires in 15 minutes."
+        )
+    msg.body = body
     mail.send(msg)
-    return jsonify({'msg': 'Password reset token sent via email'}), 200
+    return jsonify({'msg': 'Password reset email sent'}), 200
 
 @app.route('/auth/reset-password', methods=['POST'])
 def reset_password():
