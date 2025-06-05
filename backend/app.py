@@ -782,10 +782,17 @@ def list_questions(company, bucket):
     out = []
     for doc in results:
         q = doc['q']
-        meta = USER_META.find_one({
+        meta_query = {
             'user_id': uid,
             'question_id': str(q['_id'])
-        })
+        }
+        if bucket != 'All':
+            meta_query.update({'company_id': co['_id'], 'bucket': bucket})
+        else:
+            meta_query.update({'company_id': co['_id']})
+        meta = USER_META.find_one(meta_query)
+        if not meta:
+            meta = USER_META.find_one({'user_id': uid, 'question_id': str(q['_id'])})
         solved = meta.get('solved', False) if meta else False
         if showUnsolved and solved:
             continue
@@ -819,6 +826,15 @@ def update_question_meta(question_id):
     data = request.get_json() or {}
     update_fields = {}
 
+    company_name = data.get('company')
+    bucket       = data.get('bucket')
+    company_id   = None
+    if company_name and bucket:
+        co = COMPANIES.find_one({'name': company_name})
+        if not co:
+            abort(404, description=f"No company '{company_name}'")
+        company_id = co['_id']
+
     if 'solved' in data:
         update_fields['solved'] = bool(data['solved'])
     if 'userDifficulty' in data:
@@ -829,13 +845,18 @@ def update_question_meta(question_id):
 
     update_fields['updatedAt'] = datetime.utcnow()
 
+
+    query = {'user_id': uid, 'question_id': question_id}
+    if company_id:
+        query.update({'company_id': company_id, 'bucket': bucket})
+
     USER_META.update_one(
-        {'user_id': uid, 'question_id': question_id},
-        {'$set': update_fields},
-        upsert=True
+        query,
+        {'$set': update_fields | ({'company_id': company_id, 'bucket': bucket} if company_id else {})},
+        upsert=True,
     )
 
-    meta = USER_META.find_one({'user_id': uid, 'question_id': question_id})
+    meta = USER_META.find_one(query)
     resp = {
         'question_id':    question_id,
         'solved':         meta.get('solved', False),
@@ -862,14 +883,28 @@ def batch_update_questions_meta():
 
     update_fields['updatedAt'] = datetime.utcnow()
 
+    company_name = data.get('company')
+    bucket       = data.get('bucket')
+    company_id   = None
+    if company_name and bucket:
+        co = COMPANIES.find_one({'name': company_name})
+        if not co:
+            abort(404, description=f"No company '{company_name}'")
+        company_id = co['_id']
+
+
     results = []
     for qid in ids:
+        query = {'user_id': uid, 'question_id': qid}
+        if company_id:
+            query.update({'company_id': company_id, 'bucket': bucket})
+
         USER_META.update_one(
-            {'user_id': uid, 'question_id': qid},
-            {'$set': update_fields},
-            upsert=True
+            query,
+            {'$set': update_fields | ({'company_id': company_id, 'bucket': bucket} if company_id else {})},
+            upsert=True,
         )
-        meta = USER_META.find_one({'user_id': uid, 'question_id': qid})
+        meta = USER_META.find_one(query)
         results.append({
             'question_id':    qid,
             'solved':         meta.get('solved', False),
@@ -970,24 +1005,26 @@ def recent_buckets():
     limit = int(request.args.get('limit', 4))
 
     pipeline = [
-        { '$match': { 'user_id': uid, 'updatedAt': { '$exists': True } } },
+
+        { '$match': {
+            'user_id': uid,
+            'company_id': { '$exists': True },
+            'bucket': { '$exists': True },
+            'updatedAt': { '$exists': True }
+        }},
         { '$sort': { 'updatedAt': -1 } },
         { '$lookup': {
-            'from': 'company_questions',
-            'let': { 'qid': { '$toObjectId': '$question_id' } },
-            'pipeline': [ { '$match': { '$expr': { '$eq': [ '$question_id', '$$qid' ] } } }, { '$limit': 1 } ],
-            'as': 'cq'
-        }},
-        { '$unwind': '$cq' },
-        { '$lookup': {
             'from': 'companies',
-            'localField': 'cq.company_id',
+            'localField': 'company_id',
+
             'foreignField': '_id',
             'as': 'co'
         }},
         { '$unwind': '$co' },
         { '$group': {
-            '_id': { 'company': '$co.name', 'bucket': '$cq.bucket' },
+
+            '_id': { 'company': '$co.name', 'bucket': '$bucket' },
+
             'updatedAt': { '$first': '$updatedAt' }
         }},
         { '$sort': { 'updatedAt': -1 } },
