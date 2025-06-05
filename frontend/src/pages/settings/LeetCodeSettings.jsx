@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
+import { extractErrorMessage } from '../../utils/error'
 
 export default function LeetCodeSettings() {
   const { user, syncBackground } = useAuth()
@@ -35,7 +36,7 @@ export default function LeetCodeSettings() {
       })
       setMessage('LeetCode profile saved')
     } catch (err) {
-      setError(err.response?.data?.description || 'Save failed')
+      setError(extractErrorMessage(err) || 'Save failed')
     }
   }
 
@@ -47,7 +48,7 @@ export default function LeetCodeSettings() {
       setMessage(`Synced ${count} questions`)
       window.dispatchEvent(new Event('leetSync'))
     } catch (err) {
-      setError(err.response?.data?.description || 'Sync failed')
+      setError(extractErrorMessage(err) || 'Sync failed')
     }
   }
 

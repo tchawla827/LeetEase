@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { extractErrorMessage } from '../utils/error'
 
 export default function ResetPassword() {
   const { finalizeReset } = useAuth()
@@ -42,7 +43,7 @@ export default function ResetPassword() {
       setSuccess(true)
       setTimeout(() => navigate('/login'), 2000)
     } catch (err) {
-      setError(err.response?.data?.description || 'Failed to reset password.')
+      setError(extractErrorMessage(err) || 'Failed to reset password.')
     } finally {
       setLoading(false)
     }

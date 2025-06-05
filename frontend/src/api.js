@@ -2,6 +2,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { emitGlobalError } from './context/ErrorToastContext';
+import { extractErrorMessage } from './utils/error';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '',
@@ -32,11 +33,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    const msg =
-      error.response?.data?.description ||
-      error.response?.data?.error ||
-      error.message ||
-      'Network Error';
+    const msg = extractErrorMessage(error);
     emitGlobalError(msg);
     return Promise.reject(error);
   }
