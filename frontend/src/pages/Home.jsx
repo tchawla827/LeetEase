@@ -38,7 +38,7 @@ export default function Home() {
                 <Link
                   key={`${r.company}-${r.bucket}`}
                   to={`/company/${encodeURIComponent(r.company)}?bucket=${encodeURIComponent(r.bucket)}`}
-                  className="block w-full text-left bg-primary hover:bg-primary/90 text-white py-2 px-3 rounded-code text-sm"
+                  className="block w-full text-left bg-[#1545a6] hover:bg-primary focus:outline-none focus:ring-1 focus:ring-primary/50 text-white py-2 px-3 rounded-code text-sm transition-colors duration-150 hover:shadow-elevation"
                 >
                   {r.company} – {r.bucket}
                 </Link>
