@@ -20,7 +20,7 @@ export default function Landing() {
     return () => observer.disconnect()
   }, [])
   return (
-    <div className="min-h-screen flex flex-col bg-background text-gray-200 font-mono">
+    <div className="min-h-full flex flex-col text-gray-200 font-mono">
 
       {/* Hero */}
       <section className="hero-gradient flex flex-col items-center justify-center text-center py-section px-card flex-grow reveal opacity-0 translate-y-4">
@@ -38,7 +38,7 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="bg-background py-section px-card reveal opacity-0 translate-y-4">
+      <section className="py-section px-card reveal opacity-0 translate-y-4">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-3xl font-bold mb-6">Your Complete Interview Preparation Companion</h2>
@@ -64,7 +64,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-background border-t border-gray-800 py-8 px-card">
+      <footer className="border-t border-gray-800 py-8 px-card">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-gray-400">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
             <img src={logo} alt="LeetEase logo" className="h-6 w-6" />
