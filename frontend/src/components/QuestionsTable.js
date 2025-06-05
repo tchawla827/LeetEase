@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import Spinner from './Spinner';
 
 const PAGE_SIZE = 50;
 
@@ -295,9 +296,9 @@ export default function QuestionsTable({
               <tr>
                 <td
                   colSpan={Object.keys(SORT_FIELDS).length + 3}
-                  className="px-4 py-4 text-center italic text-gray-400"
+                  className="px-4 py-4 text-center"
                 >
-                  Loading…
+                  <Spinner size={20} className="mx-auto" />
                 </td>
               </tr>
             ) : questions.length ? (

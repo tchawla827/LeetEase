@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useAuth } from '../context/AuthContext'
+import Spinner from './Spinner'
 
 // Map raw bucket keys (from the API) to human-friendly labels
 const BUCKET_LABELS = {
@@ -198,8 +199,8 @@ export default function Sidebar({ sidebarOpen }) {
                     {isExpanded && (
                       <ul className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-2">
                         {buckets === undefined ? (
-                          <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
-                            Loading…
+                          <li className="px-2 py-1 flex justify-center">
+                            <Spinner size={16} />
                           </li>
                         ) : buckets.length > 0 ? (
                           buckets.map(rawBucketName => {
