@@ -10,7 +10,9 @@ load_dotenv()  # loads variables from your .env
 # ————————————————
 # Flask Core
 # ————————————————
-SECRET_KEY = os.getenv("SECRET_KEY", "change-me-to-a-random-secret")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY not set in environment")
 
 # ————————————————
 # MongoDB
@@ -26,7 +28,9 @@ def get_db():
 # ————————————————
 # Flask-JWT-Extended
 # ————————————————
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "also-change-me")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    raise RuntimeError("JWT_SECRET_KEY not set in environment")
 # How long access tokens last
 JWT_ACCESS_TOKEN_EXPIRES = timedelta(
     seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", 3600))
