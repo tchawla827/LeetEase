@@ -64,3 +64,8 @@ body {
   width: 1em;
   margin-left: -1em;
 }
+
+/* Scroll reveal animations */
+.reveal { opacity: 0; transform: translateY(1rem); transition: opacity 0.5s ease, transform 0.5s ease; }
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+

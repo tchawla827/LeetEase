@@ -233,7 +233,7 @@ export default function Navbar({
         ReactDOM.createPortal(
           <div
             ref={portalRef}
-            className={`bg-surface border border-gray-700 rounded-code shadow-lg z-50 transform transition-all duration-300 ${
+            className={`bg-surface border border-gray-700 rounded-code shadow-lg z-50 transform transition-all duration-300 ease-out ${
               isUserMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
             style={{

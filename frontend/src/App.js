@@ -150,15 +150,15 @@ function SyncToast() {
     return () => clearTimeout(timerId)
   }, [syncResult])
 
-  if (!visible) return null
-
   const text = syncing
     ? 'Syncing solved questions…'
     : `Synced ${syncResult} questions`
 
   return (
     <div
-      className="fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-code p-2 pl-3 shadow-elevation-md flex items-center z-50 text-gray-100"
+      className={`fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-code p-2 pl-3 shadow-elevation-md flex items-center z-50 text-gray-100 transform transition-all duration-300 ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+      }`}
     >
       {syncing && (
         <div

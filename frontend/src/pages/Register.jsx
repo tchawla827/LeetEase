@@ -157,10 +157,12 @@ export default function Register() {
           </div>
         )}
 
-        {/* Step 1: Registration Form */}
-        {step === 1 && (
-          <form onSubmit={handleSubmitForm} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        <div className="relative">
+          <div
+            className={`transition-opacity duration-300 ${step === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none absolute inset-0'}`}
+          >
+            <form onSubmit={handleSubmitForm} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-code-sm text-gray-300 font-mono mb-1">
                   First Name <span className="text-red-500">*</span>
@@ -272,13 +274,13 @@ export default function Register() {
             >
               Request OTP
             </button>
-          </form>
-        )}
-
-        {/* Step 2: OTP Verification */}
-        {step === 2 && (
-          <form onSubmit={handleSubmitOtp} className="space-y-4">
-            <div>
+            </form>
+          </div>
+          <div
+            className={`transition-opacity duration-300 ${step === 2 ? 'opacity-100' : 'opacity-0 pointer-events-none absolute inset-0'}`}
+          >
+            <form onSubmit={handleSubmitOtp} className="space-y-4">
+              <div>
               <p className="text-code-sm text-gray-300 font-mono mb-4">
                 A 6-digit code was sent to{' '}
                 <span className="text-primary">{formData.email}</span>. Enter it below:
@@ -314,8 +316,9 @@ export default function Register() {
             >
               Back
             </button>
-          </form>
-        )}
+            </form>
+          </div>
+        </div>
 
         {/* Footer Links */}
         <div className="mt-6 text-center">
