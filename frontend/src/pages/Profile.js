@@ -1,11 +1,14 @@
 // src/pages/Profile.js
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
+import { extractErrorMessage } from '../utils/error'
 
 export default function Profile() {
-  const { user } = useAuth()
+  const { user, syncBackground } = useAuth()
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   if (!user) {
     return (
@@ -25,6 +28,18 @@ export default function Profile() {
   } = user
 
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`
+
+  const handleSync = async () => {
+    setMessage('')
+    setError('')
+    try {
+      const count = await syncBackground()
+      setMessage(`Synced ${count} questions`)
+      window.dispatchEvent(new Event('leetSync'))
+    } catch (err) {
+      setError(extractErrorMessage(err) || 'Sync failed')
+    }
+  }
 
   return (
     <div className="font-mono text-code-base text-gray-300 max-w-3xl mx-auto p-card space-y-6">
@@ -49,13 +64,32 @@ export default function Profile() {
             <p className="text-code-sm text-gray-400">{email}</p>
           </div>
         </div>
-        <Link
-          to="/settings/account"
-          className="bg-primary hover:bg-primary/90 text-white font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
-        >
-          Edit Profile
-        </Link>
+        <div className="flex gap-code">
+          <Link
+            to="/settings/account"
+            className="bg-primary hover:bg-primary/90 text-white font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
+          >
+            Edit Profile
+          </Link>
+          <button
+            onClick={handleSync}
+            className="border border-primary text-primary hover:bg-primary/10 font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
+          >
+            Sync Questions
+          </button>
+        </div>
       </div>
+
+      {message && (
+        <div className="bg-green-900/50 border border-green-800 rounded-code p-card text-code-base text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-900/50 border border-red-800 rounded-code p-card text-code-base text-red-400">
+          {error}
+        </div>
+      )}
 
       {/* User Info Card */}
       <div className="bg-surface border border-gray-800 rounded-card shadow-elevation p-card">
