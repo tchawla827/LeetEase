@@ -1140,7 +1140,8 @@ def user_stats():
     cached = STATS_CACHE.get(uid)
     now = datetime.utcnow()
     if cached and (now - cached['ts']).total_seconds() < STATS_TTL_SECONDS:
-        return jsonify(cached['data']), 200
+        if 'totalQuestions' in cached['data']:
+            return jsonify(cached['data']), 200
 
     total_attempted = USER_META.count_documents({'user_id': uid})
     total_solved = USER_META.count_documents({'user_id': uid, 'solved': True})
