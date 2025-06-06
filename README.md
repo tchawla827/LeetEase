@@ -33,9 +33,10 @@ python backend/app.py
 ```
 
 For a production deployment you may wish to run the app using a WSGI server such as Gunicorn.
-=======
 
-This repository contains a Flask backend and React frontend.
+This repository contains a Flask backend and React frontend. The backend uses only
+Python dependencies, so `backend/package.json` and `backend/package-lock.json`
+have been removed.
 
 ## Deployment Notes
 
