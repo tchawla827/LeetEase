@@ -6,6 +6,7 @@ import csv
 import threading
 import time
 import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from datetime import timedelta, datetime
 
@@ -680,11 +681,24 @@ def backfill_tags():
         abort(403, description='Only admin can run backfill')
 
     cursor = QUEST.find({}, {'link': 1})
-    for q in cursor:
-        slug = q['link'].rstrip('/').split('/')[-1]
-        tags = fetch_leetcode_tags(slug)
-        QUEST.update_one({'_id': q['_id']}, {'$set': {'tags': tags}})
-        time.sleep(0.2)
+    slugs = [
+        (q['_id'], q['link'].rstrip('/').split('/')[-1])
+        for q in cursor
+    ]
+
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        future_to_id = {
+            pool.submit(fetch_leetcode_tags, slug): qid
+            for qid, slug in slugs
+        }
+        for fut in concurrent.futures.as_completed(future_to_id):
+            qid = future_to_id[fut]
+            try:
+                tags = fut.result()
+            except Exception as e:
+                app.logger.warning('Failed to backfill tags for %s: %s', qid, e)
+                tags = []
+            QUEST.update_one({'_id': qid}, {'$set': {'tags': tags}})
 
     return jsonify({'msg': 'Backfill complete'}), 200
 
