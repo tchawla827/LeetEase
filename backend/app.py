@@ -1212,9 +1212,12 @@ def user_stats():
     ]
     company_stats = list(CQ.aggregate(company_pipeline))
 
+    total_questions = sum(c['total'] for c in company_stats)
+
     data = {
         'totalSolved': total_solved,
         'totalAttempted': total_attempted,
+        'totalQuestions': total_questions,
         'difficulty': diff_counts,
         'companies': company_stats
     }
