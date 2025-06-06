@@ -115,4 +115,8 @@ export function fetchRecentBuckets(limit = 4) {
   return api.get(`/api/recent-buckets?limit=${limit}`);
 }
 
+export function fetchUserStats() {
+  return api.get('/api/user-stats');
+}
+
 export default api;
