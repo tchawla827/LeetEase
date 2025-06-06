@@ -64,6 +64,10 @@ CQ        = db.company_questions
 USER_META = db.user_meta
 USERS     = db.users
 
+# Cache for per-user statistics (simple in-memory)
+STATS_CACHE = {}
+STATS_TTL_SECONDS = 60
+
 # ─── Error Handlers ───────────────────────────────────────────────────────
 @app.errorhandler(HTTPException)
 def handle_http_exception(e):
@@ -1130,6 +1134,95 @@ def recent_buckets():
     results = list(USER_META.aggregate(pipeline))
     return jsonify({'data': results}), 200
 
+# ─── Aggregate user statistics for Home page ─────────────────────────────
+@app.route('/api/user-stats', methods=['GET'])
+@jwt_required()
+def user_stats():
+    """Return solved/attempted counts and per-company breakdown."""
+    uid = get_jwt_identity()
+
+    cached = STATS_CACHE.get(uid)
+    now = datetime.utcnow()
+    if cached and (now - cached['ts']).total_seconds() < STATS_TTL_SECONDS:
+        return jsonify(cached['data']), 200
+
+    total_attempted = USER_META.count_documents({'user_id': uid})
+    total_solved = USER_META.count_documents({'user_id': uid, 'solved': True})
+
+    diff_pipeline = [
+        {'$match': {'user_id': uid, 'solved': True}},
+        {
+            '$lookup': {
+                'from': 'questions',
+                'let': {'qid': '$question_id'},
+                'pipeline': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$eq': ['$_id', {'$toObjectId': '$$qid'}]
+                            }
+                        }
+                    },
+                    {'$project': {'leetDifficulty': 1}}
+                ],
+                'as': 'q'
+            }
+        },
+        {'$unwind': '$q'},
+        {'$group': {'_id': '$q.leetDifficulty', 'count': {'$sum': 1}}}
+    ]
+    raw_counts = {d['_id']: d['count'] for d in USER_META.aggregate(diff_pipeline)}
+    diff_counts = {'Easy': 0, 'Medium': 0, 'Hard': 0}
+    for k, v in raw_counts.items():
+        key = str(k).strip().capitalize()
+        if key in diff_counts:
+            diff_counts[key] += v
+
+    company_pipeline = [
+        {'$match': {'bucket': 'All'}},
+        {'$lookup': {
+            'from': 'user_meta',
+            'let': {'qid': '$question_id'},
+            'pipeline': [
+                {'$match': {
+                    '$expr': {
+                        '$and': [
+                            {'$eq': ['$question_id', {'$toString': '$$qid'}]},
+                            {'$eq': ['$user_id', uid]},
+                            {'$eq': ['$solved', True]}
+                        ]
+                    }
+                }},
+                {'$project': {'_id': 0}}
+            ],
+            'as': 'meta'
+        }},
+        {'$lookup': {
+            'from': 'companies',
+            'localField': 'company_id',
+            'foreignField': '_id',
+            'as': 'co'
+        }},
+        {'$unwind': '$co'},
+        {'$group': {
+            '_id': '$co.name',
+            'total': {'$sum': 1},
+            'solved': {'$sum': {'$cond': [{'$gt': [{'$size': '$meta'}, 0]}, 1, 0]}}
+        }},
+        {'$project': {'company': '$_id', 'total': 1, 'solved': 1, '_id': 0}},
+        {'$sort': {'company': 1}}
+    ]
+    company_stats = list(CQ.aggregate(company_pipeline))
+
+    data = {
+        'totalSolved': total_solved,
+        'totalAttempted': total_attempted,
+        'difficulty': diff_counts,
+        'companies': company_stats
+    }
+    STATS_CACHE[uid] = {'ts': now, 'data': data}
+    return jsonify(data), 200
+
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
     """Sync every user who has both handle & session saved."""
@@ -1157,6 +1250,30 @@ def _startup_sync():
                 fut.result()
             except Exception as e:
                 app.logger.warning("Startup sync failed for %s: %s", uid, e)
+
+# ─── Serve React Frontend ────────────────────────────────────────────────
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path: str):
+    """Serve the React single-page application."""
+    if path.startswith('api/') or path.startswith('uploads/'):
+        abort(404)
+
+    build_dir = os.path.join(os.getcwd(), 'frontend', 'build')
+    public_dir = os.path.join(os.getcwd(), 'frontend', 'public')
+
+    target = os.path.join(build_dir, path)
+    if os.path.exists(target) and os.path.isfile(target):
+        return send_from_directory(build_dir, path)
+
+    index_build = os.path.join(build_dir, 'index.html')
+    if os.path.exists(index_build):
+        return send_from_directory(build_dir, 'index.html')
+
+    target_public = os.path.join(public_dir, path)
+    if os.path.exists(target_public) and os.path.isfile(target_public):
+        return send_from_directory(public_dir, path)
+    return send_from_directory(public_dir, 'index.html')
 
 if __name__ == '__main__':
     # If you want to perform a one-time sync on startup, uncomment below:
