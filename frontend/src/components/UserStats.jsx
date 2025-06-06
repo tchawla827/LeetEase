@@ -25,9 +25,9 @@ export default function UserStats() {
     )
   }
 
-  const { totalSolved, totalAttempted, difficulty } = stats
+  const { totalSolved, totalQuestions, difficulty } = stats
 
-  const pct = totalAttempted > 0 ? Math.round((totalSolved / totalAttempted) * 100) : 0
+  const pct = totalQuestions > 0 ? Math.round((totalSolved / totalQuestions) * 100) : 0
   const diffColors = { Easy: '#8BC34A', Medium: '#FFB74D', Hard: '#E57373' }
 
   return (
@@ -36,7 +36,7 @@ export default function UserStats() {
         <div className="relative">
           <CircularProgress size={100} progress={pct} color="#38bdf8" />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl font-medium">{totalSolved}</span>
+            <span className="text-xl font-medium">{totalSolved}/{totalQuestions}</span>
             <span className="text-gray-400 text-sm">Solved</span>
           </div>
         </div>
