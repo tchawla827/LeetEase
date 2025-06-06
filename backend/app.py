@@ -385,12 +385,41 @@ def manual_leetcode_sync():
     if not user or not user.get('leetcode_username') or not user.get('leetcode_session'):
         abort(400, description='Username & sessionCookie must be set first')
 
-    synced = sync_leetcode(
-        user['leetcode_username'],
-        user['leetcode_session'],
-        str(uid)
-    )
-    return jsonify({'synced': synced}), 200
+    def _bg_sync(u, s, user_id):
+        try:
+            USERS.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$set': {
+                    'leetcode_sync_status': 'running',
+                    'leetcode_sync_updated': datetime.utcnow()
+                }}
+            )
+            synced = sync_leetcode(u, s, str(user_id))
+            USERS.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$set': {
+                    'leetcode_sync_status': 'done',
+                    'leetcode_sync_result': synced,
+                    'leetcode_sync_updated': datetime.utcnow()
+                }}
+            )
+        except Exception as e:
+            app.logger.warning("Manual sync failed for %s: %s", user_id, e)
+            USERS.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$set': {
+                    'leetcode_sync_status': 'error',
+                    'leetcode_sync_updated': datetime.utcnow()
+                }}
+            )
+
+    threading.Thread(
+        target=_bg_sync,
+        args=(user['leetcode_username'], user['leetcode_session'], uid),
+        daemon=True
+    ).start()
+
+    return jsonify({'msg': 'Sync started'}), 200
 
 # ─── Update per‐user color settings ────────────────────────────────────────
 @app.route('/profile/settings', methods=['PATCH'])
