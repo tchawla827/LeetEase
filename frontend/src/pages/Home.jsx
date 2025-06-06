@@ -6,6 +6,7 @@ import UserStats from '../components/UserStats'
 import CompanyStats from '../components/CompanyStats'
 
 
+
 export default function Home() {
   const { user } = useAuth()
 
@@ -61,6 +62,7 @@ export default function Home() {
         <div className="bg-surface rounded-card p-card md:col-span-2">
           <h3 className="text-lg font-medium mb-2">By Company</h3>
           <CompanyStats />
+
         </div>
       </div>
     </div>

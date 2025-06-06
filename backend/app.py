@@ -83,10 +83,6 @@ def handle_exception(e):
     return jsonify({'error': 'Internal Server Error'}), 500
 
 # ─── Helpers ──────────────────────────────────────────────────────────────
-def to_json(doc):
-    doc['id'] = str(doc.pop('_id'))
-    return doc
-
 def generate_otp() -> str:
     return f"{random.randint(100_000, 999_999)}"
 
@@ -1151,6 +1147,7 @@ def user_stats():
 
     diff_pipeline = [
         {'$match': {'user_id': uid, 'solved': True}},
+
         {
             '$lookup': {
                 'from': 'questions',
@@ -1177,6 +1174,7 @@ def user_stats():
         key = str(k).strip().capitalize()
         if key in diff_counts:
             diff_counts[key] += v
+
 
     company_pipeline = [
         {'$match': {'bucket': 'All'}},

@@ -26,6 +26,7 @@ export default function UserStats() {
   }
 
   const { totalSolved, totalAttempted, difficulty } = stats
+
   const pct = totalAttempted > 0 ? Math.round((totalSolved / totalAttempted) * 100) : 0
   const diffColors = { Easy: '#8BC34A', Medium: '#FFB74D', Hard: '#E57373' }
 
@@ -51,6 +52,7 @@ export default function UserStats() {
           </div>
         ))}
       </div>
+
     </div>
   )
 }
