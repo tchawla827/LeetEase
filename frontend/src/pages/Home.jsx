@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchRecentBuckets } from '../api'
 import UserStats from '../components/UserStats'
+import CompanyStats from '../components/CompanyStats'
+
 
 
 export default function Home() {
@@ -55,6 +57,12 @@ export default function Home() {
         <div className="bg-surface rounded-card p-card">
           <h3 className="text-lg font-medium mb-2">Your Stats</h3>
           <UserStats />
+        </div>
+
+        <div className="bg-surface rounded-card p-card md:col-span-2">
+          <h3 className="text-lg font-medium mb-2">By Company</h3>
+          <CompanyStats />
+
         </div>
       </div>
     </div>

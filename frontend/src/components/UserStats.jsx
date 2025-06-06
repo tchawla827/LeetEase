@@ -25,7 +25,8 @@ export default function UserStats() {
     )
   }
 
-  const { totalSolved, totalAttempted, difficulty, companies } = stats
+  const { totalSolved, totalAttempted, difficulty } = stats
+
   const pct = totalAttempted > 0 ? Math.round((totalSolved / totalAttempted) * 100) : 0
   const diffColors = { Easy: '#8BC34A', Medium: '#FFB74D', Hard: '#E57373' }
 
@@ -52,21 +53,6 @@ export default function UserStats() {
         ))}
       </div>
 
-      {Array.isArray(companies) && companies.length > 0 && (
-        <div>
-          <h4 className="font-mono text-code-sm text-gray-300 mb-1">By Company</h4>
-          <ul className="text-sm space-y-1 max-h-40 overflow-y-auto pr-1">
-            {companies.map(c => (
-              <li key={c.company} className="flex justify-between">
-                <span>{c.company}</span>
-                <span>
-                  {c.solved} / {c.total}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }
