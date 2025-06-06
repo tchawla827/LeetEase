@@ -5,6 +5,7 @@ import random
 import csv
 import threading
 import time
+import concurrent.futures
 from io import BytesIO
 from datetime import timedelta, datetime
 
@@ -1117,14 +1118,30 @@ def recent_buckets():
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():
     """Sync every user who has both handle & session saved."""
-    for u in USERS.find({
+    users = list(USERS.find({
         'leetcode_username': {'$exists': True},
         'leetcode_session':  {'$exists': True}
-    }):
-        try:
-            sync_leetcode(u['leetcode_username'], u['leetcode_session'], str(u['_id']))
-        except Exception as e:
-            app.logger.warning("Startup sync failed for %s: %s", u['_id'], e)
+    }))
+
+    if not users:
+        return
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_uid = {
+            executor.submit(
+                sync_leetcode,
+                u['leetcode_username'],
+                u['leetcode_session'],
+                str(u['_id'])
+            ): u['_id']
+            for u in users
+        }
+        for fut in concurrent.futures.as_completed(future_to_uid):
+            uid = future_to_uid[fut]
+            try:
+                fut.result()
+            except Exception as e:
+                app.logger.warning("Startup sync failed for %s: %s", uid, e)
 
 if __name__ == '__main__':
     # If you want to perform a one-time sync on startup, uncomment below:
