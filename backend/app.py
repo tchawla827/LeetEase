@@ -1233,6 +1233,30 @@ def _startup_sync():
             except Exception as e:
                 app.logger.warning("Startup sync failed for %s: %s", uid, e)
 
+# ─── Serve React Frontend ────────────────────────────────────────────────
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path: str):
+    """Serve the React single-page application."""
+    if path.startswith('api/') or path.startswith('uploads/'):
+        abort(404)
+
+    build_dir = os.path.join(os.getcwd(), 'frontend', 'build')
+    public_dir = os.path.join(os.getcwd(), 'frontend', 'public')
+
+    target = os.path.join(build_dir, path)
+    if os.path.exists(target) and os.path.isfile(target):
+        return send_from_directory(build_dir, path)
+
+    index_build = os.path.join(build_dir, 'index.html')
+    if os.path.exists(index_build):
+        return send_from_directory(build_dir, 'index.html')
+
+    target_public = os.path.join(public_dir, path)
+    if os.path.exists(target_public) and os.path.isfile(target_public):
+        return send_from_directory(public_dir, path)
+    return send_from_directory(public_dir, 'index.html')
+
 if __name__ == '__main__':
     # If you want to perform a one-time sync on startup, uncomment below:
     # _startup_sync()
