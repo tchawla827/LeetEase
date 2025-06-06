@@ -79,10 +79,6 @@ def handle_exception(e):
     return jsonify({'error': 'Internal Server Error'}), 500
 
 # ─── Helpers ──────────────────────────────────────────────────────────────
-def to_json(doc):
-    doc['id'] = str(doc.pop('_id'))
-    return doc
-
 def generate_otp() -> str:
     return f"{random.randint(100_000, 999_999)}"
 
