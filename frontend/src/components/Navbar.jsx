@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 // Adjust this import path if your logo is stored elsewhere
 import logo from '../assets/logo.png'
@@ -15,6 +16,7 @@ export default function Navbar({
 }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { theme, toggleTheme } = useTheme()
 
   // ─── Mobile Menu (“Import / Profile / Settings / Logout”) ────────────
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -274,6 +276,15 @@ export default function Navbar({
             >
               Settings
             </Link>
+            <button
+              onClick={() => {
+                toggleTheme()
+                closeUserMenu()
+              }}
+              className="w-full text-left font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
+            >
+              Switch to {theme === 'dark' ? 'Light' : 'Dark'} Theme
+            </button>
             <Link
               to="/contact"
               onClick={closeUserMenu}
@@ -321,6 +332,15 @@ export default function Navbar({
             >
               Settings
             </Link>
+            <button
+              onClick={() => {
+                toggleTheme()
+                toggleMenu()
+              }}
+              className="w-full text-left font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
+            >
+              Switch to {theme === 'dark' ? 'Light' : 'Dark'} Theme
+            </button>
             <Link
               to="/contact"
               className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"

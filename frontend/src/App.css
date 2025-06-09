@@ -9,12 +9,21 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  background-color: #0d1117; /* use Tailwind “background” token (#0d1117) */
 }
 
-/* If you want to override Tailwind’s default body text color, you can add: */
 body {
-  color: #e2e8f0; /* a light gray for text on dark background, adjust to taste */
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+:root {
+  --background-color: #ffffff;
+  --text-color: #1f2937;
+}
+
+body.dark {
+  --background-color: #0d1117;
+  --text-color: #e2e8f0;
 }
 
 /* Custom scrollbar styling for sidebar components */
