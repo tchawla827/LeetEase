@@ -1,20 +1,20 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useState,
+} from 'react';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('dark');
-
-  // Load saved preference on mount
-  useEffect(() => {
+  const [theme, setTheme] = useState(() => {
     const stored = localStorage.getItem('theme');
-    if (stored === 'light' || stored === 'dark') {
-      setTheme(stored);
-    }
-  }, []);
+    return stored === 'light' || stored === 'dark' ? stored : 'dark';
+  });
 
-  // Apply class and persist preference
-  useEffect(() => {
+  // Apply class and persist preference synchronously
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
