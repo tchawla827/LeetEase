@@ -61,8 +61,8 @@ export default function AdminImport() {
 
   // ─── UI ───────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-xl mx-auto mt-8 p-6 bg-surface rounded-code border border-gray-800 shadow-elevation">
-      <h2 className="text-2xl font-mono text-gray-100 mb-4">Admin: Import Questions</h2>
+    <div className="max-w-xl mx-auto mt-8 p-6 bg-surface rounded-code border border-gray-300 dark:border-gray-800 shadow-elevation">
+      <h2 className="text-2xl font-mono text-gray-900 dark:text-gray-100 mb-4">Admin: Import Questions</h2>
 
       <form onSubmit={handleUpload} className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
@@ -70,16 +70,17 @@ export default function AdminImport() {
             type="file"
             accept=".csv,.xlsx,.xls"
             onChange={onFileChange}
-            className="block w-full text-code-sm text-gray-300
+            className="block w-full text-code-sm text-gray-900 dark:text-gray-300
                        file:mr-4 file:py-2 file:px-4
                        file:rounded-code file:border-0
                        file:text-code-sm file:font-mono
-                       file:bg-gray-800 file:text-gray-100
-                       hover:file:bg-gray-700
+                       file:bg-gray-200 file:text-gray-900
+                       dark:file:bg-gray-800 dark:file:text-gray-100
+                       hover:file:bg-gray-300 dark:hover:file:bg-gray-700
                        cursor-pointer
                        focus:outline-none focus:ring-1 focus:ring-primary/50"
           />
-          <p className="mt-1 text-code-xs text-gray-500">
+          <p className="mt-1 text-code-xs text-gray-600 dark:text-gray-500">
             {file ? file.name : 'No file selected'}
           </p>
         </div>
@@ -119,9 +120,9 @@ export default function AdminImport() {
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-gray-900/50 rounded-code border border-gray-800">
-        <h3 className="font-mono text-code-sm text-gray-300 mb-2">File Format Requirements:</h3>
-        <ul className="font-mono text-code-xs text-gray-500 list-disc pl-5 space-y-1">
+      <div className="mt-6 p-4 bg-gray-200/50 dark:bg-gray-900/50 rounded-code border border-gray-300 dark:border-gray-800">
+        <h3 className="font-mono text-code-sm text-gray-700 dark:text-gray-300 mb-2">File Format Requirements:</h3>
+        <ul className="font-mono text-code-xs text-gray-600 dark:text-gray-500 list-disc pl-5 space-y-1">
           <li>Accepted file types: <code>.csv</code>, <code>.xlsx</code>, <code>.xls</code></li>
           <li>Required columns (case-insensitive): <strong>title</strong>, <strong>link</strong> (or <strong>url</strong>), <strong>company</strong>, <strong>bucket</strong></li>
           <li>Optional columns: <strong>difficulty</strong>, <strong>frequency</strong>, <strong>acceptanceRate</strong></li>
