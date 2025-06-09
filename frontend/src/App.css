@@ -57,10 +57,11 @@ body {
   --color-code-variable: 227 98 9;
 
   --color-gray-100: 254 252 247;
-  --color-gray-200: 239 231 215;
-  --color-gray-300: 220 212 196;
-  --color-gray-400: 192 180 160;
-  --color-gray-500: 160 146 122;
+  /* Darker grays for better contrast in light mode */
+  --color-gray-200: 118 108 98;
+  --color-gray-300: 112 102 92;
+  --color-gray-400: 110 100 90;
+  --color-gray-500: 90 80 70;
   --color-gray-600: 128 116 96;
   --color-gray-700: 105 93 76;
   --color-gray-800: 77 69 56;
