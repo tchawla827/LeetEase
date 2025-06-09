@@ -1143,38 +1143,27 @@ def user_stats():
         if 'totalQuestions' in cached['data']:
             return jsonify(cached['data']), 200
 
-    total_attempted = USER_META.count_documents({'user_id': uid})
-    total_solved = USER_META.count_documents({'user_id': uid, 'solved': True})
+    attempted_qids = USER_META.distinct('question_id', {'user_id': uid})
+    solved_qids = USER_META.distinct('question_id', {
+        'user_id': uid,
+        'solved': True
+    })
 
-    diff_pipeline = [
-        {'$match': {'user_id': uid, 'solved': True}},
+    total_attempted = len(attempted_qids)
+    total_solved = len(solved_qids)
 
-        {
-            '$lookup': {
-                'from': 'questions',
-                'let': {'qid': '$question_id'},
-                'pipeline': [
-                    {
-                        '$match': {
-                            '$expr': {
-                                '$eq': ['$_id', {'$toObjectId': '$$qid'}]
-                            }
-                        }
-                    },
-                    {'$project': {'leetDifficulty': 1}}
-                ],
-                'as': 'q'
-            }
-        },
-        {'$unwind': '$q'},
-        {'$group': {'_id': '$q.leetDifficulty', 'count': {'$sum': 1}}}
-    ]
-    raw_counts = {d['_id']: d['count'] for d in USER_META.aggregate(diff_pipeline)}
     diff_counts = {'Easy': 0, 'Medium': 0, 'Hard': 0}
-    for k, v in raw_counts.items():
-        key = str(k).strip().capitalize()
-        if key in diff_counts:
-            diff_counts[key] += v
+    if solved_qids:
+        obj_ids = [ObjectId(qid) for qid in solved_qids]
+        pipeline = [
+            {'$match': {'_id': {'$in': obj_ids}}},
+            {'$group': {'_id': '$leetDifficulty', 'count': {'$sum': 1}}}
+        ]
+        raw_counts = {d['_id']: d['count'] for d in QUEST.aggregate(pipeline)}
+        for k, v in raw_counts.items():
+            key = str(k).strip().capitalize()
+            if key in diff_counts:
+                diff_counts[key] += v
 
 
     company_pipeline = [
