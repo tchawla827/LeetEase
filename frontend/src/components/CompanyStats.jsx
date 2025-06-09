@@ -1,21 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchUserStats } from '../api'
 import LinearProgress from './LinearProgress'
 import Loading from './Loading'
+import useUserStats from '../context/useUserStats'
 
 export default function CompanyStats() {
-  const [companies, setCompanies] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { stats, loading } = useUserStats()
+  const companies = stats?.companies || []
   const [sortBy, setSortBy] = useState('name')
   const [filter, setFilter] = useState('')
-
-  useEffect(() => {
-    fetchUserStats()
-      .then(res => setCompanies(res.data.companies || []))
-      .catch(() => setCompanies([]))
-      .finally(() => setLoading(false))
-  }, [])
 
   const sorted = useMemo(() => {
     const list = [...companies]

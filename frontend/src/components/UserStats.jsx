@@ -1,18 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import CircularProgress from './CircularProgress'
-import { fetchUserStats } from '../api'
 import Loading from './Loading'
+import useUserStats from '../context/useUserStats'
 
 export default function UserStats() {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchUserStats()
-      .then(res => setStats(res.data))
-      .catch(() => setStats(null))
-      .finally(() => setLoading(false))
-  }, [])
+  const { stats, loading } = useUserStats()
 
   if (loading) {
     return <Loading message="Loading stats…" />
