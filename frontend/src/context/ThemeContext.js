@@ -27,10 +27,20 @@ export function ThemeProvider({ children }) {
   const toggleTheme = () => {
     const root = document.documentElement;
     root.classList.add('theme-transition');
+
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+
+    if (newTheme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+
     setTimeout(() => {
       root.classList.remove('theme-transition');
     }, 300);
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+
+    setTheme(newTheme);
   };
 
   return (
