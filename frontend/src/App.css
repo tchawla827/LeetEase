@@ -143,3 +143,18 @@ body {
 .main-screen-bg {
   @apply bg-background bg-dev-grid bg-repeat bg-[length:100px_100px];
 }
+
+/* Shimmer animation for loading effects */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+

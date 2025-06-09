@@ -44,11 +44,27 @@ export default function CompanyProgress({ data, loading }) {
                   {solved} / {total} (<span className="text-primary">{pct}%</span>)
                 </span>
               </div>
-              <div className="w-full bg-gray-800 h-2 rounded overflow-hidden">
+              <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
                 <div
-                  className="bg-green-500 h-full transition-all duration-300"
+                  className={`
+                    h-full rounded-full transition-all duration-1000 ease-out
+                    relative overflow-hidden
+                    ${pct === 100
+                      ? 'bg-gradient-to-r from-success via-success/80 to-success'
+                      : pct >= 75
+                        ? 'bg-gradient-to-r from-info via-info/80 to-info'
+                        : pct >= 50
+                          ? 'bg-gradient-to-r from-warning via-warning/80 to-warning'
+                          : 'bg-gradient-to-r from-primary via-primary/80 to-primary'}
+                  `}
                   style={{ width: `${pct}%` }}
-                />
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                </div>
               </div>
             </li>
           )
