@@ -1143,22 +1143,21 @@ def user_stats():
         if 'totalQuestions' in cached['data']:
             return jsonify(cached['data']), 200
 
-    total_attempted = USER_META.count_documents({'user_id': uid})
-    total_solved = USER_META.count_documents({'user_id': uid, 'solved': True})
+    # Count distinct questions instead of raw document totals
+    total_attempted = len(USER_META.distinct('question_id', {'user_id': uid}))
+    total_solved = len(USER_META.distinct('question_id', {'user_id': uid, 'solved': True}))
 
     diff_pipeline = [
         {'$match': {'user_id': uid, 'solved': True}},
-
+        {'$group': {'_id': '$question_id'}},
         {
             '$lookup': {
                 'from': 'questions',
-                'let': {'qid': '$question_id'},
+                'let': {'qid': {'$toObjectId': '$_id'}},
                 'pipeline': [
                     {
                         '$match': {
-                            '$expr': {
-                                '$eq': ['$_id', {'$toObjectId': '$$qid'}]
-                            }
+                            '$expr': {'$eq': ['$_id', '$$qid']}
                         }
                     },
                     {'$project': {'leetDifficulty': 1}}
