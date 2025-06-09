@@ -1213,6 +1213,7 @@ def user_stats():
     ]
     company_stats = list(CQ.aggregate(company_pipeline))
 
+
     # Count unique question slugs across all companies to avoid duplicates
     qids = CQ.distinct('question_id')
     links = [q.get('link', '') for q in QUEST.find({'_id': {'$in': qids}}, {'link': 1})]
@@ -1221,6 +1222,7 @@ def user_stats():
         for link in links if link
     }
     total_questions = len(slugs)
+
 
     data = {
         'totalSolved': total_solved,
