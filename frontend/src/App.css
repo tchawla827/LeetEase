@@ -36,36 +36,36 @@ body {
 :root {
   /* Light theme variables */
 
-  --sidebar-track: #e8e0d1;
-  --sidebar-thumb: #c8bfae;
+  --sidebar-track: #e5e8eb;
+  --sidebar-thumb: #c4c9d0;
 
-  --color-background: 249 245 233;
-  --color-surface: 255 252 244;
+  --color-background: 245 247 249;
+  --color-surface: 255 255 255;
 
-  --color-primary: 9 105 218;
-  --color-secondary: 26 127 55;
-  --color-accent: 227 121 51;
-  --color-error: 207 34 46;
-  --color-warning: 212 167 44;
-  --color-success: 45 164 78;
-  --color-info: 56 139 253;
-  --color-code-keyword: 215 58 73;
-  --color-code-function: 111 66 193;
-  --color-code-string: 3 47 98;
-  --color-code-number: 0 92 197;
-  --color-code-comment: 106 115 125;
-  --color-code-variable: 227 98 9;
+  --color-primary: 37 99 235;
+  --color-secondary: 16 185 129;
+  --color-accent: 217 119 6;
+  --color-error: 220 38 38;
+  --color-warning: 234 179 8;
+  --color-success: 5 150 105;
+  --color-info: 56 189 248;
+  --color-code-keyword: 199 58 61;
+  --color-code-function: 107 33 168;
+  --color-code-string: 29 78 216;
+  --color-code-number: 2 132 199;
+  --color-code-comment: 100 116 139;
+  --color-code-variable: 234 88 12;
 
-  --color-gray-100: 254 252 247;
-  --color-gray-200: 239 231 215;
-  --color-gray-300: 220 212 196;
-  --color-gray-400: 192 180 160;
-  --color-gray-500: 160 146 122;
-  --color-gray-600: 128 116 96;
-  --color-gray-700: 105 93 76;
-  --color-gray-800: 77 69 56;
-  --color-gray-900: 52 46 36;
-  --color-text: 45 42 40;
+  --color-gray-100: 255 255 255;
+  --color-gray-200: 243 244 246;
+  --color-gray-300: 229 231 235;
+  --color-gray-400: 209 213 219;
+  --color-gray-500: 156 163 175;
+  --color-gray-600: 107 114 128;
+  --color-gray-700: 75 85 99;
+  --color-gray-800: 55 65 81;
+  --color-gray-900: 31 41 55;
+  --color-text: 33 37 41;
 
 }
 
