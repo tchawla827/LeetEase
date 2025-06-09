@@ -1213,7 +1213,9 @@ def user_stats():
     ]
     company_stats = list(CQ.aggregate(company_pipeline))
 
-    total_questions = sum(c['total'] for c in company_stats)
+    # Count unique questions across all companies (any bucket)
+    # This represents the denominator for solved stats
+    total_questions = len(CQ.distinct('question_id'))
 
     data = {
         'totalSolved': total_solved,
