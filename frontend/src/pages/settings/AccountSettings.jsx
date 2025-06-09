@@ -129,7 +129,7 @@ export default function AccountSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-12 h-12 border-4 border-gray-300 border-t-primary rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-gray-600 dark:border-gray-300 border-t-primary rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -149,7 +149,7 @@ export default function AccountSettings() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-code-sm text-gray-300 font-mono mb-1">
+            <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
               First Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -158,11 +158,11 @@ export default function AccountSettings() {
               value={formData.firstName}
               onChange={handleChange}
               required
-              className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+              className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
           <div>
-            <label className="block text-code-sm text-gray-300 font-mono mb-1">
+            <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
               Last Name
             </label>
             <input
@@ -170,13 +170,13 @@ export default function AccountSettings() {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+              className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-code-sm text-gray-300 font-mono mb-1">
+          <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
             College/University
           </label>
           <UniversityAutocomplete
@@ -188,7 +188,7 @@ export default function AccountSettings() {
         </div>
 
         <div>
-          <label className="block text-code-sm text-gray-300 font-mono mb-1">
+          <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
             Email <span className="text-red-500">*</span>
           </label>
           <input
@@ -197,12 +197,12 @@ export default function AccountSettings() {
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+            className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
           />
         </div>
 
 
-        <p className="text-center text-code-sm text-gray-400 font-mono">
+        <p className="text-center text-code-sm text-gray-600 dark:text-gray-400 font-mono">
           <Link to="/forgot-password" className="text-primary hover:underline">
             Reset password via email
           </Link>
@@ -218,7 +218,7 @@ export default function AccountSettings() {
       </form>
 
       <div className="mt-8">
-        <h3 className="text-code-base text-gray-300 font-mono mb-2">
+        <h3 className="text-code-base text-gray-900 dark:text-gray-300 font-mono mb-2">
           Profile Photo
         </h3>
         {profilePhotoUrl ? (
@@ -245,7 +245,7 @@ export default function AccountSettings() {
           </div>
         ) : (
           <div>
-            <p className="text-code-sm text-gray-400 font-mono mb-2">
+            <p className="text-code-sm text-gray-600 dark:text-gray-400 font-mono mb-2">
               No profile photo yet.
             </p>
             <button
@@ -267,7 +267,7 @@ export default function AccountSettings() {
 
         {newPhotoFile && (
           <div className="mt-3 flex items-center space-x-2">
-            <span className="text-code-sm text-gray-200 font-mono">
+            <span className="text-code-sm text-gray-800 dark:text-gray-200 font-mono">
               {newPhotoFile.name}
             </span>
             <button
