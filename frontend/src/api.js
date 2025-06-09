@@ -111,7 +111,7 @@ export function fetchCompanyProgress(companyName) {
   return api.get(path);
 }
 
-export function fetchRecentBuckets(limit = 4) {
+export function fetchRecentBuckets(limit = 8) {
   return api.get(`/api/recent-buckets?limit=${limit}`);
 }
 

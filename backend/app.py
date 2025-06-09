@@ -1092,7 +1092,7 @@ def company_progress(company):
 def recent_buckets():
     """Return most recently updated company buckets for the current user."""
     uid   = get_jwt_identity()
-    limit = int(request.args.get('limit', 4))
+    limit = int(request.args.get('limit', 8))
 
     pipeline = [
 
