@@ -66,7 +66,8 @@ USERS     = db.users
 
 # Cache for per-user statistics (simple in-memory)
 STATS_CACHE = {}
-STATS_TTL_SECONDS = 60
+# Disable caching so stats refresh on every request
+STATS_TTL_SECONDS = 0
 
 # ─── Error Handlers ───────────────────────────────────────────────────────
 @app.errorhandler(HTTPException)

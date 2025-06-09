@@ -1,33 +1,34 @@
 import { useState, useEffect } from 'react'
 import { fetchUserStats } from '../api'
 
-let cached = null
+// Deduplicate concurrent fetches across components
 let inflight = null
 
 export default function useUserStats() {
-  const [stats, setStats] = useState(cached)
-  const [loading, setLoading] = useState(!cached)
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (cached) return
+    let isMounted = true
 
     if (!inflight) {
       inflight = fetchUserStats()
-        .then(res => {
-          cached = res.data
-          setStats(cached)
-        })
-        .catch(() => {
-          cached = null
-        })
+        .then(res => res.data)
+        .catch(() => null)
         .finally(() => {
-          setLoading(false)
+          inflight = null
         })
-    } else {
-      inflight.finally(() => {
-        setStats(cached)
+    }
+
+    inflight.then(data => {
+      if (isMounted) {
+        setStats(data)
         setLoading(false)
-      })
+      }
+    })
+
+    return () => {
+      isMounted = false
     }
   }, [])
 
