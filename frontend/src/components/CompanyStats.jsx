@@ -8,6 +8,7 @@ export default function CompanyStats() {
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState('name')
+  const [filter, setFilter] = useState('')
 
   useEffect(() => {
     fetchUserStats()
@@ -20,21 +21,29 @@ export default function CompanyStats() {
     const list = [...companies]
     switch (sortBy) {
       case 'solved':
-        return list.sort((a, b) => {
+        list.sort((a, b) => {
           const aPct = a.total ? a.solved / a.total : 0
           const bPct = b.total ? b.solved / b.total : 0
           return bPct - aPct
         })
+        break
       case 'unsolved':
-        return list.sort((a, b) => {
+        list.sort((a, b) => {
           const aPct = a.total ? (a.total - a.solved) / a.total : 0
           const bPct = b.total ? (b.total - b.solved) / b.total : 0
           return bPct - aPct
         })
+        break
       default:
-        return list.sort((a, b) => a.company.localeCompare(b.company))
+        list.sort((a, b) => a.company.localeCompare(b.company))
     }
-  }, [companies, sortBy])
+
+    const prefix = filter.trim().toLowerCase()
+    if (prefix) {
+      return list.filter(c => c.company.toLowerCase().startsWith(prefix))
+    }
+    return list
+  }, [companies, sortBy, filter])
 
   if (loading) {
     return <Loading message="Loading company stats…" />
@@ -48,20 +57,29 @@ export default function CompanyStats() {
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
-        <label className="text-xs text-gray-600 dark:text-gray-400 mr-2" htmlFor="company-sort">
-          Sort by
-        </label>
-        <select
-          id="company-sort"
-          value={sortBy}
-          onChange={e => setSortBy(e.target.value)}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+        <input
+          type="text"
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          placeholder="Search companies…"
           className="bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-code text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          <option value="name">Name</option>
-          <option value="solved">% Solved</option>
-          <option value="unsolved">% Unsolved</option>
-        </select>
+        />
+        <div className="flex items-center">
+          <label className="text-xs text-gray-600 dark:text-gray-400 mr-2" htmlFor="company-sort">
+            Sort by
+          </label>
+          <select
+            id="company-sort"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            className="bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-code text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="name">Name</option>
+            <option value="solved">% Solved</option>
+            <option value="unsolved">% Unsolved</option>
+          </select>
+        </div>
       </div>
 
       <ul className="text-sm space-y-3 max-h-72 overflow-y-auto pr-1">
