@@ -16,6 +16,13 @@ body {
   color: rgb(var(--color-text));
 }
 
+/* Smooth transitions for background and text colors */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+}
+
 /* Custom scrollbar styling for sidebar components */
 .sidebar-scroll {
   scrollbar-width: thin;
