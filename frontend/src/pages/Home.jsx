@@ -13,7 +13,7 @@ export default function Home() {
   const [recent, setRecent] = useState([])
 
   useEffect(() => {
-    fetchRecentBuckets()
+    fetchRecentBuckets(8)
       .then(res => setRecent(res.data.data || []))
       .catch(() => setRecent([]))
   }, [])
