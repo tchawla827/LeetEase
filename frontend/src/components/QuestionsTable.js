@@ -254,14 +254,14 @@ export default function QuestionsTable({
   return (
     <div className="space-y-2">
       {/* <div className="overflow-x-auto rounded-xl border border-gray-800"> */}
-      <div className="overflow-x-auto rounded-xl border border-gray-800 bg-surface/0">
+      <div className="overflow-x-auto rounded-xl border border-gray-300 dark:border-gray-800 bg-surface/0">
         {/* Slight border + rounded corners around the table */}
         <table className="w-full border-collapse font-mono text-code-base md:text-code-lg">
           
           {/* Bumped table text from code-sm → base/lg */}
 
           <thead>
-            <tr className="border-b border-gray-800 bg-gray-900 text-code-base font-semibold text-gray-300 uppercase tracking-wider">
+            <tr className="border-b border-gray-300 dark:border-gray-800 bg-gray-200 dark:bg-gray-900 text-code-base font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
               {/* Brighter, larger header row */}
               <th className="px-4 py-3 text-left whitespace-nowrap">
                 <input
@@ -274,7 +274,7 @@ export default function QuestionsTable({
                       ? setSelected([])
                       : setSelected(questions.map(q => q.id))
                   }
-                  className="rounded border-gray-700 bg-gray-800 text-primary focus:ring-primary/50"
+                  className="rounded border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-primary focus:ring-primary/50"
                 />
               </th>
 
@@ -282,7 +282,7 @@ export default function QuestionsTable({
                 <th
                   key={field}
                   onClick={() => onSort(field)}
-                  className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-100 whitespace-nowrap"
+                  className="px-4 py-3 text-left cursor-pointer select-none hover:text-gray-900 dark:hover:text-gray-100 whitespace-nowrap"
                 >
                   {label}
                   <span className="text-gray-500">{arrow(field)}</span>
@@ -293,7 +293,7 @@ export default function QuestionsTable({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-800 text-gray-200">
+          <tbody className="divide-y divide-gray-300 dark:divide-gray-800 text-gray-900 dark:text-gray-200">
             {loading ? (
               <tr>
                 <td
@@ -307,7 +307,7 @@ export default function QuestionsTable({
               questions.map(q => (
                 <tr
                   key={q.id}
-                  className={`hover:bg-gray-900/50 transition-colors duration-150 ${
+                  className={`hover:bg-gray-300 dark:hover:bg-gray-900/50 transition-colors duration-150 ${
                     !q.solved ? 'font-bold' : 'font-normal opacity-75'
                   }`}
                 >
@@ -323,7 +323,7 @@ export default function QuestionsTable({
                             : [...prev, q.id]
                         )
                       }
-                      className="rounded border-gray-700 bg-gray-800 text-primary focus:ring-primary/50"
+                      className="rounded border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-primary focus:ring-primary/50"
                     />
                   </td>
 
@@ -355,7 +355,7 @@ export default function QuestionsTable({
                         updateField(q.id, 'userDifficulty', e.target.value)
                       }
                       style={{ color: getYourRatingColor(q) || 'inherit' }}
-                      className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
                     >
                       <option value="">–</option>
                       <option value="Easy"   style={{ color: easyColor   }}>Easy</option>
@@ -384,7 +384,7 @@ export default function QuestionsTable({
                       onChange={e =>
                         updateField(q.id, 'solved', e.target.checked)
                       }
-                      className="rounded border-gray-700 bg-gray-800 text-primary focus:ring-primary/50"
+                      className="rounded border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-primary focus:ring-primary/50"
                     />
                   </td>
                 </tr>
@@ -393,7 +393,7 @@ export default function QuestionsTable({
               <tr>
                 <td
                   colSpan={Object.keys(SORT_FIELDS).length + 3}
-                  className="px-4 py-4 text-center italic text-gray-400"
+                  className="px-4 py-4 text-center italic text-gray-500 dark:text-gray-400"
                 >
                   No questions found.
                 </td>
@@ -405,24 +405,24 @@ export default function QuestionsTable({
 
       {/* Batch action bar */}
       {selected.length > 0 && (
-        <div className="sticky bottom-0 bg-surface/95 backdrop-blur border-t border-gray-800 px-4 py-3 flex items-center gap-4 z-10">
-          <strong className="text-gray-300">{selected.length} selected</strong>
+        <div className="sticky bottom-0 bg-surface/95 backdrop-blur border-t border-gray-300 dark:border-gray-800 px-4 py-3 flex items-center gap-4 z-10">
+          <strong className="text-gray-700 dark:text-gray-300">{selected.length} selected</strong>
           <button
             onClick={() => batchUpdate({ solved: true })}
-            className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded border border-gray-700 transition-colors"
+            className="font-mono text-code-base bg-transparent hover:bg-gray-300 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-1 rounded border border-gray-300 dark:border-gray-700 transition-colors"
           >
             Mark Solved
           </button>
           <button
             onClick={() => batchUpdate({ solved: false })}
-            className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1 rounded border border-gray-700 transition-colors"
+            className="font-mono text-code-base bg-transparent hover:bg-gray-300 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-1 rounded border border-gray-300 dark:border-gray-700 transition-colors"
           >
             Mark Unsolved
           </button>
           <select
             value={batchDifficulty}
             onChange={e => setBatchDifficulty(e.target.value)}
-            className="font-mono text-code-base bg-gray-800 border border-gray-700 rounded px-3 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
+            className="font-mono text-code-base bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-3 py-1 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary/50"
           >
             <option value="">Set difficulty…</option>
             <option value="Easy">Easy</option>
@@ -444,17 +444,17 @@ export default function QuestionsTable({
         <button
           onClick={() => setPage(p => Math.max(p - 1, 1))}
           disabled={page === 1}
-          className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-4 py-1 rounded border border-gray-700 transition-colors disabled:opacity-50"
+          className="font-mono text-code-base bg-transparent hover:bg-gray-300 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-4 py-1 rounded border border-gray-300 dark:border-gray-700 transition-colors disabled:opacity-50"
         >
           ← Prev
         </button>
-        <span className="text-gray-300">
+        <span className="text-gray-700 dark:text-gray-300">
           Page {page} of {totalPages}
         </span>
         <button
           onClick={() => setPage(p => Math.min(p + 1, totalPages))}
           disabled={page === totalPages}
-          className="font-mono text-code-base bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-4 py-1 rounded border border-gray-700 transition-colors disabled:opacity-50"
+          className="font-mono text-code-base bg-transparent hover:bg-gray-300 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-4 py-1 rounded border border-gray-300 dark:border-gray-700 transition-colors disabled:opacity-50"
         >
           Next →
         </button>
