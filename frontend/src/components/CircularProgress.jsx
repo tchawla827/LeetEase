@@ -1,6 +1,12 @@
 import React from 'react'
 
-export default function CircularProgress({ size = 80, stroke = 8, progress = 0, color = '#38bdf8', bg = '#374151' }) {
+export default function CircularProgress({
+  size = 80,
+  stroke = 8,
+  progress = 0,
+  color = 'rgb(var(--color-primary))',
+  bg = 'rgb(var(--color-gray-300))',
+}) {
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (progress / 100) * circumference
