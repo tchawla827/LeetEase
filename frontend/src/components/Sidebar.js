@@ -130,7 +130,8 @@ export default function Sidebar({ sidebarOpen }) {
             md:relative md:top-0 md:block
 
             /* Basic styling */
-            bg-gradient-to-b from-surface via-gray-900 to-surface
+            bg-gray-200 dark:bg-surface
+            text-gray-900 dark:text-gray-100
             border-r border-gray-800 shadow-elevation
             overflow-y-auto sidebar-scroll
 
@@ -145,7 +146,7 @@ export default function Sidebar({ sidebarOpen }) {
                • On desktop, parent already has pt-16, so this is extra padding.
           */}
           <div className="pt-2 px-card">
-            <h2 className="font-mono text-lg md:text-xl text-gray-100 font-semibold mb-3">
+            <h2 className="font-mono text-lg md:text-xl text-gray-900 dark:text-gray-100 font-semibold mb-3">
               Companies
             </h2>
 
@@ -157,7 +158,7 @@ export default function Sidebar({ sidebarOpen }) {
               className="
                 font-mono text-code-sm w-full px-3 py-1.5 mb-2
                 rounded-code border border-gray-700 bg-gray-900
-                text-gray-100 placeholder-gray-500
+                text-gray-900 dark:text-gray-100 placeholder-gray-500
                 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50
               "
             />
@@ -178,7 +179,7 @@ export default function Sidebar({ sidebarOpen }) {
                         ${
                           isActive
                             ? 'bg-gray-700 border-l-4 border-primary text-primary font-medium'
-                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                            : 'text-gray-800 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
                         }
                       `}
                     >
@@ -189,7 +190,7 @@ export default function Sidebar({ sidebarOpen }) {
                           e.stopPropagation()
                           toggleCompany(company)
                         }}
-                        className="text-gray-400 group-hover:text-primary p-1 rounded transition-colors duration-150 hover:bg-gray-800/40"
+                        className="text-gray-600 dark:text-gray-400 group-hover:text-primary p-1 rounded transition-colors duration-150 hover:bg-gray-300/40 dark:hover:bg-gray-800/40"
                         aria-label={isExpanded ? 'Collapse' : 'Expand'}
                       >
                         {isExpanded ? '−' : '+'}
@@ -217,7 +218,7 @@ export default function Sidebar({ sidebarOpen }) {
                                     transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-primary/50
                                     ${bucketActive
                                       ? 'bg-primary/20 text-primary font-semibold ring-1 ring-primary/50'
-                                      : 'text-gray-400 hover:text-primary hover:bg-gray-800/60'}
+                                      : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-primary'}
                                   `}
                                 >
                                   {BUCKET_LABELS[rawBucketName] || rawBucketName}
@@ -226,7 +227,7 @@ export default function Sidebar({ sidebarOpen }) {
                             )
                           })
                         ) : (
-                          <li className="font-mono text-code-sm text-gray-500 px-2 py-1">
+                          <li className="font-mono text-code-sm text-gray-600 dark:text-gray-500 px-2 py-1">
                             (No buckets)
                           </li>
                         )}
