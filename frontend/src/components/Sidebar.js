@@ -178,7 +178,7 @@ export default function Sidebar({ sidebarOpen }) {
                         transition-colors duration-150
                         ${
                           isActive
-                            ? 'bg-gray-700 border-l-4 border-primary text-primary font-medium'
+                            ? 'bg-gray-300 dark:bg-gray-700 border-l-4 border-primary text-primary font-medium'
                             : 'text-gray-800 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
                         }
                       `}
@@ -198,7 +198,7 @@ export default function Sidebar({ sidebarOpen }) {
                     </button>
 
                     {isExpanded && (
-                      <ul className="ml-4 mt-1 space-y-1 border-l border-gray-700 pl-2">
+                      <ul className="ml-4 mt-1 space-y-1 border-l border-gray-300 dark:border-gray-700 pl-2">
                         {buckets === undefined ? (
                           <li className="px-2 py-1 flex justify-center">
                             <Spinner size={16} />
@@ -217,7 +217,7 @@ export default function Sidebar({ sidebarOpen }) {
                                     font-mono text-code-sm rounded-code w-full text-left px-2 py-1
                                     transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-primary/50
                                     ${bucketActive
-                                      ? 'bg-primary/20 text-primary font-semibold ring-1 ring-primary/50'
+                                      ? 'bg-primary/10 dark:bg-primary/20 text-primary font-semibold ring-1 ring-primary/50'
                                       : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-primary'}
                                   `}
                                 >
