@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
 // Adjust this import path if your logo is stored elsewhere
-import logo from '../assets/logo.png'
+import logo from '../assets/logo.svg'
 
 export default function Navbar({
   sidebarOpen,
@@ -168,7 +168,7 @@ export default function Navbar({
         {/* ─── Center: Logo ───────────────────────────────────────────────────────────── */}
         <div className="absolute left-1/2 top-0 transform -translate-x-1/2 h-16 flex items-center pointer-events-none">
           <Link to={user ? '/home' : '/'} className="pointer-events-auto">
-            <img src={logo} alt="LeetEase Logo" className="h-8 w-auto" />
+            <img src={logo} alt="LeetEase Logo" className="h-14 w-auto" />
           </Link>
         </div>
 

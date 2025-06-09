@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import logo from '../assets/logo.png'
+import logo from '../assets/logo.svg'
 
 export default function Landing() {
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function Landing() {
       <footer className="border-t border-gray-800 py-8 px-card">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-gray-400">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <img src={logo} alt="LeetEase logo" className="h-6 w-6" />
+            <img src={logo} alt="LeetEase logo" className="h-14 w-6" />
             <span>Leet<span className="text-primary">Ease</span></span>
           </div>
           <div>
