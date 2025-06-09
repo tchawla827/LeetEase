@@ -25,7 +25,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold">
           Welcome back, {user?.firstName || 'Friend'}!
         </h1>
-        <p className="mt-2 text-gray-300 max-w-2xl">
+        <p className="mt-2 text-gray-600 dark:text-gray-300 max-w-2xl">
           Select a company from the sidebar to view question buckets and track your progress. Mark questions as solved or take notes to keep track of your preparation.
         </p>
       </div>
@@ -35,12 +35,12 @@ export default function Home() {
           <h3 className="text-lg font-medium mb-2">Recent Buckets</h3>
 
             {recent.length === 0 ? (
-              <p className="text-sm text-gray-400">No recent activity.</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">No recent activity.</p>
             ) : (
-              <ul className="space-y-2 list-disc pl-5 marker:text-gray-400">
+              <ul className="space-y-2 list-disc pl-5 marker:text-gray-600 dark:marker:text-gray-400">
                 {recent.map((r) => (
                   <li key={`${r.company}-${r.bucket}`}
-                      className="marker:text-gray-500">
+                      className="marker:text-gray-700 dark:marker:text-gray-500">
                     <Link
                       to={`/company/${encodeURIComponent(r.company)}?bucket=${encodeURIComponent(r.bucket)}`}
                       className="block w-full text-left bg-[#1545a6] hover:bg-primary focus:outline-none focus:ring-1 focus:ring-primary/50 text-white py-2 px-3 rounded-code text-sm transition-colors duration-150 hover:shadow-elevation"
