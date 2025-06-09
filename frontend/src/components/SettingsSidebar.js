@@ -19,6 +19,7 @@ export default function SettingsSidebar({ sidebarOpen }) {
 
         /* Basic sidebar styling */
         bg-gray-200 dark:bg-surface
+        text-gray-900 dark:text-gray-100
         border-r border-gray-800 shadow-elevation
         overflow-y-auto sidebar-scroll
 
