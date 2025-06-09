@@ -1214,14 +1214,9 @@ def user_stats():
     company_stats = list(CQ.aggregate(company_pipeline))
 
 
-    # Count unique question slugs across all companies to avoid duplicates
-    qids = CQ.distinct('question_id')
-    links = [q.get('link', '') for q in QUEST.find({'_id': {'$in': qids}}, {'link': 1})]
-    slugs = {
-        link.rstrip('/').split('/')[-1].split('?')[0].lower()
-        for link in links if link
-    }
-    total_questions = len(slugs)
+    # Count unique canonical questions directly from the questions collection
+    # to avoid double counting company-specific duplicates.
+    total_questions = QUEST.count_documents({})
 
 
     data = {
