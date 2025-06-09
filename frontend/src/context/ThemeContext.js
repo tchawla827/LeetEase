@@ -28,19 +28,16 @@ export function ThemeProvider({ children }) {
     const root = document.documentElement;
     root.classList.add('theme-transition');
 
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    // Force a reflow so the transition class is applied before the
+    // `dark` class toggles. This avoids the abrupt flash when modes change.
+    void root.offsetWidth;
 
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
 
     setTimeout(() => {
       root.classList.remove('theme-transition');
     }, 300);
-
-    setTheme(newTheme);
   };
 
   return (
