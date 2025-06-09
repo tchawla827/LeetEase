@@ -37,7 +37,7 @@ export default function UserStats() {
     <div className="space-y-4">
       <div className="flex justify-center">
         <div className="relative">
-          <CircularProgress size={100} progress={pct} color="#38bdf8" />
+          <CircularProgress size={120} progress={pct} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
 
             <span className="text-xl font-medium">{totalSolved}/{totalQs}</span>
