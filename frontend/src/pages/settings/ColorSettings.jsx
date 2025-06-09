@@ -56,7 +56,7 @@ export default function ColorSettings() {
             <select
               value={colorMode}
               onChange={(e) => setColorMode(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-code px-3 py-1 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
+              className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-code px-3 py-1 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="leet">Based on Leet difficulty</option>
               <option value="user">Based on your difficulty</option>
