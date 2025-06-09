@@ -118,14 +118,16 @@ export default function Navbar({
     : ''
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-gray-800 shadow-elevation">
+    <header
+      className="fixed top-0 left-0 right-0 z-50 bg-gray-200 dark:bg-surface text-gray-900 dark:text-gray-100 border-b border-gray-800 shadow-elevation"
+    >
       <div className="relative flex items-center h-16 px-card">
         {/* ─── Left: Sidebar Toggle Button ───────────────────────────────────────── */}
         {user && (
           <div className="flex items-center">
             <button
             onClick={handleSidebarToggle}
-            className="text-gray-400 hover:text-gray-100 focus:outline-none mr-4"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none mr-4"
             aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {sidebarOpen ? (
@@ -174,7 +176,7 @@ export default function Navbar({
         <div className="ml-auto flex items-center gap-code">
           <button
             onClick={toggleTheme}
-            className="text-gray-400 hover:text-gray-100 focus:outline-none"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
@@ -254,13 +256,13 @@ export default function Navbar({
             <div className="hidden md:flex md:items-center md:gap-2">
               <Link
                 to="/contact"
-                className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1.5 rounded-code border border-gray-700 transition-colors duration-150"
+                className="font-mono text-code-sm bg-transparent hover:bg-gray-300 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-1.5 rounded-code border border-gray-700 transition-colors duration-150"
               >
                 Contact
               </Link>
               <Link
                 to="/login"
-                className="font-mono text-code-sm bg-transparent hover:bg-gray-800 text-gray-400 hover:text-gray-100 px-3 py-1.5 rounded-code border border-gray-700 transition-colors duration-150"
+                className="font-mono text-code-sm bg-transparent hover:bg-gray-300 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-3 py-1.5 rounded-code border border-gray-700 transition-colors duration-150"
               >
                 Login
               </Link>
@@ -280,7 +282,7 @@ export default function Navbar({
         ReactDOM.createPortal(
           <div
             ref={portalRef}
-            className={`bg-surface border border-gray-700 rounded-code shadow-lg z-50 transform transition-all duration-300 ease-out ${
+            className={`bg-gray-200 dark:bg-surface border border-gray-700 rounded-code shadow-lg z-50 transform transition-all duration-300 ease-out ${
               isUserMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
             style={{
@@ -293,7 +295,7 @@ export default function Navbar({
             <Link
               to="/profile"
               onClick={closeUserMenu}
-              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-t-code transition-colors duration-150"
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 rounded-t-code transition-colors duration-150"
             >
               Profile
             </Link>
@@ -301,7 +303,7 @@ export default function Navbar({
               <Link
                 to="/import"
                 onClick={closeUserMenu}
-                className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
+                className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 transition-colors duration-150"
               >
                 Import Questions
               </Link>
@@ -309,14 +311,14 @@ export default function Navbar({
             <Link
               to="/settings"
               onClick={closeUserMenu}
-              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 transition-colors duration-150"
             >
               Settings
             </Link>
             <Link
               to="/contact"
               onClick={closeUserMenu}
-              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 transition-colors duration-150"
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 transition-colors duration-150"
             >
               Contact
             </Link>
@@ -325,7 +327,7 @@ export default function Navbar({
                 logout()
                 closeUserMenu()
               }}
-              className="w-full text-left font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-4 py-2 rounded-b-code transition-colors duration-150"
+              className="w-full text-left font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 rounded-b-code transition-colors duration-150"
             >
               Logout
             </button>
@@ -335,12 +337,12 @@ export default function Navbar({
 
       {/* ─── Mobile Menu Panel ─────────────────────────────────────────────────────── */}
       {isMenuOpen && user && (
-        <div className="md:hidden bg-surface border-t border-gray-800 z-50">
+        <div className="md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50">
           <div className="px-card py-2 space-y-1">
             {user?.role === 'admin' && (
               <Link
                 to="/import"
-                className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
+                className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
                 onClick={toggleMenu}
               >
                 Import Questions
@@ -348,21 +350,21 @@ export default function Navbar({
             )}
             <Link
               to="/profile"
-              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
               onClick={toggleMenu}
             >
               Profile
             </Link>
             <Link
               to="/settings"
-              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
               onClick={toggleMenu}
             >
               Settings
             </Link>
             <Link
               to="/contact"
-              className="block font-mono text-code-base text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
               onClick={toggleMenu}
             >
               Contact
@@ -373,7 +375,7 @@ export default function Navbar({
                   logout()
                   toggleMenu()
                 }}
-                className="w-full text-left font-mono text-code-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 px-3 py-2 rounded-code transition-colors duration-150"
+                className="w-full text-left font-mono text-code-sm text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
               >
                 Logout
               </button>
