@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 // Adjust this import path if your logo is stored elsewhere
 import logo from '../assets/logo.png'
@@ -15,6 +16,7 @@ export default function Navbar({
 }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { theme, toggleTheme } = useTheme()
 
   // ─── Mobile Menu (“Import / Profile / Settings / Logout”) ────────────
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -170,6 +172,43 @@ export default function Navbar({
 
         {/* ─── Right: Avatar (Desktop / Mobile) ──────────────────────────────────── */}
         <div className="ml-auto flex items-center gap-code">
+          <button
+            onClick={toggleTheme}
+            className="text-gray-400 hover:text-gray-100 focus:outline-none"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3v1m0 16v1m8.66-11.66l-.71.71M4.05 19.95l-.71-.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71.71M12 5a7 7 0 100 14 7 7 0 000-14z"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
+                />
+              </svg>
+            )}
+          </button>
           {user ? (
             <>
               {/* --- Desktop Avatar Button (hidden on mobile) --- */}
