@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { fetchUserStats } from '../api'
 
 export default function CompanyStats() {
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState('name')
 
   useEffect(() => {
     fetchUserStats()
@@ -11,6 +13,26 @@ export default function CompanyStats() {
       .catch(() => setCompanies([]))
       .finally(() => setLoading(false))
   }, [])
+
+  const sorted = useMemo(() => {
+    const list = [...companies]
+    switch (sortBy) {
+      case 'solved':
+        return list.sort((a, b) => {
+          const aPct = a.total ? a.solved / a.total : 0
+          const bPct = b.total ? b.solved / b.total : 0
+          return bPct - aPct
+        })
+      case 'unsolved':
+        return list.sort((a, b) => {
+          const aPct = a.total ? (a.total - a.solved) / a.total : 0
+          const bPct = b.total ? (b.total - b.solved) / b.total : 0
+          return bPct - aPct
+        })
+      default:
+        return list.sort((a, b) => a.company.localeCompare(b.company))
+    }
+  }, [companies, sortBy])
 
   if (loading) {
     return (
@@ -25,14 +47,42 @@ export default function CompanyStats() {
   }
 
   return (
-    <ul className="text-sm space-y-1 max-h-60 overflow-y-auto pr-1">
-      {companies.map(c => (
-        <li key={c.company} className="flex justify-between">
-          <span>{c.company}</span>
-          <span>{c.solved} / {c.total}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <label className="text-xs text-gray-400 mr-2" htmlFor="company-sort">
+          Sort by
+        </label>
+        <select
+          id="company-sort"
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value)}
+          className="bg-gray-900 border border-gray-700 rounded-code text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="name">Name</option>
+          <option value="solved">% Solved</option>
+          <option value="unsolved">% Unsolved</option>
+        </select>
+      </div>
+
+      <ul className="text-sm space-y-1 max-h-60 overflow-y-auto pr-1">
+        {sorted.map(c => {
+          const pctSolved = c.total ? Math.round((c.solved / c.total) * 100) : 0
+          return (
+            <li key={c.company} className="flex justify-between">
+              <Link
+                to={`/company/${encodeURIComponent(c.company)}`}
+                className="text-primary hover:underline"
+              >
+                {c.company}
+              </Link>
+              <span>
+                {c.solved} / {c.total} ({pctSolved}%)
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
 
