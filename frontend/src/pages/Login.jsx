@@ -28,7 +28,7 @@ export default function Login() {
 
   return (
     <div className="min-h-full flex items-center justify-center p-4">
-      <div className="relative max-w-sm w-full bg-surface border border-gray-700 rounded-card shadow-elevation px-card py-6 space-y-4">
+      <div className="relative max-w-sm w-full bg-surface border border-gray-300 dark:border-gray-700 rounded-card shadow-elevation px-card py-6 space-y-4">
         {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-gray-800/70 flex flex-col items-center justify-center z-50 rounded-card">
@@ -43,7 +43,7 @@ export default function Login() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="block text-code-sm text-gray-300 font-mono">
+            <label className="block text-code-sm text-gray-700 dark:text-gray-300 font-mono">
               Email
             </label>
             <input
@@ -52,12 +52,12 @@ export default function Login() {
               onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
-              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="block text-code-sm text-gray-300 font-mono">
+            <label className="block text-code-sm text-gray-700 dark:text-gray-300 font-mono">
               Password
             </label>
             <input
@@ -66,7 +66,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
-              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             />
           </div>
 
