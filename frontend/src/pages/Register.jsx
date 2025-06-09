@@ -109,11 +109,11 @@ export default function Register() {
 
   return (
     <div className="min-h-full flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md bg-surface border border-gray-800 rounded-card shadow-elevation px-card py-6">
+      <div className="relative w-full max-w-md bg-surface border border-gray-300 dark:border-gray-800 rounded-card shadow-elevation px-card py-6">
         {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-gray-800/70 flex items-center justify-center z-50 rounded-card">
-            <div className="w-12 h-12 border-4 border-gray-600 border-t-primary rounded-full animate-spin"></div>
+            <div className="w-12 h-12 border-4 border-gray-600 dark:border-gray-300 border-t-primary rounded-full animate-spin"></div>
           </div>
         )}
 
@@ -122,19 +122,19 @@ export default function Register() {
           <div className="flex items-center">
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                step === 1 ? 'bg-primary' : 'bg-gray-700'
+                step === 1 ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
               }`}
             >
               <span className="text-code-sm font-mono">1</span>
             </div>
             <div
               className={`w-12 h-1 mx-2 ${
-                step === 2 ? 'bg-primary' : 'bg-gray-700'
+                step === 2 ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
               }`}
             ></div>
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                step === 2 ? 'bg-primary' : 'bg-gray-700'
+                step === 2 ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
               }`}
             >
               <span className="text-code-sm font-mono">2</span>
@@ -160,7 +160,7 @@ export default function Register() {
             <form onSubmit={handleSubmitForm} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                   First Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -169,12 +169,12 @@ export default function Register() {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                   placeholder="John"
                 />
               </div>
               <div>
-                <label className="block text-code-sm text-gray-300 font-mono mb-1">
+                <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                   Last Name
                 </label>
                 <input
@@ -182,14 +182,14 @@ export default function Register() {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                   placeholder="Doe"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+              <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                 College/University
               </label>
               <UniversityAutocomplete
@@ -201,7 +201,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+              <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                 LeetCode Username
               </label>
               <input
@@ -209,13 +209,13 @@ export default function Register() {
                 name="leetcodeUsername"
                 value={formData.leetcodeUsername}
                 onChange={handleChange}
-                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                 placeholder="leetcode_john"
               />
             </div>
 
             <div>
-              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+              <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                 Email <span className="text-red-500">*</span>
               </label>
               <input
@@ -224,13 +224,13 @@ export default function Register() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                 placeholder="john@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+              <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                 Password <span className="text-red-500">*</span>
               </label>
               <input
@@ -240,13 +240,13 @@ export default function Register() {
                 onChange={handleChange}
                 required
                 minLength="8"
-                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                 placeholder="••••••••"
               />
             </div>
 
             <div>
-              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+              <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                 Confirm Password <span className="text-red-500">*</span>
               </label>
               <input
@@ -256,7 +256,7 @@ export default function Register() {
                 onChange={handleChange}
                 required
                 minLength="8"
-                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
                 placeholder="Re-enter your password"
               />
             </div>
@@ -275,12 +275,12 @@ export default function Register() {
           >
             <form onSubmit={handleSubmitOtp} className="space-y-4">
               <div>
-              <p className="text-code-sm text-gray-300 font-mono mb-4">
+              <p className="text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-4">
                 A 6-digit code was sent to{' '}
                 <span className="text-primary">{formData.email}</span>. Enter it below:
               </p>
 
-              <label className="block text-code-sm text-gray-300 font-mono mb-1">
+              <label className="block text-code-sm text-gray-600 dark:text-gray-300 font-mono mb-1">
                 Verification Code <span className="text-red-500">*</span>
               </label>
               <input
@@ -290,7 +290,7 @@ export default function Register() {
                 required
                 pattern="\d{6}"
                 maxLength="6"
-                className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50 text-center tracking-widest"
+                className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50 text-center tracking-widest"
                 placeholder="123456"
               />
             </div>
@@ -306,7 +306,7 @@ export default function Register() {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="w-full border border-gray-700 text-gray-300 font-mono text-code-base py-2 px-4 rounded-code transition-colors hover:bg-gray-800/50"
+              className="w-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-mono text-code-base py-2 px-4 rounded-code transition-colors hover:bg-gray-200 dark:hover:bg-gray-800/50"
             >
               Back
             </button>

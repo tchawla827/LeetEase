@@ -51,7 +51,8 @@ export default function UniversityAutocomplete({ value, onChange }) {
     placeholder: 'College/University',
     value: inputValue,
     onChange: handleInputChange,
-    className: 'w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50'
+    className:
+      'w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50'
   }
 
   return (
@@ -62,13 +63,13 @@ export default function UniversityAutocomplete({ value, onChange }) {
         onSuggestionsClearRequested={onSuggestionsClearRequested}
         getSuggestionValue={(sug) => sug}
         renderSuggestion={(sug) => (
-          <div className="p-2 text-code-sm text-gray-100 hover:bg-gray-800 cursor-pointer transition-colors duration-150">{sug}</div>
+          <div className="p-2 text-code-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-150">{sug}</div>
         )}
         onSuggestionSelected={onSuggestionSelected}
         inputProps={inputProps}
         theme={{
           container: 'relative',
-          suggestionsContainer: 'absolute w-full bg-gray-900 border border-gray-700 mt-1 rounded-code shadow-lg z-10',
+          suggestionsContainer: 'absolute w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 mt-1 rounded-code shadow-lg z-10',
           suggestionsList: 'list-none p-0 m-0'
         }}
       />
@@ -78,7 +79,7 @@ export default function UniversityAutocomplete({ value, onChange }) {
           value={otherValue}
           onChange={(e) => { setOtherValue(e.target.value); onChange(e.target.value) }}
           placeholder="Enter college"
-          className="w-full bg-gray-900 border border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
+          className="w-full bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-code px-3 py-2 text-code-base text-gray-900 dark:text-gray-100 font-mono placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary/50"
         />
       )}
     </div>
