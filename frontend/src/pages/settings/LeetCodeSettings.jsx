@@ -54,20 +54,20 @@ export default function LeetCodeSettings() {
 
   if (loading) {
     return (
-      <div className="font-mono text-code-base text-gray-300 p-card">
+      <div className="font-mono text-code-base text-gray-700 dark:text-gray-300 p-card">
         Loading LeetCode settings…
       </div>
     )
   }
 
   return (
-    <div className="font-mono text-code-base text-gray-300 max-w-3xl mx-auto p-card space-y-6">
+    <div className="font-mono text-code-base text-gray-700 dark:text-gray-300 max-w-3xl mx-auto p-card space-y-6">
       <h1 className="text-code-lg text-primary">LeetCode Integration</h1>
 
-      <div className="bg-surface border border-gray-800 rounded-card shadow-elevation p-card space-y-4">
+      <div className="bg-surface border border-gray-300 dark:border-gray-800 rounded-card shadow-elevation p-card space-y-4">
         <div className="space-y-4">
           <div>
-            <label className="block text-code-sm text-gray-400 mb-1">
+            <label className="block text-code-sm text-gray-600 dark:text-gray-400 mb-1">
               LeetCode Username
             </label>
             <input
@@ -75,11 +75,11 @@ export default function LeetCodeSettings() {
               value={leetcodeUsername}
               onChange={(e) => setLeetcodeUsername(e.target.value)}
               placeholder="e.g. your_handle"
-              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-code px-3 py-2 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-code-sm text-gray-400 mb-1">
+            <label className="block text-code-sm text-gray-600 dark:text-gray-400 mb-1">
               LEETCODE_SESSION Cookie
             </label>
             <input
@@ -87,7 +87,7 @@ export default function LeetCodeSettings() {
               value={leetcodeSession}
               onChange={(e) => setLeetcodeSession(e.target.value)}
               placeholder="Paste your LEETCODE_SESSION"
-              className="w-full bg-gray-800 border border-gray-700 rounded-code px-3 py-2 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-code px-3 py-2 text-code-base focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div className="flex gap-code">
