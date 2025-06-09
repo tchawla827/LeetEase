@@ -33,6 +33,18 @@ export function ThemeProvider({ children }) {
     void root.offsetWidth;
 
     const newTheme = theme === 'dark' ? 'light' : 'dark';
+
+    // Immediately toggle the class so the transition begins without waiting
+    // for React's re-render cycle. This keeps the background from flashing
+    // when switching between themes.
+    if (newTheme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+
+    // Persist the preference and update context state
+    localStorage.setItem('theme', newTheme);
     setTheme(newTheme);
 
     setTimeout(() => {
