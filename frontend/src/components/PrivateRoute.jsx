@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import api from '../api';
+import Loading from './Loading';
 
 export default function PrivateRoute({ children }) {
   const [authChecked, setAuthChecked] = useState(false);
@@ -15,7 +16,7 @@ export default function PrivateRoute({ children }) {
   }, []);
 
   if (!authChecked) {
-    return <div>Loading…</div>;
+    return <Loading />;
   }
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;

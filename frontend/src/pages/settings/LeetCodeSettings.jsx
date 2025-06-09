@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
 import { extractErrorMessage } from '../../utils/error'
+import Loading from '../../components/Loading'
 
 export default function LeetCodeSettings() {
   const { user, syncBackground } = useAuth()
@@ -53,11 +54,7 @@ export default function LeetCodeSettings() {
   }
 
   if (loading) {
-    return (
-      <div className="font-mono text-code-base text-gray-700 dark:text-gray-300 p-card">
-        Loading LeetCode settings…
-      </div>
-    )
+    return <Loading message="Loading LeetCode settings…" />
   }
 
   return (

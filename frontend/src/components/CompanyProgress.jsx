@@ -2,6 +2,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
+import Loading from './Loading'
 
 /**
  * Expects props.data to be an array of:
@@ -11,11 +12,7 @@ import PropTypes from 'prop-types'
  */
 export default function CompanyProgress({ data, loading }) {
   if (loading) {
-    return (
-      <div className="font-mono text-code-sm text-gray-500 italic">
-        Loading progress…
-      </div>
-    )
+    return <Loading message="Loading progress…" />
   }
 
   // Filter out any bucket with total === 0

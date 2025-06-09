@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchUserStats } from '../api'
 import LinearProgress from './LinearProgress'
+import Loading from './Loading'
 
 export default function CompanyStats() {
   const [companies, setCompanies] = useState([])
@@ -36,9 +37,7 @@ export default function CompanyStats() {
   }, [companies, sortBy])
 
   if (loading) {
-    return (
-      <div className="font-mono text-code-sm text-gray-500 italic">Loading company stats…</div>
-    )
+    return <Loading message="Loading company stats…" />
   }
 
   if (!companies.length) {
