@@ -35,11 +35,13 @@ body {
 /* Set scrollbar colors based on system theme */
 :root {
   /* Light theme variables */
+
   --sidebar-track: #e8e0d1;
   --sidebar-thumb: #c8bfae;
 
   --color-background: 249 245 233;
   --color-surface: 255 252 244;
+
   --color-primary: 9 105 218;
   --color-secondary: 26 127 55;
   --color-accent: 227 121 51;
@@ -53,6 +55,7 @@ body {
   --color-code-number: 0 92 197;
   --color-code-comment: 106 115 125;
   --color-code-variable: 227 98 9;
+
   --color-gray-100: 254 252 247;
   --color-gray-200: 239 231 215;
   --color-gray-300: 220 212 196;
@@ -63,6 +66,7 @@ body {
   --color-gray-800: 77 69 56;
   --color-gray-900: 52 46 36;
   --color-text: 45 42 40;
+
 }
 
 .dark {
