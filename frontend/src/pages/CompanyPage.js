@@ -6,6 +6,7 @@ import BucketsTabs from '../components/BucketsTabs'
 import QuestionsTable from '../components/QuestionsTable'
 import TopicsDashboard from '../components/TopicsDashboard'
 import CompanyProgress from '../components/CompanyProgress'
+import Loading from '../components/Loading'
 import { fetchCompanyProgress } from '../api'
 
 const BUCKET_ORDER = [
@@ -179,7 +180,9 @@ export default function CompanyPage() {
       </div>
 
       {bucketsLoading ? (
-        <div className="text-sm text-gray-500 italic">Loading buckets...</div>
+        <div className="py-4">
+          <Loading message="Loading buckets…" />
+        </div>
       ) : buckets.length > 0 ? (
         <BucketsTabs
           buckets={buckets}
@@ -227,7 +230,9 @@ export default function CompanyPage() {
               className={`transition-opacity duration-300 ${showAnalytics ? 'opacity-100' : 'opacity-0 pointer-events-none absolute inset-0'}`}
             >
               {loadingTopics ? (
-                <div className="text-sm text-gray-500 italic">Loading analytics...</div>
+                <div className="py-4">
+                  <Loading message="Loading analytics…" />
+                </div>
               ) : (
                 <div className="space-y-8">
                   {/* ── 1) CompanyProgress is now only shown here ─────────────── */}

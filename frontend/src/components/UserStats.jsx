@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import CircularProgress from './CircularProgress'
 import { fetchUserStats } from '../api'
+import Loading from './Loading'
 
 export default function UserStats() {
   const [stats, setStats] = useState(null)
@@ -14,9 +15,7 @@ export default function UserStats() {
   }, [])
 
   if (loading) {
-    return (
-      <div className="font-mono text-code-sm text-gray-500 italic">Loading stats…</div>
-    )
+    return <Loading message="Loading stats…" />
   }
 
   if (!stats) {

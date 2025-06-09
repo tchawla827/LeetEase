@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { Link } from 'react-router-dom'
 import UniversityAutocomplete from '../../components/UniversityAutocomplete.jsx'
 import { extractErrorMessage } from '../../utils/error'
+import Loading from '../../components/Loading'
 
 export default function AccountSettings() {
   const {
@@ -131,8 +132,8 @@ export default function AccountSettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="w-12 h-12 border-4 border-gray-600 dark:border-gray-300 border-t-primary rounded-full animate-spin"></div>
+      <div className="py-10">
+        <Loading />
       </div>
     )
   }

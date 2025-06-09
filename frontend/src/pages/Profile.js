@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { extractErrorMessage } from '../utils/error'
+import Loading from '../components/Loading'
 
 export default function Profile() {
   const { user, syncBackground } = useAuth()
@@ -11,11 +12,7 @@ export default function Profile() {
   const [error, setError] = useState('')
 
   if (!user) {
-    return (
-      <div className="font-mono text-code-base text-gray-700 dark:text-gray-300 p-card">
-        Loading profile…
-      </div>
-    )
+    return <Loading message="Loading profile…" />
   }
 
   const {
