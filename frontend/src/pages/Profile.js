@@ -67,13 +67,13 @@ export default function Profile() {
         <div className="flex gap-code">
           <Link
             to="/settings/account"
-            className="bg-primary hover:bg-primary/90 text-white font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
+            className="bg-primary hover:bg-[#2a7aeb] dark:hover:bg-primary/90 text-white font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
           >
             Edit Profile
           </Link>
           <button
             onClick={handleSync}
-            className="border border-primary text-primary hover:bg-primary/10 font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
+            className="border border-primary text-primary hover:bg-primary/20 dark:hover:bg-primary/10 font-mono text-code-sm py-2 px-4 rounded-code transition-colors"
           >
             Sync Questions
           </button>
