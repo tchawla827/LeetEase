@@ -17,6 +17,7 @@ export default function AccountSettings() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -56,6 +57,7 @@ export default function AccountSettings() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setMessage('')
 
     if (!formData.firstName.trim()) {
       setError('First Name is required.')
@@ -82,6 +84,7 @@ export default function AccountSettings() {
       setLoading(true)
       await editAccountProfile(payload)
       setError('')
+      setMessage('Account settings saved')
     } catch (err) {
       setError(extractErrorMessage(err) || 'Failed to update profile.')
     } finally {
@@ -140,11 +143,7 @@ export default function AccountSettings() {
         Account Settings
       </h2>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-code">
-          <p className="text-red-400 text-code-sm font-mono">{error}</p>
-        </div>
-      )}
+
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -215,6 +214,18 @@ export default function AccountSettings() {
         >
           Save Changes
         </button>
+
+        {message && (
+          <div className="mt-4 p-3 bg-green-900/50 border border-green-800 rounded-code">
+            <p className="text-green-400 text-code-sm font-mono">{message}</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-900/50 border border-red-800 rounded-code">
+            <p className="text-red-400 text-code-sm font-mono">{error}</p>
+          </div>
+        )}
       </form>
 
       <div className="mt-8">
