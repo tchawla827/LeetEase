@@ -108,7 +108,7 @@ export default function LeetCodeSettings() {
       </div>
 
       {message && (
-        <div className="bg-green-900/50 border border-green-800 rounded-code p-card text-code-base text-green-400">
+        <div className="bg-green-100 border border-green-300 text-green-700 rounded-code p-card text-code-base dark:bg-green-900/50 dark:border-green-800 dark:text-green-400">
           {message}
         </div>
       )}

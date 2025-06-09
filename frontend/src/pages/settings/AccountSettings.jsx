@@ -215,8 +215,8 @@ export default function AccountSettings() {
         </button>
 
         {message && (
-          <div className="mt-4 p-3 bg-green-900/50 border border-green-800 rounded-code">
-            <p className="text-green-400 text-code-sm font-mono">{message}</p>
+          <div className="mt-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-code dark:bg-green-900/50 dark:border-green-800 dark:text-green-400">
+            <p className="text-code-sm font-mono">{message}</p>
           </div>
         )}
 
