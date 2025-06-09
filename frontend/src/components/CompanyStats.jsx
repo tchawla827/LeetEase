@@ -50,14 +50,14 @@ export default function CompanyStats() {
   return (
     <div className="space-y-2">
       <div className="flex justify-end">
-        <label className="text-xs text-gray-400 mr-2" htmlFor="company-sort">
+        <label className="text-xs text-gray-600 dark:text-gray-400 mr-2" htmlFor="company-sort">
           Sort by
         </label>
         <select
           id="company-sort"
           value={sortBy}
           onChange={e => setSortBy(e.target.value)}
-          className="bg-gray-900 border border-gray-700 rounded-code text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-code text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="name">Name</option>
           <option value="solved">% Solved</option>
@@ -77,7 +77,7 @@ export default function CompanyStats() {
                 >
                   {c.company}
                 </Link>
-                <span className="text-gray-400">
+                <span className="text-gray-600 dark:text-gray-400">
                   {c.solved} / {c.total}
                 </span>
               </div>
