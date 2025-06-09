@@ -158,7 +158,7 @@ export default function CompanyPage() {
         "
       >
         {/* <span className="bg-gray-800 rounded-code px-3 py-1"> */}
-        <span className="bg-gray-800/20 rounded-code px-3 py-1">
+        <span className="bg-gray-200/50 dark:bg-gray-800/20 rounded-code px-3 py-1">
           {companyName}
         </span>
       </h1>
@@ -167,10 +167,10 @@ export default function CompanyPage() {
       {/* <CompanyProgress data={progressData} loading={loadingProgress} /> */}
 
       <div className="flex items-center mb-4">
-        <label className="flex items-center text-gray-300 cursor-pointer">
+        <label className="flex items-center text-gray-600 dark:text-gray-300 cursor-pointer">
           <input
             type="checkbox"
-            className="form-checkbox h-4 w-4 text-primary rounded-code focus:ring-primary border-gray-600 bg-gray-800"
+            className="form-checkbox h-4 w-4 text-primary rounded-code focus:ring-primary border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800"
             checked={showUnsolved}
             onChange={e => setShowUnsolved(e.target.checked)}
           />
@@ -192,7 +192,7 @@ export default function CompanyPage() {
           }}
         />
       ) : (
-        <p className="text-gray-400">No buckets found for this company.</p>
+        <p className="text-gray-600 dark:text-gray-400">No buckets found for this company.</p>
       )}
 
       {selectedBucket && (
@@ -203,20 +203,20 @@ export default function CompanyPage() {
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search questions..."
-              className="flex-1 px-4 py-2 bg-gray-900 text-gray-100 border border-gray-700 rounded-code placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-code placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
             />
             <button
               onClick={() => {
                 setRefreshKey(k => k + 1)
                 setSelectedTag(null)
               }}
-              className="px-4 py-2 bg-gray-800 text-gray-100 rounded-code hover:bg-gray-700 transition"
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-code hover:bg-gray-100 dark:hover:bg-gray-700 transition"
             >
               Refresh
             </button>
             <button
               onClick={() => setShowAnalytics(a => !a)}
-              className="px-4 py-2 bg-gray-800 text-gray-100 rounded-code hover:bg-gray-700 transition"
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-code hover:bg-gray-100 dark:hover:bg-gray-700 transition"
             >
               {showAnalytics ? 'Back to Questions' : 'Show Analytics'}
             </button>
@@ -231,12 +231,12 @@ export default function CompanyPage() {
               ) : (
                 <div className="space-y-8">
                   {/* ── 1) CompanyProgress is now only shown here ─────────────── */}
-                  <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+                  <div className="rounded-xl bg-surface border border-gray-300 dark:border-gray-800 shadow-elevation p-4">
                     <CompanyProgress data={progressData} loading={loadingProgress} />
                   </div>
 
                   {/* ── 2) Then show TopicsDashboard below it ────────────────── */}
-                  <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4">
+                  <div className="rounded-xl bg-surface border border-gray-300 dark:border-gray-800 shadow-elevation p-4">
                     <TopicsDashboard
                       data={topics}
                       onTagClick={tag => {
@@ -252,7 +252,7 @@ export default function CompanyPage() {
               className={`transition-opacity duration-300 ${showAnalytics ? 'opacity-0 pointer-events-none absolute inset-0' : 'opacity-100'}`}
             >
               {selectedTag && (
-                <div className="text-sm text-gray-400 mb-2">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   <strong>Filtered by topic:</strong> {selectedTag}{' '}
                   <button
                     onClick={() => setSelectedTag(null)}
@@ -263,7 +263,7 @@ export default function CompanyPage() {
                 </div>
               )}
               {/* <div className="rounded-xl bg-surface border border-gray-800 shadow-elevation p-4"> */}
-              <div className="rounded-xl bg-surface/0 border border-gray-800 shadow-elevation p-4">
+              <div className="rounded-xl bg-surface/0 border border-gray-300 dark:border-gray-800 shadow-elevation p-4">
                 <QuestionsTable
                   key={refreshKey}
                   company={companyName}
