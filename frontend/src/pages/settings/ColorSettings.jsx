@@ -46,7 +46,7 @@ export default function ColorSettings() {
   }
 
   return (
-    <div className="font-mono text-code-base text-gray-300 max-w-3xl mx-auto p-card space-y-6">
+    <div className="font-mono text-code-base text-gray-700 dark:text-gray-300 max-w-3xl mx-auto p-card space-y-6">
       <h1 className="text-code-lg text-primary">Color Settings</h1>
 
       <div className="bg-surface border border-gray-800 rounded-card shadow-elevation p-card space-y-4">
