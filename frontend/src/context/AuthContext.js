@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
   const navigate = useNavigate()
 
   // ─── Background‐sync helper ─────────────────────────────────────────────
@@ -70,6 +71,9 @@ export function AuthProvider({ children }) {
       .catch(() => {
         setUser(null)
         localStorage.removeItem('user')
+      })
+      .finally(() => {
+        setAuthChecked(true)
       })
   }, [])
 
@@ -192,6 +196,7 @@ export function AuthProvider({ children }) {
         removeProfilePhoto,
         requestReset,
         finalizeReset,
+        authChecked,
       }}
     >
       {children}
