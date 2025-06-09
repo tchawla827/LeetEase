@@ -54,38 +54,33 @@ module.exports = {
 
       // ──────────── 4) DESIGN TOKENS (COLORS) ────────────
       colors: {
-        // Dark theme base (sample palette—tweak as needed)
-        background: '#0d1117', // GitHub‐style dark bg
-        surface: '#161b22',    // Slightly elevated surfaces
-        primary: '#1f6feb',    // GitHub blue
-        secondary: '#238636',  // GitHub green
-        accent: '#f78166',     // GitHub orange
-        error: '#f85149',      // GitHub red
-        warning: '#e3b341',    // GitHub yellow
-        success: '#3fb950',    // Brighter green
-        info: '#58a6ff',       // Lighter blue
-
-        // Syntax‐highlight variants (for code blocks if you want to style in‐JS):
+        background: 'rgb(var(--color-background) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',
+        error: 'rgb(var(--color-error) / <alpha-value>)',
+        warning: 'rgb(var(--color-warning) / <alpha-value>)',
+        success: 'rgb(var(--color-success) / <alpha-value>)',
+        info: 'rgb(var(--color-info) / <alpha-value>)',
         code: {
-          keyword: '#ff7b72',   // red‐pink
-          function: '#d2a8ff',  // purple
-          string: '#a5d6ff',    // light blue
-          number: '#79c0ff',    // blue
-          comment: '#8b949e',   // gray
-          variable: '#ffa657',  // orange
+          keyword: 'rgb(var(--color-code-keyword) / <alpha-value>)',
+          function: 'rgb(var(--color-code-function) / <alpha-value>)',
+          string: 'rgb(var(--color-code-string) / <alpha-value>)',
+          number: 'rgb(var(--color-code-number) / <alpha-value>)',
+          comment: 'rgb(var(--color-code-comment) / <alpha-value>)',
+          variable: 'rgb(var(--color-code-variable) / <alpha-value>)',
         },
-
-        // Grayscale ramp (e.g. use "gray‐100", "gray‐200", … "gray‐900")
         gray: {
-          100: '#f0f6fc',
-          200: '#c9d1d9',
-          300: '#b1bac4',
-          400: '#8b949e',
-          500: '#6e7681',
-          600: '#484f58',
-          700: '#30363d',
-          800: '#21262d',
-          900: '#161b22',
+          100: 'rgb(var(--color-gray-100) / <alpha-value>)',
+          200: 'rgb(var(--color-gray-200) / <alpha-value>)',
+          300: 'rgb(var(--color-gray-300) / <alpha-value>)',
+          400: 'rgb(var(--color-gray-400) / <alpha-value>)',
+          500: 'rgb(var(--color-gray-500) / <alpha-value>)',
+          600: 'rgb(var(--color-gray-600) / <alpha-value>)',
+          700: 'rgb(var(--color-gray-700) / <alpha-value>)',
+          800: 'rgb(var(--color-gray-800) / <alpha-value>)',
+          900: 'rgb(var(--color-gray-900) / <alpha-value>)',
         },
       },
 

@@ -9,12 +9,11 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  background-color: #0d1117; /* use Tailwind “background” token (#0d1117) */
+  background-color: rgb(var(--color-background));
 }
 
-/* If you want to override Tailwind’s default body text color, you can add: */
 body {
-  color: #e2e8f0; /* a light gray for text on dark background, adjust to taste */
+  color: rgb(var(--color-text));
 }
 
 /* Custom scrollbar styling for sidebar components */
@@ -35,14 +34,66 @@ body {
 
 /* Set scrollbar colors based on system theme */
 :root {
+  /* Light theme variables */
+  --sidebar-track: #f3f4f6;
+  --sidebar-thumb: #d1d5db;
+
+  --color-background: 255 255 255;
+  --color-surface: 246 248 250;
+  --color-primary: 9 105 218;
+  --color-secondary: 26 127 55;
+  --color-accent: 227 121 51;
+  --color-error: 207 34 46;
+  --color-warning: 212 167 44;
+  --color-success: 45 164 78;
+  --color-info: 56 139 253;
+  --color-code-keyword: 215 58 73;
+  --color-code-function: 111 66 193;
+  --color-code-string: 3 47 98;
+  --color-code-number: 0 92 197;
+  --color-code-comment: 106 115 125;
+  --color-code-variable: 227 98 9;
+  --color-gray-100: 246 248 250;
+  --color-gray-200: 208 215 222;
+  --color-gray-300: 182 188 191;
+  --color-gray-400: 140 149 159;
+  --color-gray-500: 110 119 129;
+  --color-gray-600: 87 96 106;
+  --color-gray-700: 66 74 83;
+  --color-gray-800: 50 56 63;
+  --color-gray-900: 36 41 47;
+  --color-text: 36 41 47;
+}
+
+.dark {
   --sidebar-track: #161b22;
   --sidebar-thumb: #30363d;
-}
-@media (prefers-color-scheme: light) {
-  :root {
-    --sidebar-track: #f3f4f6;
-    --sidebar-thumb: #d1d5db;
-  }
+
+  --color-background: 13 17 23;
+  --color-surface: 22 27 34;
+  --color-primary: 31 111 235;
+  --color-secondary: 35 134 54;
+  --color-accent: 247 129 102;
+  --color-error: 248 81 73;
+  --color-warning: 227 179 65;
+  --color-success: 63 185 80;
+  --color-info: 88 166 255;
+  --color-code-keyword: 255 123 114;
+  --color-code-function: 210 168 255;
+  --color-code-string: 165 214 255;
+  --color-code-number: 121 192 255;
+  --color-code-comment: 139 148 158;
+  --color-code-variable: 255 166 87;
+  --color-gray-100: 240 246 252;
+  --color-gray-200: 201 209 217;
+  --color-gray-300: 177 186 196;
+  --color-gray-400: 139 148 158;
+  --color-gray-500: 110 118 129;
+  --color-gray-600: 72 79 88;
+  --color-gray-700: 48 54 61;
+  --color-gray-800: 33 38 45;
+  --color-gray-900: 22 27 34;
+  --color-text: 226 232 240;
 }
 
 /* Landing page custom styles */
