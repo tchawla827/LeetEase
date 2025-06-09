@@ -32,7 +32,7 @@ export default function SettingsSidebar({ sidebarOpen }) {
       <div className="pt-2 px-card">
         {/* Sidebar header */}
         <div className="px-6 pt-6 pb-4">
-          <h2 className="text-lg font-semibold text-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Settings
           </h2>
         </div>
@@ -48,7 +48,7 @@ export default function SettingsSidebar({ sidebarOpen }) {
                     `group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
                       isActive
                         ? 'bg-gray-700 text-white'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        : 'text-gray-800 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
                     }`
                   }
                 >
