@@ -31,12 +31,16 @@ import LeetCodeSettings  from './pages/settings/LeetCodeSettings';
 function AppContent() {
   // ─── Sidebar open/closed state for non-settings routes ────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { syncing, syncResult, user } = useAuth();
+  const { syncing, syncResult, user, authChecked } = useAuth();
   const showToast = syncing || syncResult != null;
 
   // Determine if we are on any "/settings" route
   const location = useLocation();
   const onSettingsRoute = location.pathname.startsWith('/settings');
+
+  if (!authChecked) {
+    return null;
+  }
 
   return (
     <div className="h-screen flex flex-col">
