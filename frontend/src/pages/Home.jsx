@@ -60,7 +60,7 @@ export default function Home() {
         </div>
 
         <div className="bg-surface rounded-card p-card md:col-span-2">
-          <h3 className="text-lg font-medium mb-2">By Company</h3>
+          <h3 className="text-lg font-medium mb-2">Company Progress</h3>
           <CompanyStats />
 
         </div>

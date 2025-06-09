@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchUserStats } from '../api'
+import LinearProgress from './LinearProgress'
 
 export default function CompanyStats() {
   const [companies, setCompanies] = useState([])
@@ -64,20 +65,23 @@ export default function CompanyStats() {
         </select>
       </div>
 
-      <ul className="text-sm space-y-1 max-h-60 overflow-y-auto pr-1">
+      <ul className="text-sm space-y-3 max-h-72 overflow-y-auto pr-1">
         {sorted.map(c => {
           const pctSolved = c.total ? Math.round((c.solved / c.total) * 100) : 0
           return (
-            <li key={c.company} className="flex justify-between">
-              <Link
-                to={`/company/${encodeURIComponent(c.company)}`}
-                className="text-primary hover:underline"
-              >
-                {c.company}
-              </Link>
-              <span>
-                {c.solved} / {c.total} ({pctSolved}%)
-              </span>
+            <li key={c.company} className="space-y-1">
+              <div className="flex justify-between items-center">
+                <Link
+                  to={`/company/${encodeURIComponent(c.company)}`}
+                  className="text-primary hover:underline"
+                >
+                  {c.company}
+                </Link>
+                <span className="text-gray-400">
+                  {c.solved} / {c.total}
+                </span>
+              </div>
+              <LinearProgress value={pctSolved} />
             </li>
           )
         })}
