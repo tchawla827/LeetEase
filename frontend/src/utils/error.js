@@ -11,6 +11,10 @@ export function extractErrorMessage(err) {
     if (url.includes('/auth/login')) {
       return 'Bad email or password';
     }
+    if (url.includes('/auth/me')) {
+      // Silence unauthorized errors from the initial auth check
+      return '';
+    }
     return 'Unauthorized';
   }
 
