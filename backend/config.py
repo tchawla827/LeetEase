@@ -25,6 +25,17 @@ _client = MongoClient(MONGODB_URI)
 def get_db():
     return _client.get_default_database()
 
+def ensure_indexes(db):
+    """Create indexes used across the application."""
+    db.questions.create_index('link', unique=True)
+    db.companies.create_index('name', unique=True)
+    db.company_questions.create_index(
+        [('company_id', 1), ('bucket', 1), ('question_id', 1)], unique=True
+    )
+    db.company_questions.create_index('question_id')
+    db.user_meta.create_index([('user_id', 1), ('question_id', 1)])
+    db.user_meta.create_index([('user_id', 1), ('company_id', 1), ('bucket', 1)])
+
 # ————————————————
 # Flask-JWT-Extended
 # ————————————————
