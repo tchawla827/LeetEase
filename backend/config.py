@@ -39,7 +39,8 @@ JWT_ACCESS_TOKEN_EXPIRES = timedelta(
 JWT_TOKEN_LOCATION = ["headers", "cookies"]
 # Cookie is sent only over HTTPS by default. Override with JWT_COOKIE_SECURE=False for local testing.
 JWT_COOKIE_SECURE = os.getenv("JWT_COOKIE_SECURE", "True").lower() in ("true", "1", "yes")
-JWT_COOKIE_CSRF_PROTECT = True
+JWT_COOKIE_SAMESITE = os.getenv("JWT_COOKIE_SAMESITE", "Lax")
+JWT_COOKIE_CSRF_PROTECT = False
 
 # ————————————————
 # Flask-Session (server-side sessions)
@@ -50,6 +51,8 @@ SESSION_USE_SIGNER = True
 SESSION_FILE_DIR = os.getenv("SESSION_FILE_DIR", "./.flask_session/")
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() in ("true", "1", "yes")
+WTF_CSRF_TIME_LIMIT = None
 
 # ————————————————
 # Flask-Mail (for password reset / email verification)
@@ -63,6 +66,7 @@ MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "noreply@example.com")
 
 # Base URL of the frontend (used for password reset links)
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000")
 
 # ————————————————
 # File Uploads (Profile Photos)

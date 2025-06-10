@@ -28,6 +28,9 @@ from pandas.errors import EmptyDataError
 import config
 from config import get_db
 from extensions import jwt, sess, bcrypt, mail, csrf
+from flask_cors import CORS
+from flask_wtf.csrf import generate_csrf
+import bleach
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
@@ -65,7 +68,7 @@ jwt.init_app(app)
 bcrypt.init_app(app)
 mail.init_app(app)
 csrf.init_app(app)
-
+CORS(app, supports_credentials=True, origins=app.config['CORS_ORIGINS'].split(','))
 # ─── MongoDB collections ───────────────────────────────────────────────────
 db        = get_db()
 QUEST     = db.questions
@@ -77,6 +80,18 @@ USERS     = db.users
 # Cache for per-user statistics (simple in-memory)
 STATS_CACHE = {}
 STATS_TTL_SECONDS = 60
+
+@app.after_request
+def set_csrf_cookie(response):
+    """Set a CSRF token cookie for the frontend."""
+    response.set_cookie(
+        "csrf_token",
+        generate_csrf(),
+        secure=app.config.get("SESSION_COOKIE_SECURE", True),
+        httponly=False,
+        samesite="Lax",
+    )
+    return response
 
 # ─── Error Handlers ───────────────────────────────────────────────────────
 @app.errorhandler(HTTPException)
@@ -95,6 +110,10 @@ def handle_exception(e):
 # ─── Helpers ──────────────────────────────────────────────────────────────
 def generate_otp() -> str:
     return f"{random.randint(100_000, 999_999)}"
+
+def sanitize_text(text: str) -> str:
+    """Basic HTML sanitization for user supplied strings."""
+    return bleach.clean(text or "", tags=[], strip=True)
 
 def allowed_file(filename):
     if '.' not in filename:
@@ -203,12 +222,12 @@ def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
 @app.route('/auth/register', methods=['POST'])
 def register():
     data = request.get_json() or {}
-    email             = (data.get('email') or '').strip().lower()
+    email             = sanitize_text((data.get('email') or '').strip().lower())
     password          = data.get('password')
-    first_name        = (data.get('firstName') or '').strip()
-    last_name         = (data.get('lastName') or '').strip()
-    college           = (data.get('college') or '').strip()
-    leetcode_username = (data.get('leetcodeUsername') or '').strip()
+    first_name        = sanitize_text((data.get('firstName') or '').strip())
+    last_name         = sanitize_text((data.get('lastName') or '').strip())
+    college           = sanitize_text((data.get('college') or '').strip())
+    leetcode_username = sanitize_text((data.get('leetcodeUsername') or '').strip())
 
     # Only firstName, email, and password are strictly required
     if not (email and password and first_name):
@@ -454,22 +473,22 @@ def update_account_profile():
 
     # Validate and set firstName
     if 'firstName' in data:
-        new_first = (data.get('firstName') or '').strip()
+        new_first = sanitize_text((data.get('firstName') or '').strip())
         if not new_first:
             abort(400, description='First name cannot be empty')
         update['firstName'] = new_first
 
     # lastName (optional)
     if 'lastName' in data:
-        update['lastName'] = (data.get('lastName') or '').strip() or None
+       update['lastName'] = sanitize_text((data.get('lastName') or '').strip()) or None
 
     # college (optional)
     if 'college' in data:
-        update['college'] = (data.get('college') or '').strip() or None
-
+        update['college'] = sanitize_text((data.get('college') or '').strip()) or None
+       
     # email (required & unique if changed)
     if 'email' in data:
-        new_email = (data.get('email') or '').strip().lower()
+        new_email = sanitize_text((data.get('email') or '').strip().lower())
         if not new_email:
             abort(400, description='Email cannot be empty')
         # Basic email format validation

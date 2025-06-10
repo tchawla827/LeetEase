@@ -61,10 +61,16 @@ The application will be available on `http://localhost:5000`.
 
 ### CSRF Protection
 
-All state-changing API requests are protected with [Flask-SeaSurf](https://flask-seasurf.readthedocs.io).
-Install the `Flask-SeaSurf` package (add it to `backend/requirements.txt`). The backend
-issues a `_csrf_token` cookie which the React frontend sends back in the `X-CSRFToken`
-header for POST, PUT, PATCH and DELETE requests.
+All state-changing API requests require a CSRF token. The backend issues a
+`csrf_token` cookie for every response and the React frontend sends this value
+back in the `X-CSRFToken` header for POST, PUT, PATCH and DELETE requests.
+This is provided by **Flask-WTF**'s `CSRFProtect` extension.
+
+### CORS Configuration
+
+Cross-Origin requests are allowed from the URLs defined in the `CORS_ORIGINS`
+environment variable (comma separated). Credentials such as cookies are sent
+only to these allowed origins.
 
 ## Backend Environment Variables
 

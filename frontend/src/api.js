@@ -15,7 +15,7 @@ api.interceptors.request.use(
   (config) => {
     const needsCsrf = /^(post|put|patch|delete)$/i.test(config.method);
     if (needsCsrf) {
-      const csrf = Cookies.get('_csrf_token');
+      const csrf = Cookies.get('csrf_token');
       if (csrf) {
         config.headers['X-CSRFToken'] = csrf;
       }
