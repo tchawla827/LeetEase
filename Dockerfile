@@ -24,4 +24,4 @@ COPY backend ./backend
 COPY --from=frontend /frontend/build ./frontend/build
 COPY --from=frontend /frontend/public ./frontend/public
 EXPOSE 5000
-CMD ["python", "backend/app.py"]
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:5000 -w ${WORKERS:-1} backend.app:app"]

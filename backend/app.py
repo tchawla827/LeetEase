@@ -25,8 +25,12 @@ from werkzeug.exceptions import HTTPException
 import pandas as pd
 from pandas.errors import EmptyDataError
 
-import config
-from config import get_db
+try:
+    from . import config
+    from .config import get_db
+except ImportError:  # Allow running as a script
+    import config
+    from config import get_db
 from extensions import jwt, sess, bcrypt, mail, csrf
 from flask_cors import CORS
 from flask_wtf.csrf import generate_csrf
