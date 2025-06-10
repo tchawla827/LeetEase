@@ -59,6 +59,12 @@ The application will be available on `http://localhost:5000`.
 
 - Use HTTPS in production so that authentication works correctly.
 
+### CSRF Protection
+
+All state-changing API requests are protected with [Flask-SeaSurf](https://flask-seasurf.readthedocs.io).
+Install the `Flask-SeaSurf` package (add it to `backend/requirements.txt`). The backend
+issues a `_csrf_token` cookie which the React frontend sends back in the `X-CSRFToken`
+header for POST, PUT, PATCH and DELETE requests.
 
 ## Backend Environment Variables
 

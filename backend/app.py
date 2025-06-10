@@ -27,7 +27,7 @@ from pandas.errors import EmptyDataError
 
 import config
 from config import get_db
-from extensions import jwt, sess, bcrypt, mail
+from extensions import jwt, sess, bcrypt, mail, csrf
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
@@ -64,6 +64,7 @@ sess.init_app(app)
 jwt.init_app(app)
 bcrypt.init_app(app)
 mail.init_app(app)
+csrf.init_app(app)
 
 # ─── MongoDB collections ───────────────────────────────────────────────────
 db        = get_db()
