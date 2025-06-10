@@ -1,42 +1,52 @@
 # LeetEase
 
 
-This project contains a Flask backend and a React frontend. The backend can run in either development or production mode.
+This project contains a Flask backend and a React frontend. No `node_modules` directory or Python virtual environment is committed to the repository. All dependencies are installed locally or in Docker containers.
 
-## Backend
+The backend can run in either development or production mode.
 
-1. Install Python dependencies:
+## Running Locally
 
-```bash
-pip install -r backend/requirements.txt
-```
+The project can be run directly on your machine using Python and Node.js.
 
-2. Create a `.env` file in `backend/` with the required settings (see `backend/.env.example`).
+1. Install **Python 3.11+** and **Node.js 20+**.
+2. (Optional) create a virtual environment:
 
-3. Run the server.
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-### Development
+3. Install backend dependencies:
 
-Enable Flask's debug mode by setting `FLASK_DEBUG=1`:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
 
-```bash
-export FLASK_DEBUG=1
-python backend/app.py
-```
+4. Install frontend dependencies and build the React app:
 
-### Production
+   ```bash
+   cd frontend
+   npm install
+   npm run build
+   cd ..
+   ```
 
-By default, debug mode is disabled. Simply run:
+5. Copy the example environment file and adjust values:
 
-```bash
-python backend/app.py
-```
+   ```bash
+   cp backend/.env.example backend/.env
+   # edit backend/.env
+   ```
 
-For a production deployment you may wish to run the app using a WSGI server such as Gunicorn.
+6. Ensure MongoDB is running locally (or start it via Docker with `docker compose up mongo`).
+7. Start the Flask server:
 
-This repository contains a Flask backend and React frontend. The backend uses only
-Python dependencies, so `backend/package.json` and `backend/package-lock.json`
-have been removed.
+   ```bash
+   FLASK_DEBUG=1 python backend/app.py
+   ```
+
+The application will be available on `http://localhost:5000`.
 
 ## Deployment Notes
 
@@ -65,18 +75,22 @@ Define them in your `.env` file or export them in your deployment environment.
 
 ## Docker and Docker Compose
 
-The project ships with a `docker-compose.yml` that starts both MongoDB and the
-Flask application. Copy `backend/.env.example` to `backend/.env` and adjust the
-values as needed. Docker Compose will read this file when creating the
-`app` service.
+Docker provides an isolated environment that installs all Python and Node.js
+dependencies for you.
 
-Build and run the containers with:
+1. Copy the example environment file:
 
-```bash
-docker compose up --build
-```
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
 
-The backend (and bundled React frontend) will be available on
-`http://localhost:5000`. MongoDB runs inside the Compose network and is not
-exposed by default.
+2. Build and start the containers:
+
+   ```bash
+   docker compose up --build
+   ```
+
+The backend and built React frontend will be available on
+`http://localhost:5000`. MongoDB runs inside the Compose network and persists
+data in the `mongo-data` volume.
 
