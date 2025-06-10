@@ -1291,4 +1291,7 @@ if __name__ == '__main__':
     # _startup_sync()
     debug_env = os.getenv('FLASK_DEBUG', '').lower()
     debug = debug_env in ('1', 'true', 'yes')
-    app.run(debug=debug)
+
+    host = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
+    port = int(os.getenv('FLASK_RUN_PORT', 5000))
+    app.run(host=host, port=port, debug=debug)
