@@ -27,10 +27,10 @@ from pandas.errors import EmptyDataError
 
 try:
     from . import config
-    from .config import get_db
+    from .config import get_db, ensure_indexes
 except ImportError:  # Allow running as a script
     import config
-    from config import get_db
+    from config import get_db, ensure_indexes
 
 try:
     from .extensions import jwt, sess, bcrypt, mail, csrf
@@ -79,6 +79,11 @@ csrf.init_app(app)
 CORS(app, supports_credentials=True, origins=app.config['CORS_ORIGINS'].split(','))
 # ─── MongoDB collections ───────────────────────────────────────────────────
 db        = get_db()
+if os.getenv("AUTO_INDEX", "False").lower() in ("true", "1", "yes"):
+    try:
+        ensure_indexes(db)
+    except Exception as e:
+        app.logger.warning("Index setup failed: %s", e)
 QUEST     = db.questions
 COMPANIES = db.companies
 CQ        = db.company_questions
@@ -913,26 +918,29 @@ def list_questions(company, bucket):
     results = list(CQ.aggregate(pipeline))
 
     uid = get_jwt_identity()
+    qids = [str(r['q']['_id']) for r in results]
+
+    meta_generic = {
+        m['question_id']: m
+        for m in USER_META.find({'user_id': uid, 'question_id': {'$in': qids}})
+    }
+
+    meta_filter = {'user_id': uid, 'company_id': co['_id'], 'question_id': {'$in': qids}}
+    if bucket != 'All':
+        meta_filter['bucket'] = bucket
+    meta_specific = {m['question_id']: m for m in USER_META.find(meta_filter)}
+
     out = []
     for doc in results:
         q = doc['q']
-        meta_query = {
-            'user_id': uid,
-            'question_id': str(q['_id'])
-        }
-        if bucket != 'All':
-            meta_query.update({'company_id': co['_id'], 'bucket': bucket})
-        else:
-            meta_query.update({'company_id': co['_id']})
-        meta = USER_META.find_one(meta_query)
-        if not meta:
-            meta = USER_META.find_one({'user_id': uid, 'question_id': str(q['_id'])})
+        qid_str = str(q['_id'])
+        meta = meta_specific.get(qid_str) or meta_generic.get(qid_str)
         solved = meta.get('solved', False) if meta else False
         if showUnsolved and solved:
             continue
 
         out.append({
-            'id':             str(q['_id']),
+            'id':             qid_str,
             'title':          q['title'],
             'link':           q['link'],
             'frequency':      doc.get('frequency'),
@@ -984,13 +992,12 @@ def update_question_meta(question_id):
     if company_id:
         query.update({'company_id': company_id, 'bucket': bucket})
 
-    USER_META.update_one(
+    meta = USER_META.find_one_and_update(
         query,
         {'$set': update_fields | ({'company_id': company_id, 'bucket': bucket} if company_id else {})},
         upsert=True,
+        return_document=True,
     )
-
-    meta = USER_META.find_one(query)
     resp = {
         'question_id':    question_id,
         'solved':         meta.get('solved', False),
@@ -1027,18 +1034,35 @@ def batch_update_questions_meta():
         company_id = co['_id']
 
 
-    results = []
+    from pymongo import UpdateOne
+
+    ops = []
     for qid in ids:
         query = {'user_id': uid, 'question_id': qid}
         if company_id:
             query.update({'company_id': company_id, 'bucket': bucket})
-
-        USER_META.update_one(
-            query,
-            {'$set': update_fields | ({'company_id': company_id, 'bucket': bucket} if company_id else {})},
-            upsert=True,
+        ops.append(
+            UpdateOne(
+                query,
+                {'$set': update_fields | ({'company_id': company_id, 'bucket': bucket} if company_id else {})},
+                upsert=True,
+            )
         )
-        meta = USER_META.find_one(query)
+
+    if ops:
+        USER_META.bulk_write(ops)
+
+    filter_query = {'user_id': uid, 'question_id': {'$in': ids}}
+    if company_id:
+        filter_query.update({'company_id': company_id, 'bucket': bucket})
+    meta_docs = {
+        m['question_id']: m
+        for m in USER_META.find(filter_query)
+    }
+
+    results = []
+    for qid in ids:
+        meta = meta_docs.get(qid, {})
         results.append({
             'question_id':    qid,
             'solved':         meta.get('solved', False),
