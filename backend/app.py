@@ -211,18 +211,25 @@ def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
         for q in QUEST.find({}, {"_id":1,"link":1})
     }
 
-    updated = 0
+    from pymongo import UpdateOne
+
+    ops = []
     for slug in solved_slugs:
         qid = slug_to_qid.get(slug)
         if not qid:
             continue
-        USER_META.update_one(
-            {"user_id": user_id, "question_id": qid},
-            {"$set": {"solved": True}},
-            upsert=True
+        ops.append(
+            UpdateOne(
+                {"user_id": user_id, "question_id": qid},
+                {"$set": {"solved": True}},
+                upsert=True,
+            )
         )
-        updated += 1
-    return updated
+
+    if ops:
+        USER_META.bulk_write(ops)
+
+    return len(ops)
 
 # =============================================================================
 # Authentication & User Management
