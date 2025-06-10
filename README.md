@@ -63,3 +63,20 @@ If either variable is missing, the application will raise a `RuntimeError` at st
 Define them in your `.env` file or export them in your deployment environment.
 
 
+## Docker and Docker Compose
+
+The project ships with a `docker-compose.yml` that starts both MongoDB and the
+Flask application. Copy `backend/.env.example` to `backend/.env` and adjust the
+values as needed. Docker Compose will read this file when creating the
+`app` service.
+
+Build and run the containers with:
+
+```bash
+docker compose up --build
+```
+
+The backend (and bundled React frontend) will be available on
+`http://localhost:5000`. MongoDB runs inside the Compose network and is not
+exposed by default.
+
