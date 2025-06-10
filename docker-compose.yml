@@ -7,10 +7,18 @@ services:
       - mongo-data:/data/db
   app:
     build: .
+    environment:
+      APP_SERVER: ${APP_SERVER:-gunicorn}
     ports:
       - "5000:5000"
     env_file:
       - backend/.env
+    command: >
+      sh -c 'if [ "$APP_SERVER" = "flask" ]; then \
+                flask --app backend.app run --host=0.0.0.0 --port 5000; \
+              else \
+                gunicorn -b 0.0.0.0:5000 -w ${WORKERS:-1} backend.app:app; \
+              fi'
     depends_on:
       - mongo
 volumes:

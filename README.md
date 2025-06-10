@@ -96,10 +96,12 @@ dependencies for you.
    cp backend/.env.example backend/.env
    ```
 
-2. Build and start the containers:
+2. Build and start the containers. By default the backend runs with Gunicorn.
+   Set `APP_SERVER=flask` to use Flask's built-in server instead.
 
    ```bash
-   docker compose up --build
+   docker compose up --build            # Gunicorn
+   # APP_SERVER=flask docker compose up # Flask dev server
    ```
 
 The backend and built React frontend will be available on
