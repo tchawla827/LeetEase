@@ -109,3 +109,15 @@ The backend and built React frontend will be available on
 data in the `mongo-data` volume. Profile photos uploaded by users are stored in
 the `profile-photos` volume so they survive container restarts.
 
+## Deploying on Render
+
+When deploying to [Render](https://render.com), the container's filesystem is
+ephemeral. Attach a persistent disk (typically mounted at `/var/data`) and set
+the `PROFILE_PHOTOS_DIR` environment variable to a folder on that disk, e.g.:
+
+```bash
+PROFILE_PHOTOS_DIR=/var/data/profile-photos
+```
+
+This ensures uploaded profile photos remain available across deploys.
+
