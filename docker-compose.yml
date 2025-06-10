@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:7
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/leetease
+      - SECRET_KEY=change-me
+      - JWT_SECRET_KEY=change-me
+    depends_on:
+      - mongo
+volumes:
+  mongo-data:

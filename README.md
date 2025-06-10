@@ -11,7 +11,7 @@ This project contains a Flask backend and a React frontend. The backend can run 
 pip install -r backend/requirements.txt
 ```
 
-2. Create a `.env` file in `backend/` with the required settings as described in `backend/config.py`.
+2. Create a `.env` file in `backend/` with the required settings (see `backend/.env.example`).
 
 3. Run the server.
 
@@ -52,9 +52,11 @@ have been removed.
 
 ## Backend Environment Variables
 
-The backend expects certain security keys to be set before it starts:
+The backend expects certain security keys to be set before it starts. Copy
+`backend/.env.example` to `.env` and provide values for at least:
 
 - `SECRET_KEY`: Flask's secret key used for sessions.
+- `MONGODB_URI`: Mongo connection string.
 - `JWT_SECRET_KEY`: key used to sign JWT tokens.
 
 If either variable is missing, the application will raise a `RuntimeError` at startup.
