@@ -40,13 +40,22 @@ from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_mail import Message
 
 load_dotenv()
-app = Flask(__name__)
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+app = Flask(
+    __name__,
+    static_folder=os.path.join(BASE_DIR, 'frontend', 'build', 'static'),
+    template_folder=os.path.join(BASE_DIR, 'frontend', 'build')
+)
 app.config.from_object(config)
 
 # Ensure upload folder exists
 os.makedirs(
-    app.config.get('UPLOAD_FOLDER',
-                   os.path.join(os.getcwd(), 'uploads', 'profile_photos')),
+    app.config.get(
+        'UPLOAD_FOLDER',
+        os.path.join(BASE_DIR, 'uploads', 'profile_photos')
+    ),
     exist_ok=True
 )
 
@@ -1270,8 +1279,8 @@ def serve_react(path: str):
     if path.startswith('api/') or path.startswith('uploads/'):
         abort(404)
 
-    build_dir = os.path.join(os.getcwd(), 'frontend', 'build')
-    public_dir = os.path.join(os.getcwd(), 'frontend', 'public')
+    build_dir = os.path.join(BASE_DIR, 'frontend', 'build')
+    public_dir = os.path.join(BASE_DIR, 'frontend', 'public')
 
     target = os.path.join(build_dir, path)
     if os.path.exists(target) and os.path.isfile(target):
