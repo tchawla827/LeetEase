@@ -112,18 +112,35 @@ body {
   background: linear-gradient(
     135deg,
     rgba(31, 111, 235, 0.15) 0%,
-    rgba(13, 17, 23, 1) 100%
+    rgb(var(--color-surface)) 100%
+  );
+}
+
+.dark .hero-gradient {
+  background: linear-gradient(
+    135deg,
+    rgba(31, 111, 235, 0.15) 0%,
+    #0d1117 100%
   );
 }
 
 .dashboard-placeholder {
   background: linear-gradient(
     135deg,
+    rgb(var(--color-background)) 0%,
+    rgb(var(--color-surface)) 100%
+  );
+  border: 1px solid rgb(var(--color-gray-300));
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.dark .dashboard-placeholder {
+  background: linear-gradient(
+    135deg,
     #0d1117 0%,
     #161b22 100%
   );
   border: 1px solid #363b46;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .feature-bullet::before {

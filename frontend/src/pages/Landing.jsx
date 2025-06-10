@@ -20,7 +20,7 @@ export default function Landing() {
     return () => observer.disconnect()
   }, [])
   return (
-    <div className="min-h-full flex flex-col text-gray-200 font-mono">
+    <div className="min-h-full flex flex-col font-mono text-gray-900 dark:text-gray-200">
 
       {/* Hero */}
       <section className="hero-gradient flex flex-col items-center justify-center text-center py-section px-card flex-grow reveal opacity-0 translate-y-4">
@@ -64,7 +64,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 py-8 px-card">
+      <footer className="border-t border-gray-300 dark:border-gray-800 py-8 px-card">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-gray-400">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
             <img src={logo} alt="LeetEase logo" className="h-16 w-auto" />
