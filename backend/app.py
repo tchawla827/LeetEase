@@ -31,7 +31,11 @@ try:
 except ImportError:  # Allow running as a script
     import config
     from config import get_db
-from extensions import jwt, sess, bcrypt, mail, csrf
+
+try:
+    from .extensions import jwt, sess, bcrypt, mail, csrf
+except ImportError:  # Fallback for script execution
+    from extensions import jwt, sess, bcrypt, mail, csrf
 from flask_cors import CORS
 from flask_wtf.csrf import generate_csrf
 import bleach
