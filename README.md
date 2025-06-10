@@ -106,5 +106,6 @@ dependencies for you.
 
 The backend and built React frontend will be available on
 `http://localhost:5000`. MongoDB runs inside the Compose network and persists
-data in the `mongo-data` volume.
+data in the `mongo-data` volume. Profile photos uploaded by users are stored in
+the `profile-photos` volume so they survive container restarts.
 

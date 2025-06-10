@@ -13,6 +13,8 @@ services:
       - "5000:5000"
     env_file:
       - backend/.env
+    volumes:
+      - profile-photos:/app/backend/uploads/profile_photos
     command: >
       sh -c 'if [ "$APP_SERVER" = "flask" ]; then \
                 flask --app backend.app run --host=0.0.0.0 --port 5000; \
@@ -23,3 +25,4 @@ services:
       - mongo
 volumes:
   mongo-data:
+  profile-photos:
