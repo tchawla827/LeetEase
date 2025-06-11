@@ -45,6 +45,9 @@ function AppContent() {
     return null;
   }
 
+  // Utility to detect mobile viewport
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
     <div className="h-screen flex flex-col">
       {showToast && <SyncToast />}
@@ -62,6 +65,13 @@ function AppContent() {
           <SettingsSidebar sidebarOpen={sidebarOpen} />
         ) : (
           <Sidebar sidebarOpen={sidebarOpen} />
+        )}
+
+        {sidebarOpen && isMobile && (
+          <div
+            className="md:hidden fixed inset-0 top-16 bg-black/30 z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
 
         {/* Main content area gets the SVG pattern and dark background */}
