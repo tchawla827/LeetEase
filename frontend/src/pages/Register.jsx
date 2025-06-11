@@ -1,13 +1,16 @@
 // frontend/src/pages/Register.jsx
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import api from '../api'
 import { extractErrorMessage } from '../utils/error'
 import UniversityAutocomplete from '../components/UniversityAutocomplete.jsx'
 
 export default function Register() {
   const navigate = useNavigate()
+  const { loginWithGoogle } = useAuth()
+  const googleBtn = useRef(null)
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -106,6 +109,33 @@ export default function Register() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID
+    if (!window.google || !clientId || !googleBtn.current) return
+
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (resp) => {
+        setError('')
+        setLoading(true)
+        try {
+          await loginWithGoogle(resp.credential)
+          navigate('/home')
+        } catch (err) {
+          setError(extractErrorMessage(err))
+        } finally {
+          setLoading(false)
+        }
+      }
+    })
+
+    window.google.accounts.id.renderButton(googleBtn.current, {
+      theme: 'outline',
+      size: 'large',
+      width: '250'
+    })
+  }, [loginWithGoogle, navigate])
 
   return (
     <div className="min-h-full flex items-center justify-center p-4">
@@ -268,6 +298,7 @@ export default function Register() {
             >
               Request OTP
             </button>
+            <div className="flex justify-center mt-4" ref={googleBtn}></div>
             </form>
           </div>
           <div
