@@ -5,13 +5,13 @@ It is built with a **Flask** backend and a **React** frontend styled with **Tail
 Questions are stored in MongoDB in a normalised schema and users can track their progress and sync solved problems directly from LeetCode.
 
 <!-- TODO: Screenshot of landing/home page -->
-![Home](docs/screenshots/home.png)
+![Home](screenshots/home.png)
 <!-- TODO: Screenshot of company buckets page -->
-![Company buckets](docs/screenshots/company.png)
+![Company](screenshots/company.png)
 <!-- TODO: Screenshot of statistics/profile page -->
-![Profile](docs/screenshots/profile.png)
+![Analytics](screenshots/analytics.png)
 <!-- TODO: Screenshot of settings page -->
-![Settings](docs/screenshots/settings.png)
+![Settings](screenshots/settings.png)
 
 ## Features
 
