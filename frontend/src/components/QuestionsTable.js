@@ -328,8 +328,16 @@ export default function QuestionsTable({
                   </td>
 
                   {/* Title */}
-                  <td className="px-4 py-3" style={{ color: getTitleColor(q) }}>
-                    {q.title}
+                  <td className="px-4 py-3">
+                    <a
+                      href={q.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: getTitleColor(q) }}
+                      className="hover:underline"
+                    >
+                      {q.title}
+                    </a>
                   </td>
 
                   {/* Frequency */}
