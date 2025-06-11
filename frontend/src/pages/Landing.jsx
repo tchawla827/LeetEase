@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import logo from '../assets/logo.svg'
+import placeholderImage from '../assets/placeholder_image.png'
 
 export default function Landing() {
   useEffect(() => {
@@ -51,7 +52,11 @@ export default function Landing() {
             </ul>
           </div>
           <div className="rounded-xl p-2 bg-white border border-gray-300 shadow-elevation dark:dashboard-placeholder">
-            <div className="bg-surface rounded-lg h-64" />
+            <img
+              src={placeholderImage}
+              alt="App preview"
+              className="bg-surface rounded-lg h-64 w-full object-cover"
+            />
           </div>
         </div>
       </section>
