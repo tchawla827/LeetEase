@@ -57,6 +57,10 @@ export function resetPassword(token, newPassword) {
   return api.post('/auth/reset-password', { token, newPassword });
 }
 
+export function googleLogin(idToken) {
+  return api.post('/auth/google', { idToken });
+}
+
 // ───────────────────────────────
 // Profile – Account & Photo
 // ───────────────────────────────

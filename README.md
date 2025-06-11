@@ -80,9 +80,19 @@ The backend expects certain security keys to be set before it starts. Copy
 - `SECRET_KEY`: Flask's secret key used for sessions.
 - `MONGODB_URI`: Mongo connection string.
 - `JWT_SECRET_KEY`: key used to sign JWT tokens.
+- `GOOGLE_CLIENT_ID`: OAuth client ID for Google sign-in.
 
 If either variable is missing, the application will raise a `RuntimeError` at startup.
 Define them in your `.env` file or export them in your deployment environment.
+
+## Frontend Environment Variables
+
+The React frontend uses the following variables:
+
+- `REACT_APP_GOOGLE_CLIENT_ID`: Client ID used by Google Identity Services.
+- `REACT_APP_API_URL`: Base URL of the backend API.
+
+Copy `frontend/.env.example` to `frontend/.env` and set these as needed when running `npm start`.
 
 
 ## Docker and Docker Compose

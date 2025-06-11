@@ -10,7 +10,8 @@ import api, {
   getAccountProfile,
   updateAccountProfile,
   uploadProfilePhoto,
-  deleteProfilePhoto
+  deleteProfilePhoto,
+  googleLogin
 } from '../api'
 
 const AuthContext = createContext()
@@ -114,6 +115,18 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const loginWithGoogle = async (credential) => {
+    await googleLogin(credential)
+    const res = await api.get('/auth/me')
+
+    setUser(res.data)
+    localStorage.setItem('user', JSON.stringify(res.data))
+
+    if (res.data.leetcode_username) {
+      syncBackground().catch(() => {})
+    }
+  }
+
   // ─── logout + redirect ──────────────────────────────────────────────────
   const logout = async () => {
     try {
@@ -182,6 +195,7 @@ export function AuthProvider({ children }) {
         user,
         setUser,
         login,
+        loginWithGoogle,
         logout,
         register,
         verifyRegistrationOtp,

@@ -79,6 +79,9 @@ MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "noreply@example.com")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000")
 
+# Google OAuth
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
 # ————————————————
 # File Uploads (Profile Photos)
 # ————————————————
