@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { extractErrorMessage } from '../utils/error'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
+  const googleBtn = useRef(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -25,6 +26,33 @@ export default function Login() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID
+    if (!window.google || !clientId || !googleBtn.current) return
+
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (resp) => {
+        setError('')
+        setLoading(true)
+        try {
+          await loginWithGoogle(resp.credential)
+          navigate('/home')
+        } catch (err) {
+          setError(extractErrorMessage(err))
+        } finally {
+          setLoading(false)
+        }
+      }
+    })
+
+    window.google.accounts.id.renderButton(googleBtn.current, {
+      theme: 'outline',
+      size: 'large',
+      width: '250'
+    })
+  }, [loginWithGoogle, navigate])
 
   return (
     <div className="min-h-full flex items-center justify-center p-4">
@@ -81,6 +109,7 @@ export default function Login() {
           >
             {loading ? 'Signing in…' : 'Login'}
           </button>
+          <div className="flex justify-center mt-4" ref={googleBtn}></div>
         </form>
         <p className="text-center text-code-sm text-gray-400 font-mono mt-2">
           <Link to="/forgot-password" className="text-primary hover:underline">

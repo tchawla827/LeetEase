@@ -85,6 +85,15 @@ The backend expects certain security keys to be set before it starts. Copy
 If either variable is missing, the application will raise a `RuntimeError` at startup.
 Define them in your `.env` file or export them in your deployment environment.
 
+## Frontend Environment Variables
+
+The React frontend uses the following variables:
+
+- `REACT_APP_GOOGLE_CLIENT_ID`: Client ID used by Google Identity Services.
+- `REACT_APP_API_URL`: Base URL of the backend API.
+
+Copy `frontend/.env.example` to `frontend/.env` and set these as needed when running `npm start`.
+
 
 ## Docker and Docker Compose
 
