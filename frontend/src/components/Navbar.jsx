@@ -35,6 +35,9 @@ export default function Navbar({
   // Reference to the dropdown portal container (so clicks “outside” can close it)
   const portalRef = useRef(null)
 
+  // Reference to the mobile dropdown panel
+  const menuRef = useRef(null)
+
   // Utility to detect “mobile” (i.e. narrower than Tailwind’s md breakpoint)
   const isMobile = () => window.innerWidth < 768
 
@@ -96,10 +99,30 @@ export default function Navbar({
     }
 
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
     }
   }, [])
+
+  // Close the mobile menu when tapping/clicking outside of it
+  useEffect(() => {
+    if (!isMenuOpen) return
+    function handleMenuOutside(event) {
+      const clickedInsideAvatar = avatarButtonRef.current?.contains(event.target)
+      const clickedInsideMenu = menuRef.current?.contains(event.target)
+      if (!clickedInsideAvatar && !clickedInsideMenu) {
+        setIsMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleMenuOutside)
+    document.addEventListener('touchstart', handleMenuOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleMenuOutside)
+      document.removeEventListener('touchstart', handleMenuOutside)
+    }
+  }, [isMenuOpen])
 
   // Handle sidebar toggle button: if we’re on mobile, also close the mobile menu.
   // On desktop, leave the desktop dropdown alone.
@@ -336,9 +359,12 @@ export default function Navbar({
         )}
 
       {/* ─── Mobile Menu Panel ─────────────────────────────────────────────────────── */}
-      {isMenuOpen && user && (
-        <div className="md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50">
-          <div className="px-card py-2 space-y-1">
+        {isMenuOpen && user && (
+          <div
+            ref={menuRef}
+            className="md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50"
+          >
+            <div className="px-card py-2 space-y-1">
             {user?.role === 'admin' && (
               <Link
                 to="/import"
