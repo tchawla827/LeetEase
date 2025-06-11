@@ -2,8 +2,12 @@ import React, { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import logo from '../assets/logo.svg'
 import placeholderImage from '../assets/placeholder_image.png'
+import placeholderImageLight from '../assets/placeholder_image_light.png'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Landing() {
+  const { theme } = useTheme()
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -53,7 +57,7 @@ export default function Landing() {
           </div>
           <div className="rounded-xl p-2 bg-white border border-gray-300 shadow-elevation dark:dashboard-placeholder">
             <img
-              src={placeholderImage}
+              src={theme === 'dark' ? placeholderImage : placeholderImageLight}
               alt="App preview"
               className="bg-surface rounded-lg h-64 w-full object-cover"
             />
