@@ -1,33 +1,32 @@
 import { useState, useEffect } from 'react'
 import { fetchUserStats } from '../api'
 
-let cached = null
-let inflight = null
-
 export default function useUserStats() {
-  const [stats, setStats] = useState(cached)
-  const [loading, setLoading] = useState(!cached)
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (cached) return
+    let cancelled = false
 
-    if (!inflight) {
-      inflight = fetchUserStats()
-        .then(res => {
-          cached = res.data
-          setStats(cached)
-        })
-        .catch(() => {
-          cached = null
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    } else {
-      inflight.finally(() => {
-        setStats(cached)
-        setLoading(false)
+    fetchUserStats()
+      .then(res => {
+        if (!cancelled) {
+          setStats(res.data)
+        }
       })
+      .catch(() => {
+        if (!cancelled) {
+          setStats(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
