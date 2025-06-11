@@ -105,6 +105,7 @@ dependencies for you.
    ```bash
    cp backend/.env.example backend/.env
    cp frontend/.env.example frontend/.env
+
    ```
 
    When running locally over HTTP make sure the following values are set:
@@ -113,9 +114,13 @@ dependencies for you.
    # allow cookies over HTTP
    echo "JWT_COOKIE_SECURE=False" >> backend/.env
 
-   # point the React app to the local API
-   sed -i "s|REACT_APP_API_URL=.*|REACT_APP_API_URL=http://localhost:5000|" frontend/.env
+   # use the same origin for API requests
+   sed -i "s|REACT_APP_API_URL=.*|REACT_APP_API_URL=|" frontend/.env
    ```
+
+   Leaving `REACT_APP_API_URL` blank lets the React app talk to whatever host
+   serves it, so the site works from both `http://localhost:5000` and
+   `https://leetease.onrender.com`.
 
 2. Build and start the containers. By default the backend runs with Gunicorn.
    Set `APP_SERVER=flask` to use Flask's built-in server instead.
