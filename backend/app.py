@@ -15,10 +15,11 @@ import re
 from dotenv import load_dotenv
 from flask import (
     Flask, jsonify, request, abort,
-    session, send_from_directory, current_app
+    session, send_file, send_from_directory
 )
 from bson import ObjectId
 from bson.errors import InvalidId
+import gridfs
 from werkzeug.exceptions import HTTPException
 
 # ─── New imports for CSV/Excel parsing ─────────────────────────────────
@@ -61,14 +62,6 @@ app = Flask(
 )
 app.config.from_object(config)
 
-# Ensure upload folder exists
-os.makedirs(
-    app.config.get(
-        'UPLOAD_FOLDER',
-        os.path.join(BASE_DIR, 'uploads', 'profile_photos')
-    ),
-    exist_ok=True
-)
 
 # ─── Initialize extensions ────────────────────────────────────────────────
 sess.init_app(app)
@@ -89,6 +82,7 @@ COMPANIES = db.companies
 CQ        = db.company_questions
 USER_META = db.user_meta
 USERS     = db.users
+FS        = gridfs.GridFS(db)
 
 # Cache for per-user statistics (simple in-memory)
 STATS_CACHE = {}
@@ -134,13 +128,17 @@ def allowed_file(filename):
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in getattr(config, 'ALLOWED_EXTENSIONS', {'png','jpg','jpeg','gif'})
 
-# ─── Route to serve profile photos ────────────────────────────────────────
-@app.route('/uploads/profile_photos/<filename>')
-@jwt_required()
-def serve_profile_photo(filename):
-    """Serve a saved profile photo from the upload folder."""
-    upload_folder = current_app.config.get('UPLOAD_FOLDER')
-    return send_from_directory(upload_folder, filename)
+def serialize_user(user):
+    """Convert a MongoDB user doc to JSON-friendly dict with photo URL."""
+    if not user:
+        return None
+    user = dict(user)
+    user['id'] = str(user.pop('_id'))
+    photo_id = user.pop('profilePhotoId', None)
+    user['profilePhoto'] = f"/api/profile/photo/{photo_id}" if photo_id else None
+    return user
+
+
 
 # ─── LeetCode API endpoints & fetch helpers ───────────────────────────────
 PROB_API        = "https://leetcode.com/api/problems/algorithms/"
@@ -298,7 +296,7 @@ def verify():
         'college':           reg.get('college'),
         'leetcode_username': reg.get('leetcodeUsername'),
         'leetcode_session':  None,
-        'profilePhoto':      None,
+        'profilePhotoId':    None,
         'settings': {
             'colorMode': 'leet',
             'palette': {
@@ -354,8 +352,7 @@ def me():
     user = USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
     if not user:
         abort(404, description='User not found')
-    user['id'] = str(user.pop('_id'))
-    return jsonify(user), 200
+    return jsonify(serialize_user(user)), 200
 
 @app.route('/auth/forgot-password', methods=['POST'])
 def forgot_password():
@@ -477,8 +474,7 @@ def get_account_profile():
     user = USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
     if not user:
         abort(404, description='User not found')
-    user['id'] = str(user.pop('_id'))
-    return jsonify(user), 200
+    return jsonify(serialize_user(user)), 200
 
 @app.route('/profile/account', methods=['PATCH'])
 @jwt_required()
@@ -536,66 +532,76 @@ def update_account_profile():
     USERS.update_one({'_id': ObjectId(uid)}, {'$set': update})
     # Return updated user (excluding password)
     updated_user = USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
-    updated_user['id'] = str(updated_user.pop('_id'))
-    return jsonify(updated_user), 200
+    return jsonify(serialize_user(updated_user)), 200
 
 @app.route('/profile/account/photo', methods=['POST'])
 @jwt_required()
 def upload_profile_photo():
-    """
-    Upload (or replace) a profile photo. Expects multipart-form data with 'photo' field.
-    Saves the file as <userId>.<ext> in UPLOAD_FOLDER and updates the 'profilePhoto' URL in the user doc.
-    """
+    """Upload (or replace) a profile photo to GridFS."""
     uid = get_jwt_identity()
     if 'photo' not in request.files:
         abort(400, description='No file part in the request')
+
     file = request.files['photo']
     if file.filename == '':
         abort(400, description='No selected file')
     if not allowed_file(file.filename):
         abort(400, description='File type not allowed')
 
-    # Save the file under a deterministic name: <userId>.<ext>
     ext = file.filename.rsplit('.', 1)[1].lower()
     filename = f"{uid}.{ext}"
-    upload_folder = app.config.get('UPLOAD_FOLDER')
-    filepath = os.path.join(upload_folder, filename)
+
     try:
-        file.save(filepath)
+        # remove old photo if exists
+        old = USERS.find_one({'_id': ObjectId(uid)}, {'profilePhotoId': 1})
+        if old and old.get('profilePhotoId'):
+            try:
+                FS.delete(old['profilePhotoId'])
+            except Exception as e:
+                app.logger.warning("Could not delete old photo %s: %s", old['profilePhotoId'], e)
+
+        file_id = FS.put(file.stream, filename=filename, content_type=file.content_type)
     except Exception as e:
         app.logger.error("Failed to save profile photo: %s", e)
         abort(500, description='Failed to save photo')
 
-    # Construct a URL for serving the photo
-    photo_url = f"/uploads/profile_photos/{filename}"
-    USERS.update_one({'_id': ObjectId(uid)}, {'$set': {'profilePhoto': photo_url}})
+    USERS.update_one({'_id': ObjectId(uid)}, {'$set': {'profilePhotoId': file_id}})
+    photo_url = f"/api/profile/photo/{file_id}"
     return jsonify({'profilePhotoUrl': photo_url}), 200
 
 @app.route('/profile/account/photo', methods=['DELETE'])
 @jwt_required()
 def delete_profile_photo():
-    """
-    Remove the existing profile photo (if any). Deletes the file from disk and unsets 'profilePhoto'.
-    """
+    """Remove the existing profile photo from GridFS and unset the field."""
     uid = get_jwt_identity()
-    user = USERS.find_one({'_id': ObjectId(uid)}, {'profilePhoto': 1})
+    user = USERS.find_one({'_id': ObjectId(uid)}, {'profilePhotoId': 1})
     if not user:
         abort(404, description='User not found')
 
-    photo_url = user.get('profilePhoto')
-    if photo_url:
-        # Extract filename from URL
-        filename = photo_url.split('/')[-1]
-        upload_folder = app.config.get('UPLOAD_FOLDER')
-        filepath = os.path.join(upload_folder, filename)
+    photo_id = user.get('profilePhotoId')
+    if photo_id:
         try:
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            FS.delete(photo_id)
         except Exception as e:
-            app.logger.warning("Could not delete photo file %s: %s", filepath, e)
-    # Unset in database regardless
-    USERS.update_one({'_id': ObjectId(uid)}, {'$unset': {'profilePhoto': ""}})
+            app.logger.warning("Could not delete photo file %s: %s", photo_id, e)
+
+    USERS.update_one({'_id': ObjectId(uid)}, {'$unset': {'profilePhotoId': ""}})
     return jsonify({'msg': 'Profile photo removed'}), 200
+
+
+@app.route('/api/profile/photo/<file_id>', methods=['GET'])
+@jwt_required()
+def get_profile_photo(file_id):
+    """Stream a profile photo stored in GridFS."""
+    try:
+        oid = ObjectId(file_id)
+    except (InvalidId, TypeError):
+        abort(400, description='Invalid file id')
+    try:
+        grid_out = FS.get(oid)
+    except gridfs.NoFile:
+        abort(404, description='File not found')
+    return send_file(BytesIO(grid_out.read()), mimetype=grid_out.content_type)
 
 # =============================================================================
 # Health-check
