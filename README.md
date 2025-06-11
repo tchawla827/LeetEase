@@ -1,137 +1,115 @@
 # LeetEase
 
+LeetEase is a full stack web application that helps you practise company specific LeetCode questions.
+It is built with a **Flask** backend and a **React** frontend styled with **Tailwind CSS**.
+Questions are stored in MongoDB in a normalised schema and users can track their progress and sync solved problems directly from LeetCode.
 
-This project contains a Flask backend and a React frontend. No `node_modules` directory or Python virtual environment is committed to the repository. All dependencies are installed locally or in Docker containers.
+<!-- TODO: Screenshot of landing/home page -->
+![Home](docs/screenshots/home.png)
+<!-- TODO: Screenshot of company buckets page -->
+![Company buckets](docs/screenshots/company.png)
+<!-- TODO: Screenshot of statistics/profile page -->
+![Profile](docs/screenshots/profile.png)
+<!-- TODO: Screenshot of settings page -->
+![Settings](docs/screenshots/settings.png)
 
-The backend can run in either development or production mode.
+## Features
+
+- Email registration with OTP verification and password reset
+- Google sign–in
+- Manage account details and upload a profile photo
+- Synchronise solved questions from LeetCode using your session cookie
+- Browse company question buckets, filter by tags and mark problems as solved
+- View personal statistics and company progress dashboards
+- Admin utilities to import questions from CSV/Excel and backfill tags
+- Secure APIs using JWT cookies with CSRF protection and CORS configuration
 
 ## Running Locally
 
-The project can be run directly on your machine using Python and Node.js.
-
 1. Install **Python 3.11+** and **Node.js 20+**.
-2. (Optional) create a virtual environment:
-
+2. (Optional) create and activate a virtual environment
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
-
-3. Install backend dependencies:
-
+3. Install backend dependencies
    ```bash
    pip install -r backend/requirements.txt
    ```
-
-4. Install frontend dependencies and build the React app:
-
+4. Build the React frontend
    ```bash
    cd frontend
    npm install
    npm run build
    cd ..
    ```
-
-5. Copy the example environment file and adjust values:
-
+5. Copy the example environment file and adjust values
    ```bash
    cp backend/.env.example backend/.env
    # edit backend/.env
    ```
-
-6. Ensure MongoDB is running locally (or start it via Docker with `docker compose up mongo`).
-7. Start the Flask server:
-
+6. Ensure MongoDB is running (e.g. `docker compose up mongo`)
+7. Start the Flask server
    ```bash
    FLASK_DEBUG=1 python backend/app.py
    ```
 
-The application will be available on `http://localhost:5000`.
+The site will be available at `http://localhost:5000`.
 
-## Deployment Notes
+## Docker
 
-- JWT authentication cookies are configured to be sent only over HTTPS by default.
-- When running the backend locally without HTTPS, set:
+Docker removes the need to install Python or Node locally.
 
-  ```bash
-  export JWT_COOKIE_SECURE=False
-  ```
-
-- Use HTTPS in production so that authentication works correctly.
-
-### CSRF Protection
-
-All state-changing API requests require a CSRF token. The backend issues a
-`csrf_token` cookie for every response and the React frontend sends this value
-back in the `X-CSRFToken` header for POST, PUT, PATCH and DELETE requests.
-This is provided by **Flask-WTF**'s `CSRFProtect` extension.
-
-### CORS Configuration
-
-Cross-Origin requests are allowed from the URLs defined in the `CORS_ORIGINS`
-environment variable (comma separated). Credentials such as cookies are sent
-only to these allowed origins.
-
-## Backend Environment Variables
-
-The backend expects certain security keys to be set before it starts. Copy
-`backend/.env.example` to `.env` and provide values for at least:
-
-- `SECRET_KEY`: Flask's secret key used for sessions.
-- `MONGODB_URI`: Mongo connection string.
-- `JWT_SECRET_KEY`: key used to sign JWT tokens.
-- `GOOGLE_CLIENT_ID`: OAuth client ID for Google sign-in.
-
-If either variable is missing, the application will raise a `RuntimeError` at startup.
-Define them in your `.env` file or export them in your deployment environment.
-
-## Frontend Environment Variables
-
-The React frontend uses the following variables:
-
-- `REACT_APP_GOOGLE_CLIENT_ID`: Client ID used by Google Identity Services.
-- `REACT_APP_API_URL`: Base URL of the backend API.
-
-Copy `frontend/.env.example` to `frontend/.env` and set these as needed when running `npm start`.
-
-
-## Docker and Docker Compose
-
-Docker provides an isolated environment that installs all Python and Node.js
-dependencies for you.
-
-1. Copy the example environment file for the backend **and** frontend:
-
+1. Copy the example environment files for backend **and** frontend
    ```bash
    cp backend/.env.example backend/.env
    cp frontend/.env.example frontend/.env
-
    ```
-
-   When running locally over HTTP make sure the following values are set:
-
+   When using HTTP locally set
    ```bash
-   # allow cookies over HTTP
    echo "JWT_COOKIE_SECURE=False" >> backend/.env
-
-   # use the same origin for API requests
    sed -i "s|REACT_APP_API_URL=.*|REACT_APP_API_URL=|" frontend/.env
    ```
-
-   Leaving `REACT_APP_API_URL` blank lets the React app talk to whatever host
-   serves it, so the site works from both `http://localhost:5000` and
-   `https://leetease.onrender.com`.
-
-2. Build and start the containers. By default the backend runs with Gunicorn.
-   Set `APP_SERVER=flask` to use Flask's built-in server instead.
-
+2. Build and start the containers (Gunicorn by default)
    ```bash
-   docker compose up --build            # Gunicorn
-   # APP_SERVER=flask docker compose up # Flask dev server
+   docker compose up --build
+   # APP_SERVER=flask docker compose up  # use Flask dev server
    ```
 
-The backend and built React frontend will be available on
-`http://localhost:5000`. MongoDB runs inside the Compose network and persists
-data in the `mongo-data` volume. Profile photos uploaded by users are stored in
-the `profile-photos` volume so they survive container restarts.
+The backend and the built React app will run on `http://localhost:5000`.
+MongoDB stores its data in the `mongo-data` volume and uploaded profile photos
+are kept in the `profile-photos` volume.
+
+## Backend Environment Variables
+
+Set these in `backend/.env` or in your deployment environment:
+
+- `SECRET_KEY` &ndash; Flask secret key used for sessions
+- `MONGODB_URI` &ndash; Mongo connection string
+- `JWT_SECRET_KEY` &ndash; key used to sign JWT tokens
+- `GOOGLE_CLIENT_ID` &ndash; OAuth client ID for Google sign‑in
+
+The app will fail to start if any required variable is missing.
+
+### CSRF Protection
+
+Every response sets a `csrf_token` cookie. The frontend sends this token in the
+`X-CSRFToken` header for all POST, PUT, PATCH and DELETE requests. This behaviour
+comes from **Flask-WTF**'s `CSRFProtect` extension.
+
+### CORS Configuration
+
+Cross‑origin requests are allowed from the URLs listed in `CORS_ORIGINS`. Only
+those origins may send credentials such as cookies.
+
+## Frontend Environment Variables
+
+Create `frontend/.env` and set:
+
+- `REACT_APP_GOOGLE_CLIENT_ID` &ndash; Google Identity Services client ID
+- `REACT_APP_API_URL` &ndash; base URL of the backend API (leave empty when
+  served from the same origin)
+
+Use `npm start` in the `frontend` directory to run the development server if
+needed.
 
