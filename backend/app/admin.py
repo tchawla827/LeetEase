@@ -10,7 +10,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 import pandas as pd
 from pandas.errors import EmptyDataError
 
+
 import app as app_module
+
 from . import fetch_leetcode_tags
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api')
@@ -20,7 +22,9 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/api')
 @jwt_required()
 def import_questions():
     uid = get_jwt_identity()
+
     user = app_module.USERS.find_one({'_id': ObjectId(uid)})
+
     if user.get('role') != 'admin':
         abort(403, description='Only admin can import questions')
 
@@ -76,7 +80,9 @@ def import_questions():
 
         ldiff = str(row.get('difficulty') or '').capitalize().strip()
 
+
         q_doc = app_module.QUEST.find_one_and_update(
+
             {'link': link},
             {'$setOnInsert': {
                 'link': link,
@@ -88,7 +94,9 @@ def import_questions():
         )
         qid = q_doc['_id']
 
+
         c_doc = app_module.COMPANIES.find_one_and_update(
+
             {'name': company},
             {'$setOnInsert': {'name': company}},
             upsert=True,
@@ -96,7 +104,9 @@ def import_questions():
         )
         cid = c_doc['_id']
 
+
         app_module.CQ.replace_one(
+
             {'company_id': cid, 'question_id': qid, 'bucket': bucket},
             {
                 'company_id': cid,
@@ -116,11 +126,13 @@ def import_questions():
 @jwt_required()
 def backfill_tags():
     uid = get_jwt_identity()
+
     user = app_module.USERS.find_one({'_id': ObjectId(uid)})
     if user.get('role') != 'admin':
         abort(403, description='Only admin can run backfill')
 
     cursor = app_module.QUEST.find({}, {'link': 1})
+
     slugs = [
         (q['_id'], q['link'].rstrip('/').split('/')[-1])
         for q in cursor
@@ -138,7 +150,9 @@ def backfill_tags():
             except Exception as e:
                 current_app.logger.warning('Failed to backfill tags for %s: %s', qid, e)
                 tags = []
+
             app_module.QUEST.update_one({'_id': qid}, {'$set': {'tags': tags}})
+
 
     return jsonify({'msg': 'Backfill complete'}), 200
 

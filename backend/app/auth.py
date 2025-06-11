@@ -13,8 +13,10 @@ from datetime import timedelta
 import threading
 import requests
 
+
 import app as app_module
 from . import bcrypt, mail
+
 from . import sanitize_text, generate_otp, serialize_user, sync_leetcode
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -37,7 +39,9 @@ def register():
     if not re.match(email_regex, email):
         abort(400, description='Invalid email format')
 
+
     if app_module.USERS.find_one({'email': email}):
+
         abort(400, description='Email already registered')
 
     otp = generate_otp()
@@ -68,7 +72,9 @@ def verify():
         abort(400, description='No registration data found')
 
     pw_hash = bcrypt.generate_password_hash(reg['password']).decode('utf-8')
+
     app_module.USERS.insert_one({
+
         'email': reg['email'],
         'password': pw_hash,
         'role': 'user',
@@ -99,7 +105,9 @@ def login():
 
     email = (data.get('email') or '').strip().lower()
     password = data.get('password')
+
     user = app_module.USERS.find_one({'email': email})
+
     if not user or not bcrypt.check_password_hash(user['password'], password):
         abort(401, description='Bad email or password')
 
@@ -147,7 +155,9 @@ def google_login():
     if not email:
         abort(400, description='Email not available')
 
+
     user = app_module.USERS.find_one({'email': email})
+
     if not user:
         user_doc = {
             'email': email,
@@ -169,7 +179,9 @@ def google_login():
                 }
             }
         }
+
         result = app_module.USERS.insert_one(user_doc)
+
         user_doc['_id'] = result.inserted_id
         user = user_doc
 
@@ -191,7 +203,9 @@ def logout():
 @jwt_required()
 def me():
     uid = get_jwt_identity()
+
     user = app_module.USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
+
     if not user:
         abort(404, description='User not found')
     return jsonify(serialize_user(user)), 200
@@ -200,7 +214,9 @@ def me():
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.get_json() or {}
+
     user = app_module.USERS.find_one({'email': (data.get('email') or '').strip().lower()})
+
     if not user:
         abort(400, description='Email not found')
 
@@ -242,6 +258,8 @@ def reset_password():
         abort(400, description='New password is required')
 
     pw_hash = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
     app_module.USERS.update_one({'_id': ObjectId(uid)}, {'$set': {'password': pw_hash}})
+
     return jsonify({'msg': 'Password has been reset'}), 200
 

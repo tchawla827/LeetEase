@@ -3,12 +3,15 @@
 from io import BytesIO
 import re
 from flask import Blueprint, jsonify, request, abort, current_app, send_file
+
 import app as app_module
+
 from . import bcrypt
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson import ObjectId
 from bson.errors import InvalidId
 import gridfs
+
 
 from . import sanitize_text, allowed_file, serialize_user, sync_leetcode
 
@@ -25,7 +28,9 @@ def save_leetcode_profile():
         abort(400, description='Both username and sessionCookie are required')
 
     uid = get_jwt_identity()
+
     app_module.USERS.update_one(
+
         {'_id': ObjectId(uid)},
         {'$set': {
             'leetcode_username': username,
@@ -39,7 +44,9 @@ def save_leetcode_profile():
 @jwt_required()
 def manual_leetcode_sync():
     uid = get_jwt_identity()
+
     user = app_module.USERS.find_one({'_id': ObjectId(uid)})
+
     if not user or not user.get('leetcode_username') or not user.get('leetcode_session'):
         abort(400, description='Username & sessionCookie must be set first')
 
@@ -71,8 +78,10 @@ def update_profile_settings():
         abort(400, description="No valid settings to update")
 
     uid = get_jwt_identity()
+
     app_module.USERS.update_one({'_id': ObjectId(uid)}, {'$set': update})
     result = app_module.USERS.find_one({'_id': ObjectId(uid)}, {'settings': 1, '_id': 0})
+
     return jsonify(result.get('settings', {})), 200
 
 
@@ -80,7 +89,9 @@ def update_profile_settings():
 @jwt_required()
 def get_account_profile():
     uid = get_jwt_identity()
+
     user = app_module.USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
+
     if not user:
         abort(404, description='User not found')
     return jsonify(serialize_user(user)), 200
@@ -112,7 +123,9 @@ def update_account_profile():
         email_regex = r'^[^@\s]+@[^@\s]+\.[^@\s]+$'
         if not re.match(email_regex, new_email):
             abort(400, description='Invalid email format')
+
         existing = app_module.USERS.find_one({'email': new_email})
+
         if existing and str(existing['_id']) != uid:
             abort(400, description='Email is already in use')
         update['email'] = new_email
@@ -127,8 +140,10 @@ def update_account_profile():
     if not update:
         abort(400, description='No valid fields to update')
 
+
     app_module.USERS.update_one({'_id': ObjectId(uid)}, {'$set': update})
     updated_user = app_module.USERS.find_one({'_id': ObjectId(uid)}, {'password': 0})
+
     return jsonify(serialize_user(updated_user)), 200
 
 
@@ -149,6 +164,7 @@ def upload_profile_photo():
     filename = f"{uid}.{ext}"
 
     try:
+
         old = app_module.USERS.find_one({'_id': ObjectId(uid)}, {'profilePhotoId': 1})
         if old and old.get('profilePhotoId'):
             try:
@@ -157,11 +173,14 @@ def upload_profile_photo():
                 current_app.logger.warning("Could not delete old photo %s: %s", old['profilePhotoId'], e)
 
         file_id = app_module.FS.put(file.stream, filename=filename, content_type=file.content_type)
+
     except Exception as e:
         current_app.logger.error("Failed to save profile photo: %s", e)
         abort(500, description='Failed to save photo')
 
+
     app_module.USERS.update_one({'_id': ObjectId(uid)}, {'$set': {'profilePhotoId': file_id}})
+
     photo_url = f"/api/profile/photo/{file_id}"
     return jsonify({'profilePhotoUrl': photo_url}), 200
 
@@ -170,18 +189,22 @@ def upload_profile_photo():
 @jwt_required()
 def delete_profile_photo():
     uid = get_jwt_identity()
+
     user = app_module.USERS.find_one({'_id': ObjectId(uid)}, {'profilePhotoId': 1})
+
     if not user:
         abort(404, description='User not found')
 
     photo_id = user.get('profilePhotoId')
     if photo_id:
         try:
+
             app_module.FS.delete(photo_id)
         except Exception as e:
             current_app.logger.warning("Could not delete photo file %s: %s", photo_id, e)
 
     app_module.USERS.update_one({'_id': ObjectId(uid)}, {'$unset': {'profilePhotoId': ""}})
+
     return jsonify({'msg': 'Profile photo removed'}), 200
 
 
@@ -193,7 +216,9 @@ def get_profile_photo(file_id):
     except (InvalidId, TypeError):
         abort(400, description='Invalid file id')
     try:
+
         grid_out = app_module.FS.get(oid)
+
     except gridfs.NoFile:
         abort(404, description='File not found')
     return send_file(BytesIO(grid_out.read()), mimetype=grid_out.content_type)

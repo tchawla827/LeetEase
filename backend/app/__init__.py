@@ -7,7 +7,9 @@ from datetime import timedelta
 import requests
 import re
 import gridfs
+
 from dotenv import load_dotenv
+
 from flask import (
     Flask, jsonify, request, abort, session, send_file,
     send_from_directory, current_app
@@ -23,6 +25,7 @@ from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_mail import Message
 import bleach
 
+
 try:
     from .. import config
     from ..config import get_db, ensure_indexes
@@ -31,6 +34,7 @@ except ImportError:  # Fallback for direct execution or tests
     import config
     from config import get_db, ensure_indexes
     from extensions import jwt, sess, bcrypt, mail, csrf
+
 
 # Globals for easy mocking in tests
 USERS = None
