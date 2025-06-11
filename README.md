@@ -1,115 +1,149 @@
-# LeetEase
+# 🌐 [LeetEase – Live Demo](https://leetease.onrender.com/)
 
-LeetEase is a full stack web application that helps you practise company specific LeetCode questions.
-It is built with a **Flask** backend and a **React** frontend styled with **Tailwind CSS**.
-Questions are stored in MongoDB in a normalised schema and users can track their progress and sync solved problems directly from LeetCode.
+> Your personal tracker for company-specific LeetCode preparation.
 
-<!-- TODO: Screenshot of landing/home page -->
+**LeetEase** is a full-stack web application to help you practice **company-specific LeetCode** questions efficiently.
+
+Built with a **Flask** backend and a **React + Tailwind CSS** frontend, LeetEase lets users sync solved questions directly from LeetCode, track progress, and explore curated question sets organized by companies and preparation timelines.
+
+---
+
+## 🚀 Features
+
+- 🔐 **Email authentication** with OTP verification and password reset  
+- 🔗 **Google Sign-In** using OAuth  
+- 🧑‍💻 **Profile management** with photo upload  
+- 🔄 **LeetCode sync** using session cookies  
+- 🏢 **Company-wise bucket system**: 30 days, 3 months, 6 months, and more  
+- ✅ **Question tagging and solve tracking**  
+- 📊 **Progress analytics and visual stats**  
+- 🛠️ **Admin tools** for importing questions from CSV/Excel  
+- 🛡️ **JWT-based secure APIs**, CSRF protection, and strict CORS configuration  
+
+---
+
+## 🖼️ UI Previews
+
+### 🏠 Home Page  
+> Overview of the platform with quick access to features and navigation  
 ![Home](screenshots/home.png)
-<!-- TODO: Screenshot of company buckets page -->
+
+---
+
+### 🏢 Company Buckets  
+> Browse and solve curated questions by company and preparation timeline  
 ![Company](screenshots/company.png)
-<!-- TODO: Screenshot of statistics/profile page -->
+
+---
+
+### 📈 Analytics & Progress  
+> View your stats and company-wise progress  
 ![Analytics](screenshots/analytics.png)
-<!-- TODO: Screenshot of settings page -->
+
+---
+
+### ⚙️ Settings Page  
+> Manage account info, preferences, sync options, and more  
 ![Settings](screenshots/settings.png)
 
-## Features
+---
 
-- Email registration with OTP verification and password reset
-- Google sign–in
-- Manage account details and upload a profile photo
-- Synchronise solved questions from LeetCode using your session cookie
-- Browse company question buckets, filter by tags and mark problems as solved
-- View personal statistics and company progress dashboards
-- Admin utilities to import questions from CSV/Excel and backfill tags
-- Secure APIs using JWT cookies with CSRF protection and CORS configuration
+## 🧪 Local Development Setup
 
-## Running Locally
+> Prerequisites: **Python 3.11+**, **Node.js 20+**
 
-1. Install **Python 3.11+** and **Node.js 20+**.
-2. (Optional) create and activate a virtual environment
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-3. Install backend dependencies
-   ```bash
-   pip install -r backend/requirements.txt
-   ```
-4. Build the React frontend
-   ```bash
-   cd frontend
-   npm install
-   npm run build
-   cd ..
-   ```
-5. Copy the example environment file and adjust values
-   ```bash
-   cp backend/.env.example backend/.env
-   # edit backend/.env
-   ```
-6. Ensure MongoDB is running (e.g. `docker compose up mongo`)
-7. Start the Flask server
-   ```bash
-   FLASK_DEBUG=1 python backend/app.py
-   ```
+```bash
+# Optional: Setup Python virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-The site will be available at `http://localhost:5000`.
+# 1. Install backend dependencies
+pip install -r backend/requirements.txt
 
-## Docker
+# 2. Build the frontend
+cd frontend
+npm install
+npm run build
+cd ..
 
-Docker removes the need to install Python or Node locally.
+# 3. Copy and edit environment variables
+cp backend/.env.example backend/.env
+# Edit values in backend/.env
 
-1. Copy the example environment files for backend **and** frontend
-   ```bash
-   cp backend/.env.example backend/.env
-   cp frontend/.env.example frontend/.env
-   ```
-   When using HTTP locally set
-   ```bash
-   echo "JWT_COOKIE_SECURE=False" >> backend/.env
-   sed -i "s|REACT_APP_API_URL=.*|REACT_APP_API_URL=|" frontend/.env
-   ```
-2. Build and start the containers (Gunicorn by default)
-   ```bash
-   docker compose up --build
-   # APP_SERVER=flask docker compose up  # use Flask dev server
-   ```
+# 4. Ensure MongoDB is running
+docker compose up mongo
 
-The backend and the built React app will run on `http://localhost:5000`.
-MongoDB stores its data in the `mongo-data` volume and uploaded profile photos
-are kept in the `profile-photos` volume.
+# 5. Start the backend server
+FLASK_DEBUG=1 python backend/app.py
+```
 
-## Backend Environment Variables
+🔗 Visit: `http://localhost:5000`
 
-Set these in `backend/.env` or in your deployment environment:
+---
 
-- `SECRET_KEY` &ndash; Flask secret key used for sessions
-- `MONGODB_URI` &ndash; Mongo connection string
-- `JWT_SECRET_KEY` &ndash; key used to sign JWT tokens
-- `GOOGLE_CLIENT_ID` &ndash; OAuth client ID for Google sign‑in
+## 🐳 Running with Docker (Recommended)
 
-The app will fail to start if any required variable is missing.
+> Avoid installing Python/Node locally. Use containerized development.
 
-### CSRF Protection
+```bash
+# 1. Copy and configure environment files
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 
-Every response sets a `csrf_token` cookie. The frontend sends this token in the
-`X-CSRFToken` header for all POST, PUT, PATCH and DELETE requests. This behaviour
-comes from **Flask-WTF**'s `CSRFProtect` extension.
+# 2. For local HTTP:
+echo "JWT_COOKIE_SECURE=False" >> backend/.env
+sed -i "s|REACT_APP_API_URL=.*|REACT_APP_API_URL=|" frontend/.env
 
-### CORS Configuration
+# 3. Build and run containers
+docker compose up --build
+```
 
-Cross‑origin requests are allowed from the URLs listed in `CORS_ORIGINS`. Only
-those origins may send credentials such as cookies.
+🔗 Visit: `http://localhost:5000`
 
-## Frontend Environment Variables
+---
 
-Create `frontend/.env` and set:
+## ⚙️ Configuration
 
-- `REACT_APP_GOOGLE_CLIENT_ID` &ndash; Google Identity Services client ID
-- `REACT_APP_API_URL` &ndash; base URL of the backend API (leave empty when
-  served from the same origin)
+### 🔒 Backend Environment Variables (`backend/.env`)
 
-Use `npm start` in the `frontend` directory to run the development server if
-needed.
+| Key                | Description                          |
+|--------------------|--------------------------------------|
+| `SECRET_KEY`       | Flask session key                    |
+| `MONGODB_URI`      | MongoDB connection string            |
+| `JWT_SECRET_KEY`   | JWT signing key                      |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID               |
 
+> App won't start if any are missing
+
+---
+
+### 🛡️ CSRF & CORS
+
+- **CSRF**: `csrf_token` cookie set by backend and sent via `X-CSRFToken` header from frontend.
+- **CORS**: Only origins listed in `CORS_ORIGINS` may access the API with credentials.
+
+---
+
+### 🎯 Frontend Environment (`frontend/.env`)
+
+| Key                         | Description                                      |
+|-----------------------------|--------------------------------------------------|
+| `REACT_APP_GOOGLE_CLIENT_ID` | Google Identity Services client ID              |
+| `REACT_APP_API_URL`         | Backend API URL (empty if same origin)          |
+
+---
+
+## 🧑‍💻 Development Scripts
+
+```bash
+# Run frontend dev server
+cd frontend
+npm start
+```
+
+```bash
+# Run backend dev server
+FLASK_DEBUG=1 python backend/app.py
+```
+
+---
