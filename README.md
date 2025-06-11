@@ -105,6 +105,7 @@ dependencies for you.
    ```bash
    cp backend/.env.example backend/.env
    cp frontend/.env.example frontend/.env
+
    ```
 
    When running locally over HTTP make sure the following values are set:
