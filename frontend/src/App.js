@@ -30,7 +30,10 @@ import LeetCodeSettings  from './pages/settings/LeetCodeSettings';
 
 function AppContent() {
   // ─── Sidebar open/closed state for non-settings routes ────────────────
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Default to closed on mobile (<768px) and open otherwise
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
   const { syncing, syncResult, user, authChecked } = useAuth();
   const showToast = syncing || syncResult != null;
 
