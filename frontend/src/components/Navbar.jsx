@@ -20,6 +20,8 @@ export default function Navbar({
 
   // ─── Mobile Menu (“Import / Profile / Settings / Logout”) ────────────
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  // Keep menu mounted during transition
+  const [isMenuVisible, setIsMenuVisible] = useState(false)
 
   // ─── Desktop Avatar Dropdown ─────────────────────────────────────────
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -73,15 +75,26 @@ export default function Navbar({
     }
   }
 
-  // Toggle mobile profile menu: if we’re about to open it AND we’re on mobile,
-  // then force the sidebar closed first.
+  // ----- Mobile Menu Helpers -----
+  const openMenu = () => {
+    if (isMobile()) closeSidebar()
+    // Mount before starting animation
+    setIsMenuVisible(true)
+    requestAnimationFrame(() => setIsMenuOpen(true))
+  }
+
+  const closeMenu = () => {
+    setIsMenuOpen(false)
+    setTimeout(() => setIsMenuVisible(false), 300)
+  }
+
+  // Toggle mobile profile menu
   const toggleMenu = () => {
-    setIsMenuOpen(prev => {
-      if (!prev && isMobile()) {
-        closeSidebar()
-      }
-      return !prev
-    })
+    if (isMenuOpen) {
+      closeMenu()
+    } else {
+      openMenu()
+    }
   }
 
   // Whenever you click anywhere on the page, if that click is outside
@@ -113,7 +126,9 @@ export default function Navbar({
       const clickedInsideAvatar = avatarButtonRef.current?.contains(event.target)
       const clickedInsideMenu = menuRef.current?.contains(event.target)
       if (!clickedInsideAvatar && !clickedInsideMenu) {
-        setIsMenuOpen(false)
+
+        closeMenu()
+
       }
     }
     document.addEventListener('mousedown', handleMenuOutside)
@@ -128,7 +143,7 @@ export default function Navbar({
   // On desktop, leave the desktop dropdown alone.
   const handleSidebarToggle = () => {
     if (isMobile()) {
-      setIsMenuOpen(false)
+      closeMenu()
     }
     toggleSidebar()
   }
@@ -359,10 +374,14 @@ export default function Navbar({
         )}
 
       {/* ─── Mobile Menu Panel ─────────────────────────────────────────────────────── */}
-        {isMenuOpen && user && (
+
+        {isMenuVisible && user && (
           <div
             ref={menuRef}
-            className="md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50"
+            className={`md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50 origin-top transform transition-all duration-300 ease-out ${
+              isMenuOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-95 pointer-events-none'
+            }`}
+
           >
             <div className="px-card py-2 space-y-1">
             {user?.role === 'admin' && (
