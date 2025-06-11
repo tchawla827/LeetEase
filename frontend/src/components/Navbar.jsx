@@ -126,7 +126,9 @@ export default function Navbar({
       const clickedInsideAvatar = avatarButtonRef.current?.contains(event.target)
       const clickedInsideMenu = menuRef.current?.contains(event.target)
       if (!clickedInsideAvatar && !clickedInsideMenu) {
+
         closeMenu()
+
       }
     }
     document.addEventListener('mousedown', handleMenuOutside)
@@ -372,12 +374,14 @@ export default function Navbar({
         )}
 
       {/* ─── Mobile Menu Panel ─────────────────────────────────────────────────────── */}
+
         {isMenuVisible && user && (
           <div
             ref={menuRef}
             className={`md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50 origin-top transform transition-all duration-300 ease-out ${
               isMenuOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-95 pointer-events-none'
             }`}
+
           >
             <div className="px-card py-2 space-y-1">
             {user?.role === 'admin' && (
