@@ -82,11 +82,6 @@ CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000")
 # ————————————————
 # File Uploads (Profile Photos)
 # ————————————————
-# Base directory of the project
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
-# Directory where profile photos will be stored
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads", "profile_photos")
 # Maximum file size (in bytes). E.g., 2 MB max.
 MAX_CONTENT_LENGTH = 2 * 1024 * 1024
 
