@@ -12,17 +12,19 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
 import app as app_module
-from app import app
+from app import create_app
+from app.auth import google_login
 import requests
 
 class GoogleAuthTests(unittest.TestCase):
     def setUp(self):
-        self.client = app.test_client()
+        self.app = create_app()
+        self.client = self.app.test_client()
         # Disable CSRF for testing
-        app_module.csrf.exempt(app_module.google_login)
+        app_module.csrf.exempt(google_login)
         
     def test_invalid_token(self):
-        with patch('app.requests.get', side_effect=requests.RequestException("fail")):
+        with patch('app.auth.requests.get', side_effect=requests.RequestException("fail")):
             self.client.set_cookie('csrf_token', 't', domain='localhost')
             resp = self.client.post('/auth/google', json={'idToken': 'bad'}, headers={'X-CSRFToken': 't'})
         self.assertEqual(resp.status_code, 400)
@@ -36,7 +38,7 @@ class GoogleAuthTests(unittest.TestCase):
             'given_name': 'User',
             'family_name': 'Test'
         }
-        with patch('app.requests.get', return_value=response_obj), \
+        with patch('app.auth.requests.get', return_value=response_obj), \
              patch.object(app_module, 'USERS') as mock_users:
             mock_users.find_one.return_value = None
             mock_users.insert_one.return_value.inserted_id = '1'
