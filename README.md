@@ -100,10 +100,21 @@ Copy `frontend/.env.example` to `frontend/.env` and set these as needed when run
 Docker provides an isolated environment that installs all Python and Node.js
 dependencies for you.
 
-1. Copy the example environment file:
+1. Copy the example environment file for the backend **and** frontend:
 
    ```bash
    cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   ```
+
+   When running locally over HTTP make sure the following values are set:
+
+   ```bash
+   # allow cookies over HTTP
+   echo "JWT_COOKIE_SECURE=False" >> backend/.env
+
+   # point the React app to the local API
+   sed -i "s|REACT_APP_API_URL=.*|REACT_APP_API_URL=http://localhost:5000|" frontend/.env
    ```
 
 2. Build and start the containers. By default the backend runs with Gunicorn.
