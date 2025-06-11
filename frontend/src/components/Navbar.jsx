@@ -20,6 +20,8 @@ export default function Navbar({
 
   // ─── Mobile Menu (“Import / Profile / Settings / Logout”) ────────────
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  // Keep menu mounted during transition
+  const [isMenuVisible, setIsMenuVisible] = useState(false)
 
   // ─── Desktop Avatar Dropdown ─────────────────────────────────────────
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -34,6 +36,9 @@ export default function Navbar({
 
   // Reference to the dropdown portal container (so clicks “outside” can close it)
   const portalRef = useRef(null)
+
+  // Reference to the mobile dropdown panel
+  const menuRef = useRef(null)
 
   // Utility to detect “mobile” (i.e. narrower than Tailwind’s md breakpoint)
   const isMobile = () => window.innerWidth < 768
@@ -70,15 +75,26 @@ export default function Navbar({
     }
   }
 
-  // Toggle mobile profile menu: if we’re about to open it AND we’re on mobile,
-  // then force the sidebar closed first.
+  // ----- Mobile Menu Helpers -----
+  const openMenu = () => {
+    if (isMobile()) closeSidebar()
+    // Mount before starting animation
+    setIsMenuVisible(true)
+    requestAnimationFrame(() => setIsMenuOpen(true))
+  }
+
+  const closeMenu = () => {
+    setIsMenuOpen(false)
+    setTimeout(() => setIsMenuVisible(false), 300)
+  }
+
+  // Toggle mobile profile menu
   const toggleMenu = () => {
-    setIsMenuOpen(prev => {
-      if (!prev && isMobile()) {
-        closeSidebar()
-      }
-      return !prev
-    })
+    if (isMenuOpen) {
+      closeMenu()
+    } else {
+      openMenu()
+    }
   }
 
   // Whenever you click anywhere on the page, if that click is outside
@@ -96,16 +112,36 @@ export default function Navbar({
     }
 
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
     }
   }, [])
+
+  // Close the mobile menu when tapping/clicking outside of it
+  useEffect(() => {
+    if (!isMenuOpen) return
+    function handleMenuOutside(event) {
+      const clickedInsideAvatar = avatarButtonRef.current?.contains(event.target)
+      const clickedInsideMenu = menuRef.current?.contains(event.target)
+      if (!clickedInsideAvatar && !clickedInsideMenu) {
+        closeMenu()
+      }
+    }
+    document.addEventListener('mousedown', handleMenuOutside)
+    document.addEventListener('touchstart', handleMenuOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleMenuOutside)
+      document.removeEventListener('touchstart', handleMenuOutside)
+    }
+  }, [isMenuOpen])
 
   // Handle sidebar toggle button: if we’re on mobile, also close the mobile menu.
   // On desktop, leave the desktop dropdown alone.
   const handleSidebarToggle = () => {
     if (isMobile()) {
-      setIsMenuOpen(false)
+      closeMenu()
     }
     toggleSidebar()
   }
@@ -336,9 +372,14 @@ export default function Navbar({
         )}
 
       {/* ─── Mobile Menu Panel ─────────────────────────────────────────────────────── */}
-      {isMenuOpen && user && (
-        <div className="md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50">
-          <div className="px-card py-2 space-y-1">
+        {isMenuVisible && user && (
+          <div
+            ref={menuRef}
+            className={`md:hidden bg-gray-200 dark:bg-surface border-t border-gray-800 z-50 origin-top transform transition-all duration-300 ease-out ${
+              isMenuOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-95 pointer-events-none'
+            }`}
+          >
+            <div className="px-card py-2 space-y-1">
             {user?.role === 'admin' && (
               <Link
                 to="/import"
