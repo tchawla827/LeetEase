@@ -15,7 +15,7 @@ import re
 from dotenv import load_dotenv
 from flask import (
     Flask, jsonify, request, abort,
-    session, send_file
+    session, send_file, send_from_directory
 )
 from bson import ObjectId
 from bson.errors import InvalidId
