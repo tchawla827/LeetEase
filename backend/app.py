@@ -338,6 +338,64 @@ def login():
 
     return resp, 200
 
+@app.route('/auth/google', methods=['POST'])
+def google_login():
+    """Sign up or sign in a user via a Google ID token."""
+    data = request.get_json() or {}
+    id_token = data.get('idToken') or data.get('token')
+    if not id_token:
+        abort(400, description='idToken required')
+
+    try:
+        r = requests.get(
+            'https://oauth2.googleapis.com/tokeninfo',
+            params={'id_token': id_token},
+            timeout=5
+        )
+        r.raise_for_status()
+    except requests.RequestException as e:
+        app.logger.error('Google token verify failed: %s', e)
+        abort(400, description='Invalid Google token')
+
+    info = r.json() or {}
+    if info.get('aud') != app.config.get('GOOGLE_CLIENT_ID'):
+        abort(400, description='Invalid Google token')
+
+    email = info.get('email')
+    if not email:
+        abort(400, description='Email not available')
+
+    user = USERS.find_one({'email': email})
+    if not user:
+        user_doc = {
+            'email': email,
+            'password': None,
+            'role': 'user',
+            'firstName': info.get('given_name') or '',
+            'lastName': info.get('family_name'),
+            'college': None,
+            'leetcode_username': None,
+            'leetcode_session': None,
+            'profilePhotoId': None,
+            'settings': {
+                'colorMode': 'leet',
+                'palette': {
+                    'easy': '#8BC34A',
+                    'medium': '#FFB74D',
+                    'hard': '#E57373',
+                    'solved': '#9E9E9E'
+                }
+            }
+        }
+        result = USERS.insert_one(user_doc)
+        user_doc['_id'] = result.inserted_id
+        user = user_doc
+
+    access = create_access_token(identity=str(user['_id']))
+    resp = jsonify({'msg': 'Login successful'})
+    set_access_cookies(resp, access)
+    return resp, 200
+
 @app.route('/auth/logout', methods=['POST'])
 def logout():
     resp = jsonify({'msg': 'Logout successful'})

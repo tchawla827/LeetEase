@@ -80,6 +80,7 @@ The backend expects certain security keys to be set before it starts. Copy
 - `SECRET_KEY`: Flask's secret key used for sessions.
 - `MONGODB_URI`: Mongo connection string.
 - `JWT_SECRET_KEY`: key used to sign JWT tokens.
+- `GOOGLE_CLIENT_ID`: OAuth client ID for Google sign-in.
 
 If either variable is missing, the application will raise a `RuntimeError` at startup.
 Define them in your `.env` file or export them in your deployment environment.
