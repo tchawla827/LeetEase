@@ -46,7 +46,10 @@ export default function AskAIPage() {
       <div className="space-y-2">
         {messages.map((m, idx) => (
           <div key={idx} className={m.role === 'user' ? 'text-right' : 'text-left'}>
-            <div className={`inline-block px-3 py-2 rounded ${m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+            <div
+              className={`inline-block px-3 py-2 rounded ${m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
+              style={{ whiteSpace: 'pre-wrap' }}
+            >
               {m.content}
             </div>
           </div>

@@ -1445,8 +1445,12 @@ def ask_ai(question_id):
         thread.append({'role': 'user', 'content': message})
 
         system_prompt = (
-            "You are a helpful AI tutor designed to assist students with problem-solving."\
-            " Provide hints and explanations based on the problem context."\
+            "You are a helpful and precise AI coding assistant. "
+            "Always return clean, readable, and well-formatted code. "
+            "Use proper indentation, line breaks, and spacing to improve clarity. "
+            "If responding with explanations or instructions, structure them using bullet points or short paragraphs. "
+            "When providing code, enclose it in markdown-style triple backticks with the language specified (e.g., ```python). "
+            "Do not compress code into a single line unless explicitly asked to."
         )
         messages = [
             {'role': 'system', 'content': system_prompt},
