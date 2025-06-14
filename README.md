@@ -112,6 +112,7 @@ docker compose up --build
 | `MONGODB_URI`      | MongoDB connection string            |
 | `JWT_SECRET_KEY`   | JWT signing key                      |
 | `GOOGLE_CLIENT_ID` | Google OAuth Client ID               |
+| `OPENROUTER_API_KEY` | API key for the Ask AI feature       |
 
 > App won't start if any are missing
 

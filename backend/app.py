@@ -52,7 +52,7 @@ from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_mail import Message
 
 load_dotenv()
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -1461,24 +1461,26 @@ def ask_ai(question_id):
         ] + thread
 
         ai_resp = ""
-        if OPENAI_API_KEY:
+        if OPENROUTER_API_KEY:
             try:
                 r = requests.post(
-                    'https://api.openai.com/v1/chat/completions',
+                    'https://openrouter.ai/api/v1/chat/completions',
                     headers={
-                        'Authorization': f'Bearer {OPENAI_API_KEY}',
+                        'Authorization': f'Bearer {OPENROUTER_API_KEY}',
                         'Content-Type': 'application/json',
+                        'HTTP-Referer': 'https://github.com/tchawla827/LeetEase',
+                        'X-Title': 'LeetEase',
                     },
-                    json={'model': 'gpt-3.5-turbo', 'messages': messages},
+                    json={'model': 'qwen/qwen-2.5-coder-32b-instruct:free', 'messages': messages},
                     timeout=10,
                 )
                 r.raise_for_status()
                 ai_resp = r.json()['choices'][0]['message']['content']
             except Exception as e:
-                app.logger.error('OpenAI request failed: %s', e)
+                app.logger.error('OpenRouter request failed: %s', e)
                 ai_resp = "Sorry, I'm unable to generate a hint right now."
         else:
-            ai_resp = "OpenAI API key not configured."
+            ai_resp = "OpenRouter API key not configured."
 
         thread.append({'role': 'assistant', 'content': ai_resp})
         session.modified = True
