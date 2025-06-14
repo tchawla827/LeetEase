@@ -21,6 +21,7 @@ import AdminImport       from './pages/AdminImport';
 import CompanyPage       from './pages/CompanyPage';
 import Profile           from './pages/Profile';
 import Contact           from './pages/Contact';
+import AskAIPage         from './pages/AskAIPage';
 
 // Settings-related imports
 import Settings          from './pages/Settings';
@@ -116,6 +117,15 @@ function AppContent() {
               element={
                 <PrivateRoute>
                   <Profile />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/ask-ai/:questionId"
+              element={
+                <PrivateRoute>
+                  <AskAIPage />
                 </PrivateRoute>
               }
             />
