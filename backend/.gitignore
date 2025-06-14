@@ -6,3 +6,4 @@ uploads/
 # Ignore any __pycache__ directory under backend (including nested ones)
 __pycache__/
 modules/**/__pycache__/
+.env
