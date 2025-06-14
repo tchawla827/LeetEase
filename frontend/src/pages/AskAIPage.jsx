@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api';
 import Loading from '../components/Loading';
+import Spinner from '../components/Spinner';
 
 export default function AskAIPage() {
   const { questionId } = useParams();
@@ -21,12 +22,14 @@ export default function AskAIPage() {
 
   const send = () => {
     if (!input.trim()) return;
+    const message = input;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: message }]);
     setSending(true);
-    api.post(`/api/ask-ai/${questionId}`, { message: input })
+    api.post(`/api/ask-ai/${questionId}`, { message })
       .then(res => setMessages(res.data.thread || []))
       .catch(() => {})
       .finally(() => {
-        setInput('');
         setSending(false);
       });
   };
@@ -54,6 +57,14 @@ export default function AskAIPage() {
             </div>
           </div>
         ))}
+        {sending && (
+          <div className="text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded bg-gray-200 dark:bg-gray-700">
+              <Spinner size={16} />
+              <span>Generating…</span>
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex gap-2">
         <input
