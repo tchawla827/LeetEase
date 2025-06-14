@@ -123,4 +123,15 @@ export function fetchUserStats() {
   return api.get('/api/user-stats');
 }
 
+// ───────────────────────────────
+// Ask AI Chat
+// ───────────────────────────────
+export function askAI(questionId, message) {
+  return api.post(`/api/ask-ai/${questionId}`, { message });
+}
+
+export function getAIThread(questionId) {
+  return api.get(`/api/ask-ai/${questionId}`);
+}
+
 export default api;

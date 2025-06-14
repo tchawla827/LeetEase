@@ -52,6 +52,7 @@ from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_mail import Message
 
 load_dotenv()
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -205,6 +206,30 @@ def fetch_leetcode_tags(slug: str) -> list[str]:
         return []
     tags = resp.json().get("data", {}).get("question", {}).get("topicTags", [])
     return [t["name"] for t in tags]
+
+def fetch_leetcode_content(slug: str) -> str:
+    query = """
+    query getQuestion($titleSlug: String!) {
+      question(titleSlug: $titleSlug) {
+        content
+      }
+    }
+    """
+    payload = {"query": query, "variables": {"titleSlug": slug}}
+    try:
+        resp = requests.post(
+            GRAPHQL_API, headers=GRAPHQL_HEADERS, json=payload, timeout=10
+        )
+    except requests.RequestException as e:
+        app.logger.error("Content request failed for %s: %s", slug, e)
+        abort(502, description="Unable to contact LeetCode")
+
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError as e:
+        app.logger.warning("Failed to fetch content for %s: %s", slug, e)
+        return ""
+    return resp.json().get("data", {}).get("question", {}).get("content", "")
 
 def sync_leetcode(username: str, session_cookie: str, user_id: str) -> int:
     solved_slugs = _fetch_solved_slugs_via_list(session_cookie)
@@ -1016,6 +1041,30 @@ def list_questions(company, bucket):
 
     return jsonify({'data': out, 'total': total}), 200
 
+@app.route('/api/questions/<question_id>', methods=['GET'])
+@jwt_required()
+def get_question(question_id):
+    try:
+        q_oid = ObjectId(question_id)
+    except InvalidId:
+        abort(400, description=f"Invalid question ID '{question_id}'")
+
+    q = QUEST.find_one({'_id': q_oid})
+    if not q:
+        abort(404, description=f"Question '{question_id}' not found")
+
+    slug = q['link'].rstrip('/').split('/')[-1]
+    content = fetch_leetcode_content(slug)
+    resp = {
+        'id': str(q['_id']),
+        'title': q.get('title'),
+        'link': q.get('link'),
+        'leetDifficulty': q.get('leetDifficulty'),
+        'tags': q.get('tags', []),
+        'content': content
+    }
+    return jsonify(resp), 200
+
 @app.route('/api/questions/<question_id>', methods=['PATCH'])
 @jwt_required()
 def update_question_meta(question_id):
@@ -1365,6 +1414,78 @@ def user_stats():
     }
     STATS_CACHE[uid] = {'ts': now, 'data': data}
     return jsonify(data), 200
+
+# ─── Ask AI Chat Endpoint ───────────────────────────────────────────────
+@app.route('/api/ask-ai/<question_id>', methods=['GET', 'POST'])
+@jwt_required()
+def ask_ai(question_id):
+    uid = get_jwt_identity()
+    try:
+        q_oid = ObjectId(question_id)
+    except InvalidId:
+        abort(400, description=f"Invalid question ID '{question_id}'")
+
+    q = QUEST.find_one({'_id': q_oid})
+    if not q:
+        abort(404, description=f"Question '{question_id}' not found")
+
+    slug = q['link'].rstrip('/').split('/')[-1]
+    content = fetch_leetcode_content(slug)
+    tags = q.get('tags', [])
+    title = q.get('title')
+
+    threads = session.setdefault('ai_threads', {})
+    thread = threads.setdefault(f"{uid}:{question_id}", [])
+
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        message = sanitize_text(data.get('message', ''))
+        if not message:
+            abort(400, description='message required')
+        thread.append({'role': 'user', 'content': message})
+
+        system_prompt = (
+            "You are a helpful AI tutor designed to assist students with problem-solving."\
+            " Provide hints and explanations based on the problem context."\
+        )
+        messages = [
+            {'role': 'system', 'content': system_prompt},
+            {
+                'role': 'assistant',
+                'content': (
+                    f"The user is trying to solve the following question: {title}. "
+                    f"{content or ''} The tags are {', '.join(tags)}. "
+                    "Provide helpful hints or explanations. Avoid directly giving the full answer unless requested."
+                ),
+            },
+        ] + thread
+
+        ai_resp = ""
+        if OPENAI_API_KEY:
+            try:
+                r = requests.post(
+                    'https://api.openai.com/v1/chat/completions',
+                    headers={
+                        'Authorization': f'Bearer {OPENAI_API_KEY}',
+                        'Content-Type': 'application/json',
+                    },
+                    json={'model': 'gpt-3.5-turbo', 'messages': messages},
+                    timeout=10,
+                )
+                r.raise_for_status()
+                ai_resp = r.json()['choices'][0]['message']['content']
+            except Exception as e:
+                app.logger.error('OpenAI request failed: %s', e)
+                ai_resp = "Sorry, I'm unable to generate a hint right now."
+        else:
+            ai_resp = "OpenAI API key not configured."
+
+        thread.append({'role': 'assistant', 'content': ai_resp})
+        session.modified = True
+        return jsonify({'thread': thread}), 200
+
+    # GET request returns existing thread
+    return jsonify({'thread': thread, 'title': title, 'content': content, 'tags': tags, 'link': q.get('link')}), 200
 
 # ─── Run & Startup Sync ────────────────────────────────────────────────────
 def _startup_sync():

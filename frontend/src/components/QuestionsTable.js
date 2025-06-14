@@ -1,5 +1,6 @@
 // src/components/QuestionsTable.js
 import React, { useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import Spinner from './Spinner';
@@ -289,6 +290,7 @@ export default function QuestionsTable({
                 </th>
               ))}
               <th className="px-4 py-3 text-left whitespace-nowrap">Link</th>
+              <th className="px-4 py-3 text-left whitespace-nowrap">Ask AI</th>
               <th className="px-4 py-3 text-left whitespace-nowrap">Status</th>
             </tr>
           </thead>
@@ -297,7 +299,7 @@ export default function QuestionsTable({
             {loading ? (
               <tr>
                 <td
-                  colSpan={Object.keys(SORT_FIELDS).length + 3}
+                  colSpan={Object.keys(SORT_FIELDS).length + 4}
                   className="px-4 py-4 text-center"
                 >
                   <Spinner size={20} className="mx-auto" />
@@ -374,7 +376,7 @@ export default function QuestionsTable({
 
                   {/* Link */}
                   <td className="px-4 py-3">
-                    <a
+                  <a
                       href={q.link}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -382,6 +384,16 @@ export default function QuestionsTable({
                     >
                       View
                     </a>
+                  </td>
+
+                  {/* Ask AI */}
+                  <td className="px-4 py-3">
+                    <RouterLink
+                      to={`/ask-ai/${q.id}`}
+                      className="text-primary hover:underline"
+                    >
+                      Ask AI
+                    </RouterLink>
                   </td>
 
                   {/* Status (solved checkbox) */}
@@ -400,7 +412,7 @@ export default function QuestionsTable({
             ) : (
               <tr>
                 <td
-                  colSpan={Object.keys(SORT_FIELDS).length + 3}
+                  colSpan={Object.keys(SORT_FIELDS).length + 4}
                   className="px-4 py-4 text-center italic text-gray-500 dark:text-gray-400"
                 >
                   No questions found.
