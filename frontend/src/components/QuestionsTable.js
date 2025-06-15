@@ -291,7 +291,7 @@ export default function QuestionsTable({
               ))}
               <th className="px-4 py-3 text-left whitespace-nowrap">Link</th>
               <th className="px-4 py-3 text-left whitespace-nowrap">Ask AI</th>
-              <th className="px-4 py-3 text-left whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 pl-6 text-left whitespace-nowrap">Status</th>
             </tr>
           </thead>
 
@@ -387,7 +387,7 @@ export default function QuestionsTable({
                   </td>
 
                   {/* Ask AI */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <RouterLink
                       to={`/ask-ai/${q.id}`}
                       className="text-primary hover:underline"
@@ -397,7 +397,7 @@ export default function QuestionsTable({
                   </td>
 
                   {/* Status (solved checkbox) */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 pl-6">
                     <input
                       type="checkbox"
                       checked={q.solved}
