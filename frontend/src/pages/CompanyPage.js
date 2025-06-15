@@ -147,7 +147,7 @@ export default function CompanyPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="px-4 py-6 md:px-6 max-w-6xl mx-auto">
+    <div className="px-4 py-6 md:px-6 max-w-7xl mx-auto">
       {/* ── Company title ─────────────────────────────────────────────── */}
       <h1
         className="
