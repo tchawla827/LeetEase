@@ -61,6 +61,31 @@ export default function LeetCodeSettings() {
     <div className="font-mono text-code-base text-gray-700 dark:text-gray-300 max-w-3xl mx-auto p-card space-y-6">
       <h1 className="text-code-lg text-primary">LeetCode Integration</h1>
 
+      <p className="text-code-sm text-gray-600 dark:text-gray-400">
+        Follow these steps to find your <code>LEETCODE_SESSION</code> cookie:
+      </p>
+      <ol className="list-decimal pl-5 space-y-1 text-code-sm text-gray-600 dark:text-gray-400">
+        <li>
+          Log in at
+          {' '}
+          <a
+            href="https://leetcode.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            leetcode.com
+          </a>
+        </li>
+        <li>Open your browser dev tools (Ctrl+Shift+I or Cmd+Opt+I)</li>
+        <li>In the <strong>Application</strong> tab, expand <strong>Cookies</strong></li>
+        <li>
+          Choose <code>https://leetcode.com</code> and copy the value of
+          {' '}
+          <code>LEETCODE_SESSION</code>
+        </li>
+      </ol>
+
       <div className="bg-surface border border-gray-300 dark:border-gray-800 rounded-card shadow-elevation p-card space-y-4">
         <div className="space-y-4">
           <div>
