@@ -40,7 +40,7 @@ export default function AskAIPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-4">
+    <div className="max-w-5xl mx-auto p-4 space-y-4">
       <button
         onClick={() => navigate(-1)}
         className="text-primary hover:underline text-lg"
@@ -57,8 +57,7 @@ export default function AskAIPage() {
         {messages.map((m, idx) => (
           <div key={idx} className={m.role === 'user' ? 'text-right' : 'text-left'}>
             <div
-              className={`inline-block px-3 py-2 rounded ${m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
-              style={{ whiteSpace: 'pre-wrap' }}
+              className={`inline-block max-w-full px-3 py-2 rounded whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}`}
             >
               {m.content}
             </div>
