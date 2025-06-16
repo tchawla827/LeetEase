@@ -134,4 +134,15 @@ export function getAIThread(questionId) {
   return api.get(`/api/ask-ai/${questionId}`);
 }
 
+// ───────────────────────────────
+// Global Question Search
+// ───────────────────────────────
+export function suggestQuestions(query, limit = 10) {
+  return api.get('/api/questions/suggestions', { params: { query, limit } });
+}
+
+export function getQuestionCompanies(questionId) {
+  return api.get(`/api/questions/${questionId}/companies`);
+}
+
 export default api;

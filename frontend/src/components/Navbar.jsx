@@ -337,6 +337,13 @@ export default function Navbar({
             >
               Profile
             </Link>
+            <Link
+              to="/search"
+              onClick={closeUserMenu}
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 transition-colors duration-150"
+            >
+              Search Questions
+            </Link>
             {user?.role === 'admin' && (
               <Link
                 to="/import"
@@ -399,6 +406,13 @@ export default function Navbar({
               onClick={toggleMenu}
             >
               Profile
+            </Link>
+            <Link
+              to="/search"
+              className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
+              onClick={toggleMenu}
+            >
+              Search Questions
             </Link>
             <Link
               to="/settings"

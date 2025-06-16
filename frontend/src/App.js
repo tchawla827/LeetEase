@@ -22,6 +22,7 @@ import CompanyPage       from './pages/CompanyPage';
 import Profile           from './pages/Profile';
 import Contact           from './pages/Contact';
 import AskAIPage         from './pages/AskAIPage';
+import SearchQuestions   from './pages/SearchQuestions';
 
 // Settings-related imports
 import Settings          from './pages/Settings';
@@ -126,6 +127,15 @@ function AppContent() {
               element={
                 <PrivateRoute>
                   <AskAIPage />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/search"
+              element={
+                <PrivateRoute>
+                  <SearchQuestions />
                 </PrivateRoute>
               }
             />
