@@ -1184,6 +1184,52 @@ def batch_update_questions_meta():
 
     return jsonify(results), 200
 
+# ─── Global Question Search Endpoints ─────────────────────────────────────
+
+@app.route('/api/questions/suggestions', methods=['GET'])
+@jwt_required()
+def question_suggestions():
+    """Return question title suggestions across all companies."""
+    query = request.args.get('query', '').strip()
+    limit = int(request.args.get('limit', 10))
+    if not query:
+        return jsonify({'suggestions': []}), 200
+    if len(query) > 100:
+        abort(400, description='Query too long')
+    regex = re.escape(query)
+    docs = QUEST.find(
+        {'title': {'$regex': regex, '$options': 'i'}},
+        {'title': 1}
+    ).limit(limit)
+    suggestions = [{'id': str(d['_id']), 'title': d['title']} for d in docs]
+    return jsonify({'suggestions': suggestions}), 200
+
+
+@app.route('/api/questions/<question_id>/companies', methods=['GET'])
+@jwt_required()
+def question_companies(question_id):
+    """List companies that include the given question in any bucket."""
+    try:
+        q_oid = ObjectId(question_id)
+    except InvalidId:
+        abort(400, description=f"Invalid question ID '{question_id}'")
+
+    pipeline = [
+        {'$match': {'question_id': q_oid}},
+        {'$lookup': {
+            'from': 'companies',
+            'localField': 'company_id',
+            'foreignField': '_id',
+            'as': 'co'
+        }},
+        {'$unwind': '$co'},
+        {'$group': {'_id': '$co.name'}},
+        {'$sort': {'_id': 1}}
+    ]
+    results = list(CQ.aggregate(pipeline))
+    companies = [r['_id'] for r in results]
+    return jsonify({'companies': companies}), 200
+
 # ─── Company-wide progress (per bucket) ───────────────────────────────────
 @app.route('/api/companies/<company>/progress', methods=['GET'])
 @jwt_required()
