@@ -161,25 +161,28 @@ python -m unittest discover tests
 
 ## 🔏 File Integrity Verification
 
-Scripts in `integrity/` allow signing files with an RSA key. Generate keys once:
+Scripts in `backend/integrity/` allow signing files with an RSA key. Generate keys once:
 
 ```bash
-python integrity/generate_keys.py
+python backend/integrity/generate_keys.py
 ```
 
-This writes `integrity/private.pem` and `integrity/public.pem`. **Commit only**
-`public.pem` and keep the private key secret.
+This writes `backend/integrity/private_key.pem` and `backend/integrity/public_key.pem`.
+**Commit only** `public_key.pem` and keep the private key secret.
 
 After editing a protected file (e.g. `backend/app.py`) sign it and commit the
 signature:
 
 ```bash
-python integrity/sign_file.py backend/app.py
+python backend/integrity/sign_file.py backend/app.py
 git add backend/app.py.sig
 ```
 
 The backend verifies its own signature on startup and exits if verification
 fails.
+
+Line endings are normalized (CRLF -> LF) when signing to avoid mismatches
+between Windows and Linux environments.
 
 ---
 
