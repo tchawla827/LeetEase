@@ -1,0 +1,6 @@
+# Keep all Python source in LF so signatures match everywhere
+*.py   text eol=lf
+
+# Do NOT treat these as text, avoid any newline rewriting
+*.sig  -text
+*.pem  -text
