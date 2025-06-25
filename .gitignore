@@ -1,3 +1,4 @@
 backend/.env
 .env
 backend/integrity/private_key.pem
+.flask_session
