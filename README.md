@@ -159,6 +159,30 @@ python -m unittest discover tests
 
 ---
 
+## 🔏 File Integrity Verification
+
+Scripts in `integrity/` allow signing files with an RSA key. Generate keys once:
+
+```bash
+python integrity/generate_keys.py
+```
+
+This writes `integrity/private.pem` and `integrity/public.pem`. **Commit only**
+`public.pem` and keep the private key secret.
+
+After editing a protected file (e.g. `backend/app.py`) sign it and commit the
+signature:
+
+```bash
+python integrity/sign_file.py backend/app.py
+git add backend/app.py.sig
+```
+
+The backend verifies its own signature on startup and exits if verification
+fails.
+
+---
+
 ## 📁 Folder Structure (simplified)
 ```
 backend/   - Flask API and data loaders

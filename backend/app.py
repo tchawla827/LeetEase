@@ -9,7 +9,7 @@ import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from datetime import timedelta, datetime
-
+from integrity.integrity_check import verify_file_integrity
 import requests
 import re
 from dotenv import load_dotenv
@@ -52,6 +52,8 @@ from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_mail import Message
 
 load_dotenv()
+if not verify_file_integrity(__file__):
+    raise SystemExit("Integrity check failed")
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
