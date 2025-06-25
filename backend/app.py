@@ -2,6 +2,8 @@
 # to run
 # ./venv/scripts/activate
 # python -m backend.app
+
+
 import os
 import random
 import csv
