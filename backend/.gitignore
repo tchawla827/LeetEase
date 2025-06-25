@@ -10,3 +10,4 @@ modules/**/__pycache__/
 backend\.env
 C:\Users\tavis\Desktop\LeetEase\backend\.env
 backend/.env
+.env
