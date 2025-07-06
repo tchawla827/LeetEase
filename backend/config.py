@@ -22,19 +22,24 @@ if not MONGODB_URI:
     raise RuntimeError("MONGODB_URI not set in .env")
 
 _client = MongoClient(MONGODB_URI)
+
+
 def get_db():
     return _client.get_default_database()
 
+
 def ensure_indexes(db):
     """Create indexes used across the application."""
-    db.questions.create_index('link', unique=True)
-    db.companies.create_index('name', unique=True)
+    db.questions.create_index("link", unique=True)
+    db.questions.create_index("slug", unique=True)
+    db.companies.create_index("name", unique=True)
     db.company_questions.create_index(
-        [('company_id', 1), ('bucket', 1), ('question_id', 1)], unique=True
+        [("company_id", 1), ("bucket", 1), ("question_id", 1)], unique=True
     )
-    db.company_questions.create_index('question_id')
-    db.user_meta.create_index([('user_id', 1), ('question_id', 1)])
-    db.user_meta.create_index([('user_id', 1), ('company_id', 1), ('bucket', 1)])
+    db.company_questions.create_index("question_id")
+    db.user_meta.create_index([("user_id", 1), ("question_id", 1)])
+    db.user_meta.create_index([("user_id", 1), ("company_id", 1), ("bucket", 1)])
+
 
 # ————————————————
 # Flask-JWT-Extended
@@ -49,7 +54,11 @@ JWT_ACCESS_TOKEN_EXPIRES = timedelta(
 # Store tokens in headers and cookies
 JWT_TOKEN_LOCATION = ["headers", "cookies"]
 # Cookie is sent only over HTTPS by default. Override with JWT_COOKIE_SECURE=False for local testing.
-JWT_COOKIE_SECURE = os.getenv("JWT_COOKIE_SECURE", "True").lower() in ("true", "1", "yes")
+JWT_COOKIE_SECURE = os.getenv("JWT_COOKIE_SECURE", "True").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 JWT_COOKIE_SAMESITE = os.getenv("JWT_COOKIE_SAMESITE", "Lax")
 JWT_COOKIE_CSRF_PROTECT = False
 
@@ -62,7 +71,11 @@ SESSION_USE_SIGNER = True
 SESSION_FILE_DIR = os.getenv("SESSION_FILE_DIR", "./.flask_session/")
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() in ("true", "1", "yes")
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 WTF_CSRF_TIME_LIMIT = None
 
 # ————————————————

@@ -19,33 +19,36 @@ from pathlib import Path
 import pandas as pd
 from pandas.errors import EmptyDataError
 from bson import ObjectId
+import re
 from backend.config import get_db
 
 # ── CSV/Excel bucket filenames → bucket key ─────────────────────────────
 BUCKET_MAP = {
-    "1. Thirty Days.csv":          "30Days",
-    "2. Three Months.csv":         "3Months",
-    "3. Six Months.csv":           "6Months",
+    "1. Thirty Days.csv": "30Days",
+    "2. Three Months.csv": "3Months",
+    "3. Six Months.csv": "6Months",
     "4. More Than Six Months.csv": "MoreThan6Months",
-    "5. All.csv":                  "All"
+    "5. All.csv": "All",
 }
 
 # ── Collections ──────────────────────────────────────────────────────────
-db  = get_db()
-Q   = db.questions           # canonical problems
-CO  = db.companies
-CQ  = db.company_questions
+db = get_db()
+Q = db.questions  # canonical problems
+CO = db.companies
+CQ = db.company_questions
 
 # ── Build indexes once ───────────────────────────────────────────────────
 # Ensure unique problem links, unique company names, and unique (company, bucket, question) combos
-Q.create_index('link', unique=True)
-CO.create_index('name', unique=True)
-CQ.create_index([('company_id', 1), ('bucket', 1), ('question_id', 1)], unique=True)
-CQ.create_index('question_id')
+Q.create_index("link", unique=True)
+Q.create_index("slug", unique=True)
+CO.create_index("name", unique=True)
+CQ.create_index([("company_id", 1), ("bucket", 1), ("question_id", 1)], unique=True)
+CQ.create_index("question_id")
 
 # ── Helper caches to minimise round-trips ────────────────────────────────
-company_id_cache  = {}   # name  -> ObjectId
-question_id_cache = {}   # link  -> ObjectId
+company_id_cache = {}  # name  -> ObjectId
+question_id_cache = {}  # slug -> ObjectId
+
 
 def get_company_id(name: str) -> ObjectId:
     """
@@ -56,35 +59,44 @@ def get_company_id(name: str) -> ObjectId:
         return company_id_cache[name]
 
     doc = CO.find_one_and_update(
-        {'name': name},
-        {'$setOnInsert': {'name': name}},
+        {"name": name},
+        {"$setOnInsert": {"name": name}},
         upsert=True,
-        return_document=True
+        return_document=True,
     )
-    company_id_cache[name] = doc['_id']
-    return doc['_id']
+    company_id_cache[name] = doc["_id"]
+    return doc["_id"]
+
+
+def slug_from_link(link: str) -> str:
+    """Extract the LeetCode slug from a URL."""
+    slug = re.sub(r"/+$", "", link.strip())
+    slug = slug.split("?")[0]
+    return slug.rsplit("/", 1)[-1]
+
 
 def get_question_id(link: str, title: str, leet_diff: str) -> ObjectId:
-    """
-    Return the ObjectId for a given problem link. If not present, create it
-    with the provided title and leetDifficulty.
-    Caches results to avoid repeated DB hits.
-    """
-    if link in question_id_cache:
-        return question_id_cache[link]
+    """Return the ObjectId for a given problem link or slug."""
+    slug = slug_from_link(link)
+    if slug in question_id_cache:
+        return question_id_cache[slug]
 
     doc = Q.find_one_and_update(
-        {'link': link},
-        {'$setOnInsert': {
-            'link': link,
-            'title': title,
-            'leetDifficulty': leet_diff
-        }},
+        {"$or": [{"link": link}, {"slug": slug}]},
+        {
+            "$setOnInsert": {
+                "link": link,
+                "slug": slug,
+                "title": title,
+                "leetDifficulty": leet_diff,
+            }
+        },
         upsert=True,
-        return_document=True
+        return_document=True,
     )
-    question_id_cache[link] = doc['_id']
-    return doc['_id']
+    question_id_cache[slug] = doc["_id"]
+    return doc["_id"]
+
 
 def load_company_data(data_root: str | Path | None = None):
     """
@@ -138,18 +150,17 @@ def load_company_data(data_root: str | Path | None = None):
             for _, row in df.iterrows():
                 # Title: look for common variants
                 title = (
-                    str(row.get("Title") or
-                        row.get("Question") or
-                        row.get("Problem") or
-                        "")
+                    str(
+                        row.get("Title")
+                        or row.get("Question")
+                        or row.get("Problem")
+                        or ""
+                    )
                 ).strip()
 
                 # Link/URL: look for several possible column names
                 link = (
-                    str(row.get("Link") or
-                        row.get("URL") or
-                        row.get("url") or
-                        "")
+                    str(row.get("Link") or row.get("URL") or row.get("url") or "")
                 ).strip()
 
                 # Frequency (float); default to 0 if missing or invalid
@@ -171,10 +182,10 @@ def load_company_data(data_root: str | Path | None = None):
 
                 # User-defined difficulty or existing leetDifficulty
                 ldiff = (
-                    str(row.get("Difficulty") or
-                        row.get("LeetDiff") or
-                        "")
-                ).capitalize().strip()
+                    (str(row.get("Difficulty") or row.get("LeetDiff") or ""))
+                    .capitalize()
+                    .strip()
+                )
 
                 # Skip if no valid link
                 if not link:
@@ -184,25 +195,27 @@ def load_company_data(data_root: str | Path | None = None):
                 qid = get_question_id(link, title, ldiff)
 
                 # Prepare upsert payload for company_questions
-                batch.append({
-                    'company_id'    : cid,
-                    'question_id'   : qid,
-                    'bucket'        : bucket,
-                    'frequency'     : freq,
-                    'acceptanceRate': acc
-                })
+                batch.append(
+                    {
+                        "company_id": cid,
+                        "question_id": qid,
+                        "bucket": bucket,
+                        "frequency": freq,
+                        "acceptanceRate": acc,
+                    }
+                )
 
         # Upsert all rows for this company
         if batch:
             for doc in batch:
                 CQ.replace_one(
                     {
-                        'company_id' : doc['company_id'],
-                        'question_id': doc['question_id'],
-                        'bucket'     : doc['bucket']
+                        "company_id": doc["company_id"],
+                        "question_id": doc["question_id"],
+                        "bucket": doc["bucket"],
                     },
                     doc,
-                    upsert=True
+                    upsert=True,
                 )
             print(f"  ✔ added/updated {len(batch)} bucket rows")
             total_cq += len(batch)
@@ -215,6 +228,7 @@ def load_company_data(data_root: str | Path | None = None):
     print(f"  questions         : {Q.count_documents({})}")
     print(f"  company_questions : {CQ.count_documents({})}")
     print(f"  rows processed    : {total_cq}")
+
 
 if __name__ == "__main__":
     import sys
