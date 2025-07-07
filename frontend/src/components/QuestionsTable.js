@@ -50,6 +50,7 @@ export default function QuestionsTable({
   const [sortOrder, setSortOrder]               = useState('asc');
   const [selected, setSelected]                 = useState([]);
   const [batchDifficulty, setBatchDifficulty]   = useState('');
+  const [noteEditor, setNoteEditor]             = useState(null); // {id, text}
 
   // ─── Whenever the list of questions changes, clear any batch selection ─
   useEffect(() => {
@@ -148,6 +149,7 @@ export default function QuestionsTable({
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
+              note: hit.note ?? q.note ?? null,
             };
           })
         );
@@ -175,6 +177,7 @@ export default function QuestionsTable({
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
+              note: hit.note ?? q.note ?? null,
             };
           })
         );
@@ -291,6 +294,7 @@ export default function QuestionsTable({
               ))}
               <th className="px-4 py-3 text-left whitespace-nowrap">Link</th>
               <th className="px-4 py-3 text-left whitespace-nowrap">Ask AI</th>
+              <th className="px-4 py-3 text-left whitespace-nowrap">Note</th>
               <th className="px-4 py-3 pl-6 text-left whitespace-nowrap">Status</th>
             </tr>
           </thead>
@@ -299,7 +303,7 @@ export default function QuestionsTable({
             {loading ? (
               <tr>
                 <td
-                  colSpan={Object.keys(SORT_FIELDS).length + 4}
+                  colSpan={Object.keys(SORT_FIELDS).length + 5}
                   className="px-4 py-4 text-center"
                 >
                   <Spinner size={20} className="mx-auto" />
@@ -396,6 +400,19 @@ export default function QuestionsTable({
                     </RouterLink>
                   </td>
 
+                  {/* Note icon */}
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => setNoteEditor({ id: q.id, text: q.note || '' })}
+                      className="text-primary hover:underline"
+                    >
+                      {/* Pencil Icon */}
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 19.5 3 21l1.5-4.5 12.696-12.768z" />
+                      </svg>
+                    </button>
+                  </td>
+
                   {/* Status (solved checkbox) */}
                   <td className="px-4 py-3 pl-6">
                     <input
@@ -412,7 +429,7 @@ export default function QuestionsTable({
             ) : (
               <tr>
                 <td
-                  colSpan={Object.keys(SORT_FIELDS).length + 4}
+                  colSpan={Object.keys(SORT_FIELDS).length + 5}
                   className="px-4 py-4 text-center italic text-gray-500 dark:text-gray-400"
                 >
                   No questions found.
@@ -479,6 +496,34 @@ export default function QuestionsTable({
           Next →
         </button>
       </div>
+      {noteEditor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-surface border border-gray-300 dark:border-gray-700 rounded p-4 w-80">
+            <textarea
+              className="w-full h-32 p-2 border border-gray-300 dark:border-gray-700 rounded"
+              value={noteEditor.text}
+              onChange={e => setNoteEditor({ ...noteEditor, text: e.target.value })}
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={() => setNoteEditor(null)}
+                className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  updateField(noteEditor.id, 'note', noteEditor.text);
+                  setNoteEditor(null);
+                }}
+                className="px-3 py-1 bg-primary text-white rounded"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
