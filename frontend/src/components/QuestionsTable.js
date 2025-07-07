@@ -403,13 +403,45 @@ export default function QuestionsTable({
                   {/* Note icon */}
                   <td className="px-4 py-3 text-center">
                     <button
-                      onClick={() => setNoteEditor({ id: q.id, text: q.note || '' })}
+                      onClick={() =>
+                        setNoteEditor({ id: q.id, text: q.note || '' })
+                      }
                       className="text-primary hover:underline"
+                      aria-label={q.note ? 'Edit note' : 'Add note'}
                     >
-                      {/* Pencil Icon */}
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 19.5 3 21l1.5-4.5 12.696-12.768z" />
-                      </svg>
+                      {q.note ? (
+                        // Document icon when a note exists
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      ) : (
+                        // Pencil icon when no note saved
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 19.5 3 21l1.5-4.5 12.696-12.768z"
+                          />
+                        </svg>
+                      )}
                     </button>
                   </td>
 
@@ -500,9 +532,11 @@ export default function QuestionsTable({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-surface border border-gray-300 dark:border-gray-700 rounded p-4 w-80">
             <textarea
-              className="w-full h-32 p-2 border border-gray-300 dark:border-gray-700 rounded"
+              className="w-full h-32 p-2 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded"
               value={noteEditor.text}
-              onChange={e => setNoteEditor({ ...noteEditor, text: e.target.value })}
+              onChange={e =>
+                setNoteEditor({ ...noteEditor, text: e.target.value })
+              }
             />
             <div className="flex justify-end gap-2 mt-2">
               <button
