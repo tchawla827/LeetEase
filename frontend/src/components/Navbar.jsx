@@ -2,9 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { backfillTags } from '../api'
+import { extractErrorMessage } from '../utils/error'
+import { emitGlobalError } from '../context/ErrorToastContext'
 
 // Adjust this import path if your logo is stored elsewhere
 import logo from '../assets/logo.svg'
@@ -15,7 +18,6 @@ export default function Navbar({
   closeSidebar, // callback from App to forcibly close the sidebar
 }) {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
 
   // ─── Mobile Menu (“Import / Profile / Settings / Logout”) ────────────
@@ -27,6 +29,7 @@ export default function Navbar({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   // Separate state to keep the menu mounted during transition
   const [isUserMenuVisible, setIsUserMenuVisible] = useState(false)
+  const [isBackfilling, setIsBackfilling] = useState(false)
 
   // We'll store the computed screen‐coordinates for the dropdown box
   const [dropdownCoords, setDropdownCoords] = useState({ top: 0, right: 0 })
@@ -146,6 +149,23 @@ export default function Navbar({
       closeMenu()
     }
     toggleSidebar()
+  }
+
+  const handleBackfillTags = async () => {
+    if (!window.confirm('Backfill tags for all questions?')) return
+    closeUserMenu()
+    closeMenu()
+    setIsBackfilling(true)
+    try {
+      await backfillTags()
+      emitGlobalError('Tag backfill completed successfully.')
+    } catch (err) {
+      emitGlobalError(
+        extractErrorMessage(err) || 'Backfill failed. Please try again.'
+      )
+    } finally {
+      setIsBackfilling(false)
+    }
   }
 
   // Compute avatar initial (“T” from “Tavish” or first letter of user.email)
@@ -345,13 +365,22 @@ export default function Navbar({
               Search Questions
             </Link>
             {user?.role === 'admin' && (
-              <Link
-                to="/import"
-                onClick={closeUserMenu}
-                className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 transition-colors duration-150"
-              >
-                Import Questions
-              </Link>
+              <>
+                <button
+                  onClick={handleBackfillTags}
+                  disabled={isBackfilling}
+                  className="w-full text-left font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 transition-colors duration-150"
+                >
+                  {isBackfilling ? 'Backfilling…' : 'Backfill Tags'}
+                </button>
+                <Link
+                  to="/import"
+                  onClick={closeUserMenu}
+                  className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-4 py-2 transition-colors duration-150"
+                >
+                  Import Questions
+                </Link>
+              </>
             )}
             <Link
               to="/settings"
@@ -392,13 +421,22 @@ export default function Navbar({
           >
             <div className="px-card py-2 space-y-1">
             {user?.role === 'admin' && (
-              <Link
-                to="/import"
-                className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
-                onClick={toggleMenu}
-              >
-                Import Questions
-              </Link>
+              <>
+                <button
+                  onClick={handleBackfillTags}
+                  disabled={isBackfilling}
+                  className="w-full text-left font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
+                >
+                  {isBackfilling ? 'Backfilling…' : 'Backfill Tags'}
+                </button>
+                <Link
+                  to="/import"
+                  className="block font-mono text-code-base text-gray-700 hover:bg-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 px-3 py-2 rounded-code transition-colors duration-150"
+                  onClick={toggleMenu}
+                >
+                  Import Questions
+                </Link>
+              </>
             )}
             <Link
               to="/profile"
