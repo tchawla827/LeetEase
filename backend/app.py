@@ -1086,6 +1086,7 @@ def list_questions(company, bucket):
                 "leetDifficulty": q.get("leetDifficulty"),
                 "solved": solved,
                 "userDifficulty": meta.get("userDifficulty") if meta else None,
+                "note": meta.get("note") if meta else None,
             }
         )
 
@@ -1106,6 +1107,9 @@ def get_question(question_id):
 
     slug = q["link"].rstrip("/").split("/")[-1]
     content = fetch_leetcode_content(slug)
+    meta = USER_META.find_one(
+        {"user_id": get_jwt_identity(), "question_id": question_id}
+    )
     resp = {
         "id": str(q["_id"]),
         "title": q.get("title"),
@@ -1113,6 +1117,7 @@ def get_question(question_id):
         "leetDifficulty": q.get("leetDifficulty"),
         "tags": q.get("tags", []),
         "content": content,
+        "note": meta.get("note") if meta else None,
     }
     return jsonify(resp), 200
 
@@ -1146,9 +1151,13 @@ def update_question_meta(question_id):
         update_fields["solved"] = bool(data["solved"])
     if "userDifficulty" in data:
         update_fields["userDifficulty"] = data.get("userDifficulty") or None
+    if "note" in data:
+        update_fields["note"] = data.get("note") or None
 
     if not update_fields:
-        abort(400, description="No valid fields to update (solved, userDifficulty)")
+        abort(
+            400, description="No valid fields to update (solved, userDifficulty, note)"
+        )
 
     update_fields["updatedAt"] = datetime.utcnow()
 
@@ -1172,7 +1181,7 @@ def update_question_meta(question_id):
     generic_update = {
         "$set": {
             k: update_fields[k]
-            for k in ["solved", "userDifficulty"]
+            for k in ["solved", "userDifficulty", "note"]
             if k in update_fields
         }
     }
@@ -1197,6 +1206,7 @@ def update_question_meta(question_id):
         "question_id": question_id,
         "solved": meta.get("solved", False),
         "userDifficulty": meta.get("userDifficulty"),
+        "note": meta.get("note"),
     }
     return jsonify(resp), 200
 
@@ -1215,8 +1225,12 @@ def batch_update_questions_meta():
         update_fields["solved"] = bool(data["solved"])
     if "userDifficulty" in data:
         update_fields["userDifficulty"] = data.get("userDifficulty") or None
+    if "note" in data:
+        update_fields["note"] = data.get("note") or None
     if not update_fields:
-        abort(400, description="No valid fields to update (solved, userDifficulty)")
+        abort(
+            400, description="No valid fields to update (solved, userDifficulty, note)"
+        )
 
     update_fields["updatedAt"] = datetime.utcnow()
 
@@ -1257,7 +1271,7 @@ def batch_update_questions_meta():
         generic_update = {
             "$set": {
                 k: update_fields[k]
-                for k in ["solved", "userDifficulty"]
+                for k in ["solved", "userDifficulty", "note"]
                 if k in update_fields
             }
         }
@@ -1293,6 +1307,7 @@ def batch_update_questions_meta():
                 "question_id": qid,
                 "solved": meta.get("solved", False),
                 "userDifficulty": meta.get("userDifficulty"),
+                "note": meta.get("note"),
             }
         )
 
