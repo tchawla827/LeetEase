@@ -149,7 +149,7 @@ export default function QuestionsTable({
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
-              note: hit.note ?? q.note ?? null,
+              note: hit.note,
             };
           })
         );
@@ -177,7 +177,7 @@ export default function QuestionsTable({
               ...q,
               solved: hit.solved,
               userDifficulty: hit.userDifficulty ?? null,
-              note: hit.note ?? q.note ?? null,
+              note: hit.note,
             };
           })
         );
@@ -547,7 +547,21 @@ export default function QuestionsTable({
               </button>
               <button
                 onClick={() => {
-                  updateField(noteEditor.id, 'note', noteEditor.text);
+                  updateField(noteEditor.id, 'note', '');
+                  setNoteEditor(null);
+                }}
+                className="px-3 py-1 bg-red-600 text-white rounded"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => {
+                  const trimmed = noteEditor.text.trim();
+                  updateField(
+                    noteEditor.id,
+                    'note',
+                    trimmed ? noteEditor.text : ''
+                  );
                   setNoteEditor(null);
                 }}
                 className="px-3 py-1 bg-primary text-white rounded"
