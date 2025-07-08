@@ -1,6 +1,6 @@
 // frontend/src/pages/CompanyPage.js
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import BucketsTabs from '../components/BucketsTabs'
 import QuestionsTable from '../components/QuestionsTable'
@@ -8,6 +8,7 @@ import TopicsDashboard from '../components/TopicsDashboard'
 import CompanyProgress from '../components/CompanyProgress'
 import Loading from '../components/Loading'
 import { fetchCompanyProgress } from '../api'
+import debounce from 'lodash.debounce'
 
 const BUCKET_ORDER = [
   '30Days',
@@ -31,7 +32,18 @@ export default function CompanyPage() {
   const [selectedBucket, setSelectedBucket] = useState(() => bucketFromUrl || null)
   const [selectedTag,    setSelectedTag]    = useState(() => tagFromUrl   || null)
   const [showUnsolved,   setShowUnsolved]   = useState(() => unsolvedFromUrl)
+  const [searchInput,    setSearchInput]    = useState(() => qFromUrl)
   const [searchTerm,     setSearchTerm]     = useState(() => qFromUrl)
+  const debouncedSetSearchTerm = useMemo(
+    () => debounce(val => setSearchTerm(val), 300),
+    []
+  )
+
+  const handleSearchChange = e => {
+    const val = e.target.value
+    setSearchInput(val)
+    debouncedSetSearchTerm(val)
+  }
 
   // ── Buckets & progress state ───────────────────────────────────────────
   const [buckets,          setBuckets]        = useState([])
@@ -44,6 +56,18 @@ export default function CompanyPage() {
   const [showAnalytics, setShowAnalytics] = useState(false)
   const [topics,        setTopics]        = useState([])
   const [loadingTopics, setLoadingTopics] = useState(false)
+
+  // ── Debounce cleanup and sync search input with URL ──────────────────
+  useEffect(() => {
+    return () => debouncedSetSearchTerm.cancel()
+  }, [debouncedSetSearchTerm])
+
+  useEffect(() => {
+    if (qFromUrl !== searchTerm) {
+      setSearchInput(qFromUrl)
+      setSearchTerm(qFromUrl)
+    }
+  }, [qFromUrl])
 
   // ── Keep URL in sync with local state ──────────────────────────────────
   useEffect(() => {
@@ -203,8 +227,8 @@ export default function CompanyPage() {
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <input
               type="text"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={handleSearchChange}
               placeholder="Search questions..."
               className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-code placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
             />
