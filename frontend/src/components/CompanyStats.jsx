@@ -53,14 +53,23 @@ export default function CompanyStats() {
   return (
     <div className="bg-surface rounded-card border border-gray-300 dark:border-gray-800 shadow-elevation p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="flex-1 max-w-xs">
+        <div className="flex-1 max-w-xs relative">
           <input
             type="text"
             value={filter}
             onChange={e => setFilter(e.target.value)}
             placeholder="Search companies…"
-            className="w-full bg-background border border-gray-300 dark:border-gray-700 text-foreground rounded-lg px-4 py-2.5 text-sm placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all hover:border-gray-400 dark:hover:border-gray-600"
+            className="w-full bg-background border border-gray-300 dark:border-gray-700 text-foreground rounded-lg px-4 py-2.5 pr-8 text-sm placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all hover:border-gray-400 dark:hover:border-gray-600"
           />
+          {filter && (
+            <button
+              onClick={() => setFilter('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <label 

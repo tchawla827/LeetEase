@@ -225,13 +225,27 @@ export default function CompanyPage() {
       {selectedBucket && (
         <>
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={handleSearchChange}
-              placeholder="Search questions..."
-              className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-code placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={handleSearchChange}
+                placeholder="Search questions..."
+                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 rounded-code placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary pr-8"
+              />
+              {searchInput && (
+                <button
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearchTerm('');
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
             <button
               onClick={() => {
                 setRefreshKey(k => k + 1)
