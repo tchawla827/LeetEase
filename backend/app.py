@@ -1167,16 +1167,27 @@ def update_question_meta(question_id):
     else:
         query_specific = query
 
+
+    set_on_insert = {}
+    if company_id and "solved" not in update_fields:
+        existing = USER_META.find_one(query_specific, {"solved": 1})
+        if not existing:
+            generic = USER_META.find_one(query, {"solved": 1}) or {}
+            if "solved" in generic:
+                set_on_insert["solved"] = generic["solved"]
+
+    update_doc = {
+        "$set": update_fields | ({"company_id": company_id, "bucket": bucket} if company_id else {})
+    }
+    if set_on_insert:
+        update_doc["$setOnInsert"] = set_on_insert
+
     meta = USER_META.find_one_and_update(
         query_specific,
-        {
-            "$set": update_fields
-            | ({"company_id": company_id, "bucket": bucket} if company_id else {})
-        },
+        update_doc,
         upsert=True,
         return_document=True,
     )
-
     # Ensure a generic record exists and update all other bucket records
     generic_update = {
         "$set": {
@@ -1253,17 +1264,29 @@ def batch_update_questions_meta():
         else:
             query_specific = query_base
 
+        set_on_insert = {}
+        if company_id and "solved" not in update_fields:
+            meta_exist = USER_META.find_one(query_specific, {"solved": 1})
+            if not meta_exist:
+                generic_meta = USER_META.find_one(query_base, {"solved": 1}) or {}
+                if "solved" in generic_meta:
+                    set_on_insert["solved"] = generic_meta["solved"]
+
+        update_doc = {
+            "$set": update_fields
+            | (
+                {"company_id": company_id, "bucket": bucket}
+                if company_id
+                else {}
+            )
+        }
+        if set_on_insert:
+            update_doc["$setOnInsert"] = set_on_insert
+
         ops.append(
             UpdateOne(
                 query_specific,
-                {
-                    "$set": update_fields
-                    | (
-                        {"company_id": company_id, "bucket": bucket}
-                        if company_id
-                        else {}
-                    )
-                },
+                update_doc,
                 upsert=True,
             )
         )
