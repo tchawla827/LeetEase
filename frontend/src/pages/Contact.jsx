@@ -28,7 +28,7 @@ export default function Contact() {
             <a href="https://www.instagram.com/tchawla827" target="_blank" rel="noopener noreferrer" className="hover:underline text-gray-700 dark:text-gray-300">@tchawla827</a>
           </li>
         </ul>
-        <p className="text-gray-600 dark:text-gray-400">We would love to hear your feedback and suggestions.</p>
+        <p className="text-gray-600 dark:text-gray-400">I would love to hear your feedback and suggestions.</p>
         <Link to="/" className="text-primary hover:underline">Back to Home</Link>
       </div>
     </div>
