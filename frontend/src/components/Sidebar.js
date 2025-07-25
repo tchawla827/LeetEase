@@ -150,18 +150,29 @@ export default function Sidebar({ sidebarOpen }) {
               Companies
             </h2>
 
-            <input
-              type="text"
-              placeholder="Search companies…"
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-              className="
-                font-mono text-code-sm w-full px-3 py-1.5 mb-2
-                rounded-code border border-gray-700 bg-gray-900
-                text-gray-900 dark:text-gray-100 placeholder-gray-500
-                focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50
-              "
-            />
+            <div className="relative mb-2">
+              <input
+                type="text"
+                placeholder="Search companies…"
+                value={filter}
+                onChange={e => setFilter(e.target.value)}
+                className="
+                  font-mono text-code-sm w-full px-3 py-1.5 pr-8
+                  rounded-code border border-gray-700 bg-gray-900
+                  text-gray-900 dark:text-gray-100 placeholder-gray-500
+                  focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50
+                "
+              />
+              {filter && (
+                <button
+                  onClick={() => setFilter('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
 
             <ul className="divide-y divide-gray-800">
               {filteredCompanies.map(company => {

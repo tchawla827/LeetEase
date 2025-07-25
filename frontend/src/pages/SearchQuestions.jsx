@@ -56,8 +56,29 @@ export default function SearchQuestions() {
     placeholder: 'Search questions...',
     value,
     onChange,
-    className: 'w-full px-3 py-2 text-code-sm bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-code focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50'
+    className: 'w-full px-3 py-2 pr-8 text-code-sm bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-code focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50'
   };
+
+  const clearSearch = () => {
+    setValue('');
+    setSuggestions([]);
+    setCompanies([]);
+  };
+
+  const renderInput = inputProps => (
+    <div className="relative">
+      <input {...inputProps} />
+      {value && (
+        <button
+          onClick={e => { e.preventDefault(); clearSearch(); }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+          aria-label="Clear search"
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="max-w-xl mx-auto mt-8">
@@ -69,6 +90,7 @@ export default function SearchQuestions() {
         renderSuggestion={renderSuggestion}
         onSuggestionSelected={onSuggestionSelected}
         inputProps={inputProps}
+        renderInputComponent={renderInput}
         theme={{
           container: 'relative',
           suggestionsContainer: 'absolute w-full bg-gray-800 border border-gray-600 mt-1 rounded-code shadow-lg z-10',
